@@ -1,0 +1,10 @@
+{
+	"name": "@mauchise/mixeditor-core",
+	"version": "0.0.1",
+	"exports": {
+		".": "./dist/index.js"
+	},
+	"dependencies": {
+		"@mauchise/anyplug": "link:d:/Mauchise/AnyPlug"
+	}
+}
