@@ -1,5 +1,5 @@
 import { Plugin, PluginManager } from "@mauchise/plugin-manager";
-import { HistoryManager } from "./command/CommandManager";
+import { HistoryManager } from "./operation/HistoryManager";
 
 class MixEditor {
   plugin_manager = new PluginManager();
