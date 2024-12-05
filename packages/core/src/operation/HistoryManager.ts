@@ -1,5 +1,7 @@
 import { RingBuffer } from "../common/ringbuffer";
 import { Operation, OperationManager } from "./Operation";
+import { CanceledError } from "../common/error";
+import { AsyncTask } from "../common/promise";
 
 export type OperationType = "undo" | "execute";
 
@@ -19,8 +21,10 @@ export enum OperationState {
 }
 
 /** 操作历史管理器。
- * 操作历史管理器用于管理操作的历史，包括撤销和重做。
+ * 操作历史管理器用于管理操作的历史，包括撤销和重做。操作历史管理器完全信任于操作的行为实现。
  *
+ * 操作历史管理器是串行的，即在同一时间只能有一个操作在执行。
+ * 
  * ## 操作历史序列
  * 操作历史是一个序列，序列中的操作分为三种类型：
  * 1. 未完成的操作：未完成的操作是指已经进入执行队列但是尚未开始执行的操作。
@@ -48,19 +52,27 @@ export enum OperationState {
  * 如果操作执行失败，管理器会调用操作的“错误处理行为”。错误处理行为不能打断后续的调度流程。
  */
 export class HistoryManager {
+  /** 操作管理器。 */
   private readonly operation_manager = new OperationManager();
+  /** 操作历史缓冲区。 */
   private readonly history_buffer = new RingBuffer<Operation>(100);
+  /** 撤销栈。最大占用空间与操作历史缓冲区相同。 */
   private readonly undo_stack: Operation[] = [];
 
+  /** 当前正在执行的操作。 */
   private current_execution: OperationExecution | null = null;
+  /** 待执行的操作。 */
   private pending_operations: OperationExecution[] = [];
+  /** 是否正在调度操作执行。 */
   private is_scheduling = false;
-  private cancel_current_operation: (() => Promise<void>) | null = null;
 
-  // TODO：完成 execute 在操作执行完毕后返回的需求
+  /** 当前正在执行的操作的取消函数。 */
+  private cancel_current_operation: AsyncTask<void> | null = null;
+
+  /** 为 execute 提供在操作执行完毕、报错或者被取消后再返回的需求。 */
   private operation_done_promise_map = new WeakMap<
     Operation,
-    ReturnType<PromiseConstructor["withResolvers"]>
+    PromiseWithResolvers<void>
   >();
 
   /** 获取操作的当前状态 */
@@ -87,7 +99,14 @@ export class HistoryManager {
       type: "execute",
     });
 
+    // 创建 PromiseWithResolvers 并存储在 map 中
+    const promiseWithResolvers = Promise.withResolvers<void>();
+    this.operation_done_promise_map.set(operation, promiseWithResolvers);
+
     this.scheduleOperations();
+
+    // 返回 promise
+    return promiseWithResolvers.promise;
   }
 
   /** 撤销操作 */
@@ -102,7 +121,7 @@ export class HistoryManager {
     switch (state) {
       case OperationState.Executing:
         // 取消正在执行的操作
-        await this.cancel_current_operation?.();
+        await this.cancel_current_operation?.execute();
         break;
       case OperationState.Pending:
         // 从待执行队列中移除
@@ -134,7 +153,7 @@ export class HistoryManager {
     switch (state) {
       case OperationState.Executing:
         // 取消正在执行的操作
-        await this.cancel_current_operation?.();
+        await this.cancel_current_operation?.execute();
         break;
       case OperationState.Pending:
         // 从待执行队列中移除
@@ -166,11 +185,19 @@ export class HistoryManager {
         this.current_execution = execution;
 
         // 设置取消函数
-        this.cancel_current_operation = async () => {
+        this.cancel_current_operation = new AsyncTask(async () => {
           await this.operation_manager.cancel(execution.operation);
           this.current_execution = null;
           this.cancel_current_operation = null;
-        };
+
+          // 调用 reject
+          const promiseWithResolvers = this.operation_done_promise_map.get(
+            execution.operation
+          );
+          promiseWithResolvers?.reject(
+            new CanceledError("Operation was canceled")
+          );
+        });
 
         // 执行操作
         try {
@@ -194,11 +221,23 @@ export class HistoryManager {
               }
             }
           }
+
+          // 调用 resolve
+          const promiseWithResolvers = this.operation_done_promise_map.get(
+            execution.operation
+          );
+          promiseWithResolvers?.resolve();
         } catch (error) {
-          this.operation_manager.handle_error(
+          // 让操作管理器处理错误，操作管理器应该正确恢复编辑器的状态
+          await this.operation_manager.handle_error(
             execution.operation,
             error as Error
           );
+          // 调用 reject
+          const promiseWithResolvers = this.operation_done_promise_map.get(
+            execution.operation
+          );
+          promiseWithResolvers?.reject(error);
         }
 
         this.current_execution = null;
@@ -207,5 +246,9 @@ export class HistoryManager {
     } finally {
       this.is_scheduling = false;
     }
+  }
+
+  constructor(initial_capacity: number = 100) {
+    this.history_buffer = new RingBuffer<Operation>(initial_capacity);
   }
 }

@@ -1,10 +1,22 @@
 {
 	"name": "@mauchise/mix-editor",
 	"version": "0.0.1",
+	"scripts": {
+		"test": "jest"
+	},
 	"exports": {
 		".": "./dist/index.js"
 	},
 	"dependencies": {
 		"@mauchise/plugin-manager": "link:D:/Mauchise/PluginManager"
+	},
+	"devDependencies": {
+		"@babel/core": "^7.26.0",
+		"@babel/preset-env": "^7.26.0",
+		"@babel/preset-typescript": "^7.26.0",
+		"@jest/globals": "^29.7.0",
+		"babel-jest": "^29.7.0",
+		"jest": "^29.7.0",
+		"ts-node": "^10.9.2"
 	}
 }

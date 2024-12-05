@@ -1,27 +1,36 @@
 export class RingBuffer<T> {
   private buffer: T[];
-  private head: number;
-  private tail: number;
+  /** 头指针。指向当前第一个元素的位置。 */
+  private head: number = 0;
+  /** 尾指针。指向当前最后一个元素的位置的下一个位置。 */
+  private tail: number = 0;
 
   constructor(capacity: number) {
-    this.buffer = new Array(capacity);
-    this.head = 0;
-    this.tail = 0;
+    // tail 和 head 之间在非空的情况下，至少要有一个空位，所以实际的缓冲区大小需要 +1
+    this.buffer = new Array(capacity + 1);
   }
 
-  get capacity() {
+  private get buffer_size() {
     return this.buffer.length;
   }
 
+  get capacity() {
+    return this.buffer.length - 1;
+  }
+
   get size() {
-    return (this.tail - this.head + this.capacity) % this.capacity;
+    if (this.tail >= this.head) {
+      return this.tail - this.head;
+    } else {
+      return this.buffer_size - (this.head - this.tail);
+    }
   }
 
   /** 缩放缓冲区。*/
   scaling(new_capacity: number) {
     if (new_capacity > this.capacity) {
       // 扩大缓冲区
-      const new_buffer = new Array(new_capacity);
+      const new_buffer = new Array(new_capacity + 1);
       for (let i = 0; i < this.size; i++) {
         new_buffer[i] = this.get(i);
       }
@@ -30,7 +39,7 @@ export class RingBuffer<T> {
       this.tail = this.size;
     } else {
       // 缩小缓冲区，仅取尾部的元素，丢弃头部的数据
-      const new_buffer = new Array(new_capacity);
+      const new_buffer = new Array(new_capacity + 1);
       const currentSize = this.size;
       const itemsToKeep = Math.min(new_capacity, currentSize);
       const start = currentSize - itemsToKeep;
@@ -39,7 +48,7 @@ export class RingBuffer<T> {
       }
       this.buffer = new_buffer;
       this.head = 0;
-      this.tail = itemsToKeep % this.capacity;
+      this.tail = itemsToKeep % this.buffer_size;
     }
   }
 
@@ -48,11 +57,11 @@ export class RingBuffer<T> {
   }
 
   is_full() {
-    return (this.tail + 1) % this.capacity === this.head;
+    return (this.tail + 1) % this.buffer_size === this.head;
   }
 
   get(index: number) {
-    return this.buffer[(this.head + index) % this.capacity];
+    return this.buffer[(this.head + index) % this.buffer_size];
   }
 
   remove(item: T) {
@@ -61,10 +70,10 @@ export class RingBuffer<T> {
       // 从找到的位置开始，将后面的元素都向左移动一位
       for (let i = index; i < this.size - 1; i++) {
         const nextItem = this.get(i + 1);
-        this.buffer[(this.head + i) % this.capacity] = nextItem;
+        this.buffer[(this.head + i) % this.buffer_size] = nextItem;
       }
       // 更新尾指针
-      this.tail = (this.tail - 1 + this.capacity) % this.capacity;
+      this.tail = (this.tail - 1 + this.buffer_size) % this.buffer_size;
       return true;
     }
     return false;
@@ -93,22 +102,25 @@ export class RingBuffer<T> {
   }
 
   push(item: T) {
-    this.tail = (this.tail + 1) % this.buffer.length;
+    const nextTail = (this.tail + 1) % this.buffer_size;
 
-    let pop_item: T | undefined = undefined;
-    if (this.tail === this.head) {
-      pop_item = this.buffer[this.head];
-      this.head = (this.head + 1) % this.buffer.length;
+    let popped_item: T | undefined = undefined;
+    if (nextTail === this.head) {
+      // 缓冲区已满，需要移除头部元素
+      popped_item = this.buffer[this.head];
+      this.head = (this.head + 1) % this.buffer_size;
     }
+
     this.buffer[this.tail] = item;
-    return pop_item;
+    this.tail = nextTail;
+    return popped_item;
   }
 
   pop() {
     if (this.is_empty()) return undefined;
 
     const item = this.buffer[this.head];
-    this.head = (this.head + 1) % this.buffer.length;
+    this.head = (this.head + 1) % this.buffer_size;
     return item;
   }
 }
