@@ -25,7 +25,7 @@ describe("OperationManager", () => {
       id: "test-id",
       type: "test-type",
       data: { foo: "bar" },
-      version: BigInt(1),
+      version: 1,
     };
   });
 
@@ -74,7 +74,7 @@ describe("OperationManager", () => {
     test("应该能够取消操作", async () => {
       manager.set_behavior("test-type", mockBehavior);
       await manager.cancel(testOperation);
-      expect(mockBehavior.cancel).toHaveBeenCalledWith(testOperation);
+      expect(mockBehavior.cancel).toHaveBeenCalledWith(testOperation, undefined);
     });
 
     test("没有对应行为时应该抛出错误", () => {

@@ -17,6 +17,9 @@ importers:
       '@mauchise/plugin-manager':
         specifier: link:D:/Mauchise/PluginManager
         version: link:../../../PluginManager
+      solid-js:
+        specifier: ^1.9.3
+        version: 1.9.3
     devDependencies:
       '@babel/core':
         specifier: ^7.26.0

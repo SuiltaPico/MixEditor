@@ -116,11 +116,22 @@ export class RingBuffer<T> {
     return popped_item;
   }
 
-  pop() {
+  /** 弹出头部元素。*/
+  shift() {
     if (this.is_empty()) return undefined;
 
     const item = this.buffer[this.head];
     this.head = (this.head + 1) % this.buffer_size;
+    return item;
+  }
+
+  /** 弹出尾部元素。*/
+  pop() {
+    if (this.is_empty()) return undefined;
+
+    const item =
+      this.buffer[(this.tail - 1 + this.buffer_size) % this.buffer_size];
+    this.tail = (this.tail - 1 + this.buffer_size) % this.buffer_size;
     return item;
   }
 }

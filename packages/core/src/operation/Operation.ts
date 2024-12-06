@@ -9,22 +9,33 @@ export interface Operation<TData = any> {
   data: TData;
 
   /** 操作所基于的版本。*/
-  version: bigint;
+  version: number;
   /** 合并到哪个 Operation。*/
   merge_with?: string;
 }
 
+export type OperationRunningBehavior = "execute" | "undo";
+
 export interface OperationBehavior {
   execute(operation: Operation): void | Promise<void>;
   undo(operation: Operation): void | Promise<void>;
-  cancel(operation: Operation): void | Promise<void>;
+  cancel(
+    operation: Operation,
+    /** 正在执行的操作行为。如果为空，则表示没有正在执行的行为。*/
+    running_behavior?: OperationRunningBehavior
+  ): void | Promise<void>;
   merge?(operation: Operation): boolean | Promise<boolean>;
+  /** 处理错误。处理 `execute` 或者 `undo` 产生的错误，恢复文档至正确的状态。 */
   handle_error(operation: Operation, error: Error): void | Promise<void>;
+  /** 序列化操作。 */
+  serialize?(operation: Operation): string | Promise<string>;
 }
 
 export class OperationManagerNoBehaviorError extends Error {
   constructor(public operation: Operation) {
-    super(`No behavior for operation: ${operation.type}`);
+    super(
+      `No behavior for operation: ${operation.type}, It may be necessary to register behaviors for this type of operation.`
+    );
   }
 }
 
@@ -58,10 +69,10 @@ export class OperationManager {
     }
   }
 
-  cancel(operation: Operation) {
+  cancel(operation: Operation, running_behavior?: OperationRunningBehavior) {
     const behavior = this.behaviors_map.get(operation.type);
     if (behavior) {
-      return behavior.cancel(operation);
+      return behavior.cancel(operation, running_behavior);
     } else {
       throw new OperationManagerNoBehaviorError(operation);
     }

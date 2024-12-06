@@ -1,5 +1,17 @@
-import { AsyncTask } from "../../src/common/promise";
+import { AsyncTask, defer } from "../../src/common/promise";
 import { describe, it, expect } from "@jest/globals";
+
+describe("defer", () => {
+  it("应该能正确延迟执行", async () => {
+    let flag = false;
+    const deferred = defer().then(() => {
+      flag = true;
+    });
+    expect(flag).toBe(false);
+    await deferred;
+    expect(flag).toBe(true);
+  });
+});
 
 describe("AsyncTask", () => {
   it("应该执行函数并返回一个 Promise", async () => {

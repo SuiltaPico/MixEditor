@@ -130,14 +130,31 @@ describe("RingBuffer", () => {
       buffer.push(1);
       buffer.push(2);
 
-      expect(buffer.pop()).toBe(1);
+      expect(buffer.pop()).toBe(2);
+      expect(buffer.size).toBe(1);
+      expect(buffer.get(0)).toBe(1);
+    });
+
+    it("空缓冲区弹出应该返回undefined", () => {
+      const buffer = new RingBuffer<number>(3);
+      expect(buffer.pop()).toBeUndefined();
+    });
+  });
+
+  describe("移出操作", () => {
+    it("应该能正确移出元素", () => {
+      const buffer = new RingBuffer<number>(3);
+      buffer.push(1);
+      buffer.push(2);
+
+      expect(buffer.shift()).toBe(1);
       expect(buffer.size).toBe(1);
       expect(buffer.get(0)).toBe(2);
     });
 
     it("空缓冲区弹出应该返回undefined", () => {
       const buffer = new RingBuffer<number>(3);
-      expect(buffer.pop()).toBeUndefined();
+      expect(buffer.shift()).toBeUndefined();
     });
   });
 });
