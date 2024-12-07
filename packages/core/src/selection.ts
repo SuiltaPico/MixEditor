@@ -1,5 +1,5 @@
 import { createSignal } from "./common/signal";
-import { MixEditor } from "./index";
+import { MixEditor } from "./MixEditor";
 import { BaseNode } from "./Node";
 
 export type SelectedNodeInfo = {

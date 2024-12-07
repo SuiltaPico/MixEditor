@@ -14,10 +14,10 @@ export interface BaseNode {
   /** 获取指定索引的子区域。 */
   get_child(index: number): MaybeNode;
 
-  /** 处理事件。 */
-  handle_event?<TEventPair extends EventPair>(
-    event: TEventPair["event"]
-  ): MaybePromise<TEventPair["result"] | void>;
+  // /** 处理事件。 */
+  // handle_event?<TEventPair extends EventPair>(
+  //   event: TEventPair["event"]
+  // ): MaybePromise<TEventPair["result"] | void>;
 }
 
 export class NodeContext {

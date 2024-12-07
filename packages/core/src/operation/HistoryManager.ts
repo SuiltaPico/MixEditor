@@ -186,87 +186,85 @@ export class HistoryManager {
 
     this.is_scheduling = true;
 
-    try {
-      while (this.pending_operations.length > 0) {
-        const execution = this.pending_operations.shift()!;
-        this.current_execution = execution;
+    while (this.pending_operations.length > 0) {
+      const execution = this.pending_operations.shift()!;
+      this.current_execution = execution;
 
-        // 设置取消函数
-        this.cancel_current_operation = new AsyncTask(
-          async (running_behavior) => {
-            await this.operation_manager.cancel(
-              execution.operation,
-              running_behavior
-            );
-            this.current_execution = null;
-            this.cancel_current_operation = null;
-
-            // 调用 reject
-            const promiseWithResolvers = this.operation_done_promise_map.get(
-              execution.operation
-            );
-            promiseWithResolvers?.reject(
-              new CanceledError("Operation was canceled")
-            );
-          }
-        );
-
-        // 执行操作
-        try {
-          if (execution.type === "undo") {
-            await this.operation_manager.undo(execution.operation);
-          } else {
-            await this.operation_manager.execute(execution.operation);
-            // 检查是否需要合并操作
-            if (execution.operation.merge_with) {
-              const target_op = this.history_buffer.find_last(
-                (op) => op.id === execution.operation.merge_with
-              );
-              if (target_op) {
-                // 从历史缓冲区中移除当前操作
-                this.history_buffer.remove(execution.operation);
-                // 合并操作
-                await this.operation_manager.merge(
-                  target_op,
-                  execution.operation
-                );
-              }
-            }
-          }
-
-          // 调用 resolve
-          const promiseWithResolvers = this.operation_done_promise_map.get(
-            execution.operation
+      // 设置取消函数
+      this.cancel_current_operation = new AsyncTask(
+        async (running_behavior) => {
+          await this.operation_manager.cancel(
+            execution.operation,
+            running_behavior
           );
-          promiseWithResolvers?.resolve();
-        } catch (error) {
-          try {
-            // 让操作管理器处理错误，操作管理器应该正确恢复编辑器的状态
-            await this.operation_manager.handle_error(
-              execution.operation,
-              error as Error
-            );
-          } catch (new_error) {
-            console.error(
-              "在操作管理器处理如下错误时，发生了新的错误",
-              error,
-              new_error,
-              "编辑器状态可能出现异常"
-            );
-          }
+          this.current_execution = null;
+          this.cancel_current_operation = null;
+
           // 调用 reject
           const promiseWithResolvers = this.operation_done_promise_map.get(
             execution.operation
           );
-          promiseWithResolvers?.reject(error);
+          promiseWithResolvers?.reject(
+            new CanceledError("Operation was canceled")
+          );
+        }
+      );
+
+      // 执行操作
+      try {
+        if (execution.type === "undo") {
+          await this.operation_manager.undo(execution.operation);
+        } else {
+          await this.operation_manager.execute(execution.operation);
+          // 检查是否需要合并操作
+          if (execution.operation.merge_with) {
+            const target_op = this.history_buffer.find_last(
+              (op) => op.id === execution.operation.merge_with
+            );
+            if (target_op) {
+              // 从历史缓冲区中移除当前操作
+              this.history_buffer.remove(execution.operation);
+              // 合并操作
+              await this.operation_manager.merge(
+                target_op,
+                execution.operation
+              );
+            }
+          }
         }
 
-        this.current_execution = null;
-        this.cancel_current_operation = null;
+        // 调用 resolve
+        const promiseWithResolvers = this.operation_done_promise_map.get(
+          execution.operation
+        );
+        promiseWithResolvers?.resolve();
+      } catch (error) {
+        try {
+          // 让操作管理器处理错误，操作管理器应该正确恢复编辑器的状态
+          await this.operation_manager.handle_error(
+            execution.operation,
+            error as Error
+          );
+        } catch (new_error) {
+          // console.error(
+          //   "在操作管理器处理如下错误时，发生了新的错误",
+          //   error,
+          //   new_error,
+          //   "编辑器状态可能出现异常"
+          // );
+        }
+        // 调用 reject
+        const promiseWithResolvers = this.operation_done_promise_map.get(
+          execution.operation
+        );
+        promiseWithResolvers?.reject(error);
       }
-    } finally {
-      this.is_scheduling = false;
+
+      this.current_execution = null;
+      this.cancel_current_operation = null;
     }
+
+    this.is_scheduling = false;
   }
 
   constructor(
