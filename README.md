@@ -6,7 +6,7 @@ Headless 富文本编辑器。不依赖 `contenteditable` 和 DOM。
 基础文本编辑。
 
 - `@mixeditor/core@1.0.0`
-- `@mixeditor/renderer@1.0.0`
+- `@mixeditor/browser-view@1.0.0`
 - `@mixeditor/plugin-heading@1.0.0`
 - `@mixeditor/plugin-basic-text-style@1.0.0`
 - `@mixeditor/plugin-block-indent@1.0.0`
