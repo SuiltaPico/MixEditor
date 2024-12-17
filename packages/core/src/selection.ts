@@ -1,9 +1,9 @@
 import { createSignal } from "./common/signal";
 import { MixEditor } from "./MixEditor";
-import { BaseNode } from "./Node";
+import { Node } from "./node/Node";
 
 export type SelectedNodeInfo = {
-  node: BaseNode;
+  node: Node;
   /** 子区域路径。 */
   child_path: number;
 };

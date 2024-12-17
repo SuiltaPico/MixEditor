@@ -180,6 +180,8 @@ export class HistoryManager {
     this.scheduleOperations();
   }
 
+  
+
   /** 调度操作执行 */
   private async scheduleOperations() {
     if (this.is_scheduling) return;
@@ -265,6 +267,36 @@ export class HistoryManager {
     }
 
     this.is_scheduling = false;
+  }
+
+  /** 清空操作历史
+   * 该方法会清空历史记录缓冲区和撤销栈。
+   * 如果有正在执行的操作，会等待其完成。
+   * 如果有待执行的操作，会取消它们。
+   */
+  async clear_history() {
+    // 取消所有待执行的操作
+    for (const execution of this.pending_operations) {
+      await this.operation_manager.cancel(execution.operation, undefined);
+      
+      // 调用 reject
+      const pwr = this.operation_done_promise_map.get(
+        execution.operation
+      );
+      pwr?.reject(new CanceledError("History was cleared"));
+    }
+    
+    // 清空待执行队列
+    this.pending_operations = [];
+    
+    // 如果有正在执行的操作，等待其完成
+    if (this.current_execution) {
+      await this.cancel_current_operation?.execute(undefined);
+    }
+
+    // 清空历史记录缓冲区和撤销栈
+    this.history_buffer.clear();
+    this.undo_stack.length = 0;
   }
 
   constructor(

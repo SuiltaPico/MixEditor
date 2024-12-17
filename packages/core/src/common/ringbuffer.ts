@@ -52,6 +52,11 @@ export class RingBuffer<T> {
     }
   }
 
+  clear() {
+    this.head = 0;
+    this.tail = 0;
+  }
+
   is_empty() {
     return this.head === this.tail;
   }
