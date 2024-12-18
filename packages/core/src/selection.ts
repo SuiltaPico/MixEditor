@@ -38,7 +38,5 @@ export class Selection {
     });
   }
 
-  
-
   constructor(public editor: MixEditor) {}
 }
