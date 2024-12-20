@@ -3,11 +3,13 @@ import { HistoryManager } from "./operation/HistoryManager";
 import { OperationManager } from "./operation/Operation";
 import { Selection } from "./selection";
 import { AsyncTask } from "./common/promise";
+import { NodeManager } from "./node/NodeManager";
 
 export class MixEditor {
   plugin_manager = new PluginManager();
   operation_manager = new OperationManager();
   command_manager = new HistoryManager(this.operation_manager);
+  node_manager = new NodeManager();
   selection = new Selection(this);
 
   init_task = new AsyncTask(async () => {

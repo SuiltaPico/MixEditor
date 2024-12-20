@@ -1,3 +1,6 @@
+import { TwoLevelTypeMap } from "../common/TwoLevelTypeMap";
+import { ParametersExceptFirst } from "../common/type";
+
 /** 操作。 */
 export interface Operation<TData = any> {
   /** 操作的唯一标识。*/
@@ -45,62 +48,96 @@ export class OperationManagerNoBehaviorError extends Error {
   }
 }
 
-export class OperationManager {
+function gen_run_operation_behavior<
+  TBehavior extends keyof TOperationBehavior,
+  TOperationBehavior extends OperationBehavior = OperationBehavior
+>(operation_manager: OperationManager<TOperationBehavior>, behavior_name: TBehavior) {
+  return function <TData>(
+    operation: Operation<TData>,
+    ...args: ParametersExceptFirst<TOperationBehavior[TBehavior]>
+  ) {
+    const behavior = operation_manager.get_behavior<TBehavior>(
+      operation.type,
+      behavior_name
+    );
+    return (behavior as any)(
+      operation,
+      ...args
+    ) as TOperationBehavior[TBehavior] extends (...args: any) => any
+      ? ReturnType<TOperationBehavior[TBehavior]>
+      : never;
+  };
+}
+
+/** 操作管理器。
+ *
+ * 管理操作的行为。允许通过更改第一个泛型参数，来扩展操作行为的具体类型。
+ */
+export class OperationManager<
+  TOperationBehavior extends OperationBehavior = OperationBehavior
+> {
   /** 操作行为映射。*/
-  private behaviors_map = new Map<string, OperationBehavior>();
+  private behaviors_map = new TwoLevelTypeMap<TOperationBehavior>();
 
   /** 设置操作行为 */
-  set_behavior<TData>(type: string, behavior: OperationBehavior<TData>) {
-    this.behaviors_map.set(type, behavior);
+  set_behavior<TBehavior extends keyof TOperationBehavior>(
+    type: string,
+    behavior_name: TBehavior,
+    behavior: TOperationBehavior[TBehavior]
+  ) {
+    this.behaviors_map.set(behavior_name, type, behavior);
   }
 
   /** 移除操作行为 */
-  remove_behavior(type: string) {
-    this.behaviors_map.delete(type);
+  remove_behavior<TBehavior extends keyof TOperationBehavior>(
+    type: string,
+    behavior_name: TBehavior
+  ) {
+    this.behaviors_map.remove(behavior_name, type);
   }
 
   /** 获取操作行为 */
-  private getBehavior<TData>(type: string): OperationBehavior<TData> {
-    const behavior = this.behaviors_map.get(type);
+  get_behavior<TBehavior extends keyof TOperationBehavior>(
+    type: string,
+    behavior_name: TBehavior
+  ): TOperationBehavior[TBehavior] {
+    const behavior = this.behaviors_map.get(behavior_name, type);
     if (!behavior) {
       throw new OperationManagerNoBehaviorError({ type } as Operation);
     }
-    return behavior as OperationBehavior<TData>;
+    return behavior as TOperationBehavior[TBehavior];
   }
 
   /** 执行操作。*/
-  execute<TData>(operation: Operation<TData>) {
-    const behavior = this.getBehavior<TData>(operation.type);
-    return behavior.execute(operation);
-  }
+  execute = gen_run_operation_behavior<"execute", TOperationBehavior>(
+    this,
+    "execute"
+  );
 
   /** 撤销操作。*/
-  undo<TData>(operation: Operation<TData>) {
-    const behavior = this.getBehavior<TData>(operation.type);
-    return behavior.undo(operation);
-  }
+  undo = gen_run_operation_behavior<"undo", TOperationBehavior>(
+    this,
+    "undo"
+  );
 
   /** 取消操作。*/
-  cancel<TData>(
-    operation: Operation<TData>,
-    running_behavior?: OperationRunningBehavior
-  ) {
-    const behavior = this.getBehavior<TData>(operation.type);
-    return behavior.cancel(operation, running_behavior);
-  }
+  cancel = gen_run_operation_behavior<"cancel", TOperationBehavior>(
+    this,
+    "cancel"
+  );
 
   /** 合并操作。*/
   merge<TData>(src: Operation<TData>, target: Operation<TData>) {
-    const behavior = this.getBehavior<TData>(src.type);
-    if (behavior.merge) {
-      return behavior.merge(target);
+    const behavior = this.get_behavior(src.type, "merge");
+    if (behavior) {
+      return behavior(target);
     }
     return false;
   }
 
   /** 处理错误。*/
-  handle_error<TData>(operation: Operation<TData>, error: Error) {
-    const behavior = this.getBehavior<TData>("error");
-    return behavior.handle_error(operation, error);
-  }
+  handle_error = gen_run_operation_behavior<"handle_error", TOperationBehavior>(
+    this,
+    "handle_error"
+  );
 }

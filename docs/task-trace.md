@@ -82,7 +82,8 @@
 
     `NodeManager` 负责管理 `Node` 相关的处理函数和元数据，主要职责包括：
 
-    * 提供 `Node` 的通用操作接口：`NodeManager` 提供了一系列通用的 `Node` 操作接口，例如： 
+    * 提供 `Node` `的通用操作接口：NodeManager` 管理了一系列通用的 Node 操作接口，这些接口通过 `NodeBehavior` 接口定义，并由 `NodeManager` 统一调度执行。这些接口包括：
+
       * `get_child(node, index)`: 获取指定节点的指定索引的子节点。
       * `get_children(node)`: 获取指定节点的所有子节点。
       * `get_children_count(node)`: 获取指定节点的子节点数量。
@@ -92,21 +93,39 @@
       * `slice(node, from, to)`: 切割一个 Node。
       * `handle_event(node, event)`: 处理指定节点的指定事件。
     * 附加信息：
-      * 标签：NodeManager 除了管理 Node 的基本操作外，还负责管理 Node 的附加信息，其中最重要的就是标签系统。
+      * 标签：
+        标签是一个字符串，用于标识 `Node` 的类别或特性。例如，`text` 节点通常拥有 `inline` 标签，表示它是一个行内元素；`paragraph` 节点通常拥有 `block` 标签，表示它是一个块级元素。
 
-      标签是一个字符串，用于标识 `Node` 的类别或特性。例如，`text` 节点通常拥有 `inline` 标签，表示它是一个行内元素；`paragraph` 节点通常拥有 `block` 标签，表示它是一个块级元素。
+        标签的主要作用是方便对 `Node` 进行分类和检索。通过标签，可以快速过滤和查找特定类型的 `Node`，这在编辑器操作中非常有用。例如：
+        * 在执行排版操作时，可以通过 `block` 标签快速找到所有块级元素。
+        * 在进行样式设置时，可以通过 `inline` 标签快速找到所有行内元素。
+        * 在实现自定义的编辑器功能时，可以通过自定义标签来标记和操作特定的 `Node`。
 
-      标签的主要作用是方便对 `Node` 进行分类和检索。通过标签，可以快速过滤和查找特定类型的 `Node`，这在编辑器操作中非常有用。例如：
-      * 在执行排版操作时，可以通过 `block` 标签快速找到所有块级元素。
-      * 在进行样式设置时，可以通过 `inline` 标签快速找到所有行内元素。
-      * 在实现自定义的编辑器功能时，可以通过自定义标签来标记和操作特定的 `Node`。
+        标签之间可以存在继承关系，形成一个有向无环图 (DAG)。子标签会继承父标签的所有特性。例如，可以定义一个 `formatting` 标签，然后让 `bold`、`italic`、`underline` 等标签继承自 `formatting` 标签。这样，所有具有 `bold`、`italic`、`underline` 标签的 `Node` 也都隐含地具有 `formatting` 标签，方便进行统一的操作。使用有向无环图可以避免循环继承的问题，保证标签系统的稳定性和可维护性。
 
-      标签之间可以存在继承关系，形成一个有向无环图 (DAG)。子标签会继承父标签的所有特性。例如，可以定义一个 `formatting` 标签，然后让 `bold`、`italic`、`underline` 等标签继承自 `formatting` 标签。这样，所有具有 `bold`、`italic`、`underline` 标签的 `Node` 也都隐含地具有 `formatting` 标签，方便进行统一的操作。使用有向无环图可以避免循环继承的问题，保证标签系统的稳定性和可维护性。
+  - [x] `SelectionManager` 的设计和实现
 
-  - [ ] `SelectionManager` 的设计和实现
+    `SelectionManager` 负责管理编辑器的光标位置和选区，提供统一的选区操作接口。
 
-    该包负责管理编辑器的光标位置和选区。
+    **核心功能：**
+    * **选区模型：** 使用 `{ start, end }` 的数据结构表示选区，其中：
+      * `start`：选区起始位置
+      * `end`：选区结束位置（当 `start === end` 时表示光标位置）
+    
+    * **选区操作：**
+      * `setSelection(start, end)`：设置选区范围
+      * `getSelection()`：获取当前选区
+      * `collapse(toStart = true)`：折叠选区到起点或终点
+      * `extend(position)`：扩展选区到指定位置
+    
+    * **事件通知：**
+      * 提供 `onSelectionChange` 事件，当选区发生变化时通知订阅者
+      * 支持多个视图层同步选区状态
 
+    * **选区验证：**
+      * 确保选区位置的合法性
+      * 处理选区跨节点的情况
+      * 规范化选区（确保 start <= end）
 
 ## `@mixeditor/browser-view`
 

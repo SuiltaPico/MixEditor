@@ -38,5 +38,16 @@ export class Selection {
     });
   }
 
+  extend_to(position: SelectedNodeInfo) {
+    const current = this.selected.get();
+    if (!current) {
+      // 如果当前没有选择,创建一个折叠选择
+      this.collapsed_select(position);
+      return;
+    }
+    // 不管当前是折叠还是扩展选择,都使用原始起点和新位置创建扩展选择
+    this.extended_select(current.start, position);
+  }
+
   constructor(public editor: MixEditor) {}
 }

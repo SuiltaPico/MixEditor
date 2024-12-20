@@ -1,9 +1,8 @@
 {
 	"name": "@mixeditor/core",
 	"version": "0.0.1",
-
 	"scripts": {
-		"build": "rollup -c rollup.config.js",
+		"build": "rollup -c rollup.config.mjs",
 		"test": "jest"
 	},
 	"exports": {
