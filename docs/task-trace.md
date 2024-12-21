@@ -129,14 +129,33 @@
 
 ## `@mixeditor/browser-view`
 
-  `@mixeditor/browser-view` 包负责处理编辑器在浏览器环境中的**渲染**和**用户交互**。
+  `@mixeditor/browser-view` 负责浏览器端视图渲染和用户交互的关键模块。它充当了 `@mixeditor/core` 抽象数据模型与用户界面之间的桥梁。
   
   它负责管理渲染器和调度渲染器，组合 `@mixeditor/core` 提供的抽象数据模型所对应的渲染器，将其渲染成用户可见的界面。它也处理用户的输入事件，将其转化为 `Operation` 提交给 `@mixeditor/core` 处理。
 
-  **主要职责:**
+  **核心功能:**
 
-  * **DOM 渲染:** 将 `@mixeditor/core` 提供的数据模型渲染成真实的 DOM 结构。
-  * **事件处理:** 监听浏览器中的用户输入事件，例如键盘事件、鼠标事件、触摸事件等。
-  * **事件转换:** 将浏览器事件转换为 `@mixeditor/core` 可以理解的 `Operation`。
-  * **光标渲染:** 管理编辑器的光标位置和选区的渲染。
-  * **视图更新:** 使用 **SolidJS** 的 **effect** 机制，当 `@mixeditor/core` 中的数据模型发生变化时，`@mixeditor/browser-view` 会负责更新视图，保持视图和数据模型的一致性。
+  `@mixeditor/browser-view` 的核心功能是将 `@mixeditor/core` 定义的抽象数据模型转化为用户可见的、可交互的编辑器界面，并处理用户输入，将其转化为 `@mixeditor/core` 可理解的操作（`Operation`）。
+
+  **主要职责:**
+  * **DOM 渲染:** 基于 `@mixeditor/core` 提供的数据模型，构建并渲染真实的 DOM 结构，呈现给用户。
+  * **事件处理:** 监听并捕获浏览器中的各种用户输入事件，包括键盘事件、鼠标事件、触摸事件以及剪贴板事件等。
+  * **事件转换:** 将原始的浏览器事件解析并转换为 `@mixeditor/core` 能处理的 `Operation`，从而驱动数据模型的更新。
+  * **光标与选区管理:** 精确控制并渲染编辑器的光标位置和选区范围，提供直观的视觉反馈。
+  * **视图更新:** 利用 **SolidJS** 的响应式 **effect** 机制，当 `@mixeditor/core` 中的数据模型发生变更时，`@mixeditor/browser-view` 能够高效地更新视图，确保视图与数据模型始终保持同步。
+
+  - [x] `NodeRenderer` 的设计和实现
+  
+    `NodeRenderer` 是 `@mixeditor/browser-view` 的核心组件之一，负责将单个 `Node`（`@mixeditor/core` 中的节点）渲染成对应的 DOM 元素。它还具备响应 `Node` 状态变化的能力，能够自动更新渲染后的 DOM 元素，保持视图与数据的同步。
+
+    `NodeRenderer` 的生命周期与 `Node` 的生命周期相同，当 `Node` 或者其上下文被销毁时，`NodeRenderer` 也会被销毁。
+
+  - [ ] `NodeRendererManager` 的设计和实现
+
+    `NodeRendererManager` 负责管理所有已注册的 `NodeRenderer`。它的主要职责包括 `NodeRenderer` 的注册、卸载、查找以及基于 `Node` 类型选择合适的 `NodeRenderer`。
+
+  - [ ] `DocumentRenderer` 的设计和实现
+
+    `DocumentRenderer` 是整个文档渲染的入口。它依赖 `NodeRendererManager` 来获取并应用相应的 `NodeRenderer`。`DocumentRenderer` 从 MixEditor 的 `root_node` 出发，递归地遍历整个 `Node` 树，并调用相应的 `NodeRenderer` 将每个 `Node` 渲染成 DOM 结构。
+
+    对于缺少对应 `NodeRenderer` 的 `Node`，`DocumentRenderer` 会自动创建一个默认的 `NodeRenderer` 进行渲染，并向开发者发出警告，提示他们为该 `Node` 类型注册自定义的 `NodeRenderer`，以实现更精细的控制。
