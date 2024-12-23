@@ -78,7 +78,7 @@
     * `type`: 字符串类型，用于标识节点的类型，例如 `text`、`paragraph`、`image` 等。
     * `data`: 用于存储节点的内容。`data` 的数据类型根据 type 的不同而不同。例如，`text` 类型的 `Node` 的 `data` 属性通常是一个字符串，而 `image` 类型的 `Node` 的 `data` 属性可能是一个包含图片 URL 和其他属性的对象。
 
-  - [ ] `NodeManager` 的设计和实现
+  - [x] `NodeManager` 的设计和实现
 
     `NodeManager` 负责管理 `Node` 相关的处理函数和元数据，主要职责包括：
 
