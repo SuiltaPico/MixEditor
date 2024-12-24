@@ -1,4 +1,8 @@
 {
+	"name": "mix-editor",
+	"scripts": {
+		"build": "turbo run build"
+	},
 	"devDependencies": {
 		"turbo": "^2.3.3"
 	},

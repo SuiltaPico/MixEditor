@@ -126,6 +126,9 @@
       * 确保选区位置的合法性
       * 处理选区跨节点的情况
       * 规范化选区（确保 start <= end）
+  
+  - [ ] `EventManager` 的设计和实现
+
 
 ## `@mixeditor/browser-view`
 
