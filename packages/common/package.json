@@ -1,5 +1,5 @@
 {
-	"name": "@mixeditor/core",
+	"name": "@mixeditor/common",
 	"version": "0.0.1",
 	"scripts": {
 		"build": "rollup -c rollup.config.mjs",
@@ -9,8 +9,7 @@
 		".": "./dist/index.js"
 	},
 	"peerDependencies": {
-		"@mauchise/plugin-manager": "link:D:/Mauchise/PluginManager",
-		"@mixeditor/common": "workspace:*"
+		"solid-js": "^1.9.3"
 	},
 	"devDependencies": {
 		"@babel/core": "^7.26.0",

@@ -1,4 +1,4 @@
-import { createSignal } from "./common/signal";
+import { createSignal } from "@mixeditor/common";
 import { MixEditor } from "./MixEditor";
 import { Node } from "./node/Node";
 

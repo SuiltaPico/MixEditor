@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@mixeditor/core": "workspace:*",
+    "@mixeditor/common": "workspace:*",
     "solid-js": "^1.9.3"
   },
   "devDependencies": {

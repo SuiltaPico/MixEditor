@@ -1,3 +1,10 @@
 export * from "./MixEditor";
-export type { Node } from "./node/Node";
-export type { MixEditorPlugin, MixEditorPluginContext } from "./plugin";
+export * from "./event";
+export * from "./node/Node";
+export * from "./node/NodeManager";
+export * from "./plugin";
+export * from "./document";
+export * from "./selection";
+export * from "./operation/Command";
+export * from "./operation/HistoryManager";
+export * from "./operation/Operation";

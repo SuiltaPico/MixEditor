@@ -1,7 +1,9 @@
+import { EmitterSignal } from "@mixeditor/common";
 import { NodeRenderer } from "./NodeRenderer";
 
 export class NodeRendererManager {
   private renderers: Map<string, NodeRenderer> = new Map();
+  private renderer_updated = new EmitterSignal();
 
   /** 注册一个节点渲染器 */
   public register(type: string, renderer: NodeRenderer) {

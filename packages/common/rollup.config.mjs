@@ -12,7 +12,7 @@ export default defineConfig([
       format: "esm",
       sourcemap: true,
     },
-    external: ["solid-js", "@mauchise/plugin-manager", "@mixeditor/common"],
+    external: ["solid-js", "@mauchise/plugin-manager"],
     plugins: [
       nodeResolve(),
       commonjs(),

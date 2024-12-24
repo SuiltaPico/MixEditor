@@ -1,5 +1,10 @@
+import { MixEditor } from "@mixeditor/core";
 import { Renderer } from "../Renderer";
 
 export function App() {
-  return <Renderer />;
+  const editor = new MixEditor({
+    plugins: [],
+  });
+  
+  return <Renderer editor={editor} />;
 }
