@@ -38,7 +38,7 @@ export class EventManager {
   add_handler(
     event_type: string,
     handler: EventHandler,
-    dependencies: Iterable<EventHandler>
+    dependencies?: Iterable<EventHandler>
   ) {
     // 获取或创建关系映射表
     if (!this.handler_relation_map.has(event_type)) {
@@ -46,16 +46,18 @@ export class EventManager {
     }
     const relation_map = this.handler_relation_map.get(event_type)!;
 
-    // 检查依赖关系是否会导致循环依赖
-    for (const dependency of dependencies) {
-      if (this.has_ancestor_handler(event_type, handler, dependency)) {
-        throw new Error("检测到循环依赖关系");
+    if (dependencies) {
+      // 检查依赖关系是否会导致循环依赖
+      for (const dependency of dependencies) {
+        if (this.has_ancestor_handler(event_type, handler, dependency)) {
+          throw new Error("检测到循环依赖关系");
+        }
       }
-    }
 
-    // 添加依赖关系
-    for (const dependency of dependencies) {
-      relation_map.set(dependency, handler);
+      // 添加依赖关系
+      for (const dependency of dependencies) {
+        relation_map.set(dependency, handler);
+      }
     }
 
     // 清除缓存

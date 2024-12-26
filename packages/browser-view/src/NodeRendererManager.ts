@@ -3,7 +3,7 @@ import { NodeRenderer } from "./NodeRenderer";
 
 export class NodeRendererManager {
   private renderers: Map<string, NodeRenderer> = new Map();
-  private renderer_updated = new EmitterSignal();
+  private reload_renderer_signal = new EmitterSignal();
 
   /** 注册一个节点渲染器 */
   public register(type: string, renderer: NodeRenderer) {
@@ -18,5 +18,15 @@ export class NodeRendererManager {
   /** 获取一个节点渲染器 */
   public get(type: string) {
     return this.renderers.get(type);
+  }
+
+  /** 重新加载节点渲染器 */
+  public reload() {
+    this.reload_renderer_signal.emit();
+  }
+
+  /** 监听节点渲染器重新加载 */
+  public use_reload_signal() {
+    return this.reload_renderer_signal.use();
   }
 }
