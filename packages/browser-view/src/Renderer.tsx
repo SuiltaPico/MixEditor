@@ -7,10 +7,7 @@ export const Renderer: Component<{
 }> = (props) => {
   return (
     <div class="mix_editor">
-      <DocumentRenderer
-        document={props.editor.document}
-        editor={props.editor}
-      />
+      <DocumentRenderer editor={props.editor} />
     </div>
   );
 };

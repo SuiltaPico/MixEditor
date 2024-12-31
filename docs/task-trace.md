@@ -132,33 +132,32 @@
 
 ## `@mixeditor/browser-view`
 
-  `@mixeditor/browser-view` 负责浏览器端视图渲染和用户交互的关键模块。它充当了 `@mixeditor/core` 抽象数据模型与用户界面之间的桥梁。
-  
-  它负责管理渲染器和调度渲染器，组合 `@mixeditor/core` 提供的抽象数据模型所对应的渲染器，将其渲染成用户可见的界面。它也处理用户的输入事件，将其转化为 `Operation` 提交给 `@mixeditor/core` 处理。
+  `@mixeditor/browser-view` 是 `@mixeditor` 编辑器在浏览器端的视图层实现，负责将 `@mixeditor/core` 定义的抽象数据模型渲染成用户可见的界面，并处理用户交互，将其转化为 `@mixeditor/core` 可理解的操作（`Operation`）。它作为 `@mixeditor/core` 与用户界面之间的桥梁，承担着至关重要的作用。
 
-  **核心功能:**
+  **核心职责**：
+  * **DOM 渲染：** 根据 `@mixeditor/core` 的数据模型，构建并渲染真实的 DOM 结构。
+  * **事件处理：** 监听并捕获键盘、鼠标、触摸及剪贴板等用户输入事件。
+  * **事件转换：** 将浏览器事件解析并转换为 `@mixeditor/core` 可处理的 `Operation`。
+  * **光标与选区管理：** 控制并渲染编辑器的光标位置和选区范围。
+  * **视图更新：** 利用 SolidJS 的响应式机制，高效地更新视图，确保与 `@mixeditor/core` 数据模型同步。
 
-  `@mixeditor/browser-view` 的核心功能是将 `@mixeditor/core` 定义的抽象数据模型转化为用户可见的、可交互的编辑器界面，并处理用户输入，将其转化为 `@mixeditor/core` 可理解的操作（`Operation`）。
+  - [x] `NodeRenderer`
+    `NodeRenderer` 是 `@mixeditor/browser-view` 的核心组件。    
 
-  **主要职责:**
-  * **DOM 渲染:** 基于 `@mixeditor/core` 提供的数据模型，构建并渲染真实的 DOM 结构，呈现给用户。
-  * **事件处理:** 监听并捕获浏览器中的各种用户输入事件，包括键盘事件、鼠标事件、触摸事件以及剪贴板事件等。
-  * **事件转换:** 将原始的浏览器事件解析并转换为 `@mixeditor/core` 能处理的 `Operation`，从而驱动数据模型的更新。
-  * **光标与选区管理:** 精确控制并渲染编辑器的光标位置和选区范围，提供直观的视觉反馈。
-  * **视图更新:** 利用 **SolidJS** 的响应式 **effect** 机制，当 `@mixeditor/core` 中的数据模型发生变更时，`@mixeditor/browser-view` 能够高效地更新视图，确保视图与数据模型始终保持同步。
+    * 其负责将 `@mixeditor/core` 中的单个 `Node` 渲染成对应的 DOM 元素。
+    * 其能够响应 `Node` 状态变化，自动更新渲染后的 DOM。
+    * 其生命周期与 `Node` 及其上下文同步，随 `Node` 或其上下文销毁而销毁。
 
-  - [x] `NodeRenderer` 的设计和实现
-  
-    `NodeRenderer` 是 `@mixeditor/browser-view` 的核心组件之一，负责将单个 `Node`（`@mixeditor/core` 中的节点）渲染成对应的 DOM 元素。它还具备响应 `Node` 状态变化的能力，能够自动更新渲染后的 DOM 元素，保持视图与数据的同步。
+  - [ ] `NodeRendererManager`
+    `NodeRendererManager` 负责管理所有已注册的 `NodeRenderer`。
+    * 负责 `NodeRenderer` 的注册、卸载、查找以及根据 `Node` 类型选择合适的 `NodeRenderer`。
+    * 支持插件注册自定义 `NodeRenderer` 以实现自定义渲染逻辑。
+  - [ ] `DocumentRenderer`
+    `DocumentRenderer` 是整个文档渲染的入口。
 
-    `NodeRenderer` 的生命周期与 `Node` 的生命周期相同，当 `Node` 或者其上下文被销毁时，`NodeRenderer` 也会被销毁。
-
-  - [ ] `NodeRendererManager` 的设计和实现
-
-    `NodeRendererManager` 负责管理所有已注册的 `NodeRenderer`。它的主要职责包括 `NodeRenderer` 的注册、卸载、查找以及基于 `Node` 类型选择合适的 `NodeRenderer`。
-
-  - [ ] `DocumentRenderer` 的设计和实现
-
-    `DocumentRenderer` 是整个文档渲染的入口。它依赖 `NodeRendererManager` 来获取并应用相应的 `NodeRenderer`。`DocumentRenderer` 从 MixEditor 的 `root_node` 出发，递归地遍历整个 `Node` 树，并调用相应的 `NodeRenderer` 将每个 `Node` 渲染成 DOM 结构。
-
-    对于缺少对应 `NodeRenderer` 的 `Node`，`DocumentRenderer` 会自动创建一个默认的 `NodeRenderer` 进行渲染，并向开发者发出警告，提示他们为该 `Node` 类型注册自定义的 `NodeRenderer`，以实现更精细的控制。
+    * 其依赖 `NodeRendererManager` 获取并应用相应的 `NodeRenderer`。
+    * 从 `root_node` 出发，递归遍历 `Node` 树，调用相应的 `NodeRenderer` 渲染每个 `Node`。
+    * 对于缺少对应 `NodeRenderer` 的 `Node`，会自动创建默认 `NodeRenderer` 并发出警告，提示开发者注册自定义 `NodeRenderer`。
+    * `NodeRendererManager` 更新后，`DocumentRenderer` 会自动重新渲染整个文档。
+    * **节点移动优化**： 为了高效处理节点移动，避免大规模重新渲染，使用 `WeakMap` 存储 `Node` 与 `NodeRenderer` 的映射关系。当 `Node` 移动时，直接从 `WeakMap` 获取对应的 `NodeRenderer` 进行渲染，这意味着节点的渲染器并不能完全依赖 Solid.js 的渲染机制，需要手动查表渲染。
+    * **性能问题**： 由于 Solid.js 的更新需要 Signal 机制才能触发，在渲染器更新的前提下，无论是为所有组件实例都创建一个 Signal 然后遍历去触发 Signal，还是创建一个中央 Signal，然后触发 Signal 去更新所有组件实例，都会导致不必要的 CPU 开销和内存开销。

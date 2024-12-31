@@ -3,7 +3,6 @@ import { Component, createSignal, For, onCleanup, onMount } from "solid-js";
 import { NodeRendererManager } from "./NodeRendererManager";
 
 export const DocumentRenderer: Component<{
-  document: Document;
   editor: MixEditor;
 }> = (props) => {
   onMount(() => {
