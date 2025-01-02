@@ -1,2 +1,3 @@
-export * from "./NodeRenderer";
-export * from "./NodeRendererManager";
+export * from "./renderer/NodeRenderer";
+export * from "./renderer/NodeRendererManager";
+export * from "./plugin";

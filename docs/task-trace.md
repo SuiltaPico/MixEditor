@@ -155,9 +155,9 @@
   - [ ] `DocumentRenderer`
     `DocumentRenderer` 是整个文档渲染的入口。
 
-    * 其依赖 `NodeRendererManager` 获取并应用相应的 `NodeRenderer`。
-    * 从 `root_node` 出发，递归遍历 `Node` 树，调用相应的 `NodeRenderer` 渲染每个 `Node`。
-    * 对于缺少对应 `NodeRenderer` 的 `Node`，会自动创建默认 `NodeRenderer` 并发出警告，提示开发者注册自定义 `NodeRenderer`。
-    * `NodeRendererManager` 更新后，`DocumentRenderer` 会自动重新渲染整个文档。
-    * **节点移动优化**： 为了高效处理节点移动，避免大规模重新渲染，使用 `WeakMap` 存储 `Node` 与 `NodeRenderer` 的映射关系。当 `Node` 移动时，直接从 `WeakMap` 获取对应的 `NodeRenderer` 进行渲染，这意味着节点的渲染器并不能完全依赖 Solid.js 的渲染机制，需要手动查表渲染。
-    * **性能问题**： 由于 Solid.js 的更新需要 Signal 机制才能触发，在渲染器更新的前提下，无论是为所有组件实例都创建一个 Signal 然后遍历去触发 Signal，还是创建一个中央 Signal，然后触发 Signal 去更新所有组件实例，都会导致不必要的 CPU 开销和内存开销。
+    * **简介**：`DocumentRenderer` 依赖 `NodeRendererManager` 获取并应用相应的 `NodeRenderer`。
+    * **渲染流程**：从 `root_node` 出发，递归遍历 `Node` 树，调用相应的 `NodeRenderer` 渲染每个 `Node`。在第一次渲染后，会缓存 `Node` 与 `NodeRenderer` 的映射关系，以便后续渲染时直接使用。
+    * **缺少 `NodeRenderer` 的处理**：对于缺少对应 `NodeRenderer` 的 `Node`，会自动创建默认 `NodeRenderer` 并发出警告，提示开发者注册自定义 `NodeRenderer`。
+    * **渲染器更新**：`NodeRendererManager` 更新后，`DocumentRenderer` 会自动重新渲染整个文档，对每一个被渲染的 `Node` 进行一次渲染器检查，决定是否使用缓存还是新的 `NodeRenderer`，再使用 Solidjs 高效的 DOM 对比算法插入新元素。以确保尽量减少元素创建和元素插入的计算。
+    * **性能问题**： 由于 Solid.js 的更新需要 Signal 机制才能触发，在渲染器更新的前提下，无论是为所有组件实例都创建一个 Signal 然后遍历去触发 Signal，还是创建一个中央 Signal，然后触发 Signal 去更新所有组件实例，都会导致不必要的 CPU 开销和内存开销。后续会新建一个 Solid.js 的 分支以解决这个问题。
+

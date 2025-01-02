@@ -1,10 +1,9 @@
 import { MixEditor } from "@mixeditor/core";
-import { Renderer } from "../Renderer";
+import { browser_view } from "../plugin";
 
 export function App() {
   const editor = new MixEditor({
-    plugins: [],
+    plugins: [browser_view({ element: document.querySelector("#root")! })],
   });
-  
-  return <Renderer editor={editor} />;
+  editor.init();
 }

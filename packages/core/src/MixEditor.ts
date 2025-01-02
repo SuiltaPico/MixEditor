@@ -5,6 +5,7 @@ import { Selection } from "./selection";
 import { NodeManager } from "./node/NodeManager";
 import { Document } from "./document";
 import { EventManager } from "./event";
+import { MixEditorPlugin, MixEditorPluginContext } from "./plugin";
 
 export class MixEditor {
   operation_manager = new OperationManager();
@@ -15,14 +16,14 @@ export class MixEditor {
   selection = new Selection(this);
 
   event_manager = new EventManager();
-  plugin_manager = new PluginManager();
+  plugin_manager = new PluginManager<MixEditorPluginContext>();
 
   async init() {
-    await this.plugin_manager.init_plugins({});
+    await this.plugin_manager.init_plugins({ editor: this });
     this.event_manager.emit({ event_type: ".core:init" });
   }
 
-  constructor(config: { plugins: Plugin[] }) {
+  constructor(config: { plugins: MixEditorPlugin[] }) {
     // 注册插件
     config.plugins.forEach((plugin) => {
       this.plugin_manager.register(plugin);

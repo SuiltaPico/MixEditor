@@ -10,7 +10,7 @@ export default defineConfig({
       fileName: "index",
     },
     rollupOptions: {
-      external: ["solid-js"],
+      external: ["solid-js", "@mixeditor/core", "@mixeditor/common"],
       output: {
         globals: {
           "solid-js": "Solid",
