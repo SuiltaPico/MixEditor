@@ -4,7 +4,7 @@ import { NodeRenderer } from "./NodeRenderer";
 export class NodeRendererManager {
   private renderers: Map<string, NodeRenderer> = new Map();
   private reload_renderer_signal = new EmitterSignal();
-  private default_renderer: NodeRenderer = () => <div>节点未被渲染</div>;
+  private default_renderer: NodeRenderer = () => <div>节点渲染器缺失</div>;
 
   /** 注册一个节点渲染器 */
   public register(type: string, renderer: NodeRenderer) {

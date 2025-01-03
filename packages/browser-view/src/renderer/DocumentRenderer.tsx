@@ -8,14 +8,14 @@ export class DocumentRendererState {
   /** 节点渲染器的缓存映射表。每次 NodeRendererWrapper 被调用，都会查询该表以确定是否使用缓存。 */
   node_renderer_map = new WeakMap<
     Node,
-    { renderer: NodeRenderer; node: JSX.Element }
+    { renderer: NodeRenderer; rendered: JSX.Element }
   >();
 
   get(node: Node) {
     return this.node_renderer_map.get(node);
   }
 
-  set(node: Node, value: { renderer: NodeRenderer; node: JSX.Element }) {
+  set(node: Node, value: { renderer: NodeRenderer; rendered: JSX.Element }) {
     this.node_renderer_map.set(node, value);
   }
 }
@@ -39,16 +39,16 @@ export const NodeRendererWrapper: Component<{
 
   if (cached && cached.renderer === renderer) {
     // 使用缓存节点，避免重复渲染。
-    return cached.node;
+    return cached.rendered;
   }
 
   // 使用节点渲染器渲染节点
-  const node = renderer(props);
+  const rendered = renderer(props);
 
   // 将节点写入缓存
-  doc_renderer_state.set(props.node, { renderer, node });
+  doc_renderer_state.set(props.node, { renderer, rendered });
 
-  return node;
+  return rendered;
 };
 
 export const DocumentRenderer: Component<{
