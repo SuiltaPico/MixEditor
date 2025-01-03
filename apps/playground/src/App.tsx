@@ -1,4 +1,4 @@
-import { createSignal, onMount } from "solid-js";
+import { onMount } from "solid-js";
 import "./App.css";
 import { MixEditor } from "@mixeditor/core";
 import { browser_view } from "@mixeditor/browser-view";

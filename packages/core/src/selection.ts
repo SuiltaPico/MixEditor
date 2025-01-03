@@ -2,16 +2,20 @@ import { createSignal } from "@mixeditor/common";
 import { MixEditor } from "./MixEditor";
 import { Node } from "./node/Node";
 
+/** 选择节点信息。 */
 export type SelectedNodeInfo = {
   node: Node;
   /** 子区域路径。 */
   child_path: number;
 };
+
+/** 折叠选择。 */
 export type CollapsedSelected = {
   type: "collapsed";
   start: SelectedNodeInfo;
 };
 
+/** 扩展选择。 */
 export type ExtendedSelected = {
   type: "extended";
   start: SelectedNodeInfo;
@@ -20,9 +24,11 @@ export type ExtendedSelected = {
 
 export type Selected = CollapsedSelected | ExtendedSelected;
 
+/** 选择管理器。 */
 export class Selection {
   selected = createSignal<Selected | undefined>(undefined);
 
+  /** 折叠选择。 */
   collapsed_select(selected: SelectedNodeInfo) {
     this.selected.set({
       type: "collapsed",
@@ -30,6 +36,7 @@ export class Selection {
     });
   }
 
+  /** 扩展选择。 */
   extended_select(start: SelectedNodeInfo, end: SelectedNodeInfo) {
     this.selected.set({
       type: "extended",
@@ -38,6 +45,7 @@ export class Selection {
     });
   }
 
+  /** 扩展到指定位置。 */
   extend_to(position: SelectedNodeInfo) {
     const current = this.selected.get();
     if (!current) {

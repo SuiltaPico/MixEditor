@@ -4,6 +4,7 @@ export * from "./node/Node";
 export * from "./node/NodeManager";
 export * from "./plugin";
 export * from "./document";
+export * from "./Saver";
 export * from "./selection";
 export * from "./operation/Command";
 export * from "./operation/HistoryManager";

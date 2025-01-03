@@ -2,6 +2,7 @@ import { BiRelationMap } from "./common/BiRelationMap";
 
 export interface Event {
   event_type: string;
+  result?: any;
 }
 
 /** 事件监听器。*/
@@ -117,7 +118,7 @@ export class EventManager {
   }
 
   /** 触发事件。*/
-  emit<T extends Event>(event: T) {
+  async emit<T extends Event>(event: T) {
     const event_type = event.event_type;
 
     // 获取或生成处理器顺序
@@ -130,9 +131,8 @@ export class EventManager {
 
     // 按顺序触发处理器
     const handlers = this.handler_order_cache_map.get(event_type)!;
-    for (const handler of handlers) {
-      handler(event);
-    }
+    await Promise.all(handlers.map((handler) => handler(event)));
+    return event.result;
   }
 
   constructor() {}

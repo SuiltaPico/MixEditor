@@ -1,5 +1,6 @@
 import { TwoLevelTypeMap } from "../common/TwoLevelTypeMap";
 import { ParametersExceptFirst } from "../common/type";
+import { TransferDataObject } from "../Saver";
 import { Node } from "./Node";
 import { TagManager } from "./TagManager";
 
@@ -8,8 +9,7 @@ export interface NodeBehavior<TNode extends Node = Node> {
   get_child(node: TNode, index: number): TNode | undefined;
   get_children(node: TNode): TNode[];
   get_children_count(node: TNode): number;
-  serialize(node: TNode): string;
-  deserialize(json_string: string): TNode;
+  save(node: TNode): TransferDataObject;
   clone(node: TNode): TNode;
   slice(node: TNode, from: number, to: number): TNode;
   handle_event(node: TNode, event: any): void;
@@ -89,19 +89,10 @@ export class NodeManager<TNodeBehavior extends NodeBehavior = NodeBehavior> {
   >(this, "get_children_count");
 
   /** 将 Node 序列化为 JSON 字符串 */
-  serialize = gen_run_node_behavior<"serialize", TNodeBehavior>(
+  save = gen_run_node_behavior<"save", TNodeBehavior>(
     this,
-    "serialize"
+    "save"
   );
-
-  /** 将 JSON 字符串反序列化为 Node */
-  deserialize<TNode extends Node>(
-    json_string: string,
-    node_type: string
-  ): TNode {
-    const behavior = this.get_property(node_type, "deserialize");
-    return behavior(json_string) as TNode;
-  }
 
   /** 克隆一个 Node */
   clone = gen_run_node_behavior<"clone", TNodeBehavior>(this, "clone");
