@@ -24,7 +24,7 @@ export class TagManager<TKey> {
       throw new Error(`检测到循环继承: ${parent_tag} -> ${child_tag}`);
     }
     // 记录继承关系
-    return this.tag_relations.set(parent_tag, child_tag);
+    return this.tag_relations.add_relation(parent_tag, child_tag);
   }
 
   /** 移除标签继承关系。*/

@@ -1,8 +1,15 @@
 import { BiRelationMap } from "./common/BiRelationMap";
+import { Graph } from "./common/Graph";
 
+/** 事件。 */
 export interface Event {
+  /** 事件类型。 */
   event_type: string;
-  result?: any;
+  /** 事件附带的上下文，可以用于传递数据。 */
+  context?: Record<string, any> & {
+    /** 事件处理的返回结果。 */
+    result?: any;
+  };
 }
 
 /** 事件监听器。*/
@@ -15,7 +22,7 @@ export type EventHandler = (event: Event) => void;
  */
 export class EventManager {
   /** 监听器到监听器节点的映射。*/
-  private handler_relation_map = new Map<string, BiRelationMap<EventHandler>>();
+  private handler_relation_map = new Map<string, Graph<EventHandler>>();
   /** 监听器触发顺序的缓存。在 emit 时构建，添加或删除监听器时清空。 */
   private handler_order_cache_map = new Map<string, EventHandler[]>();
 
@@ -25,10 +32,10 @@ export class EventManager {
     ancestor_handler: EventHandler,
     child_handler: EventHandler
   ) {
-    const relation_map = this.handler_relation_map.get(event_type);
-    if (!relation_map) return false;
+    const relation_graph = this.handler_relation_map.get(event_type);
+    if (!relation_graph) return false;
     // 使用栈进行深度优先搜索
-    for (const parent of relation_map.get_ancestors(child_handler)) {
+    for (const parent of relation_graph.get_ancestors(child_handler)) {
       if (parent === ancestor_handler) return true;
     }
     // 未找到目标祖先标签
@@ -43,9 +50,9 @@ export class EventManager {
   ) {
     // 获取或创建关系映射表
     if (!this.handler_relation_map.has(event_type)) {
-      this.handler_relation_map.set(event_type, new BiRelationMap());
+      this.handler_relation_map.set(event_type, new Graph());
     }
-    const relation_map = this.handler_relation_map.get(event_type)!;
+    const relation_graph = this.handler_relation_map.get(event_type)!;
 
     if (dependencies) {
       // 检查依赖关系是否会导致循环依赖
@@ -57,9 +64,11 @@ export class EventManager {
 
       // 添加依赖关系
       for (const dependency of dependencies) {
-        relation_map.set(dependency, handler);
+        relation_graph.add_relation(dependency, handler);
       }
     }
+
+    relation_graph.add_item(handler);
 
     // 清除缓存
     this.handler_order_cache_map.delete(event_type);
@@ -71,7 +80,7 @@ export class EventManager {
     if (relation_map) {
       relation_map.delete_item(handler);
       // 如果关系映射表为空，则删除整个映射
-      if (!relation_map.has_item(handler)) {
+      if (relation_map.size() === 0) {
         this.handler_relation_map.delete(event_type);
       }
     }
@@ -81,8 +90,8 @@ export class EventManager {
 
   /** 生成事件的监听器触发顺序。*/
   private generate_handler_order(event_type: string): EventHandler[] {
-    const relation_map = this.handler_relation_map.get(event_type);
-    if (!relation_map) return [];
+    const relation_graph = this.handler_relation_map.get(event_type);
+    if (!relation_graph) return [];
 
     const result: EventHandler[] = [];
     const visited = new Set<EventHandler>();
@@ -96,7 +105,7 @@ export class EventManager {
       if (visited.has(handler)) return;
 
       temp.add(handler);
-      const children = relation_map.get_children(handler);
+      const children = relation_graph.get_children(handler);
       if (children) {
         for (const child of children) {
           visit(child);
@@ -108,8 +117,8 @@ export class EventManager {
     };
 
     // 遍历所有没有父节点的处理器（入度为0的节点）
-    for (const handler of relation_map.get_items_with_parents()) {
-      if (!relation_map.get_parents(handler)) {
+    for (const handler of relation_graph.get_items_with_parents()) {
+      if (!relation_graph.get_parents(handler)) {
         visit(handler);
       }
     }
@@ -132,7 +141,7 @@ export class EventManager {
     // 按顺序触发处理器
     const handlers = this.handler_order_cache_map.get(event_type)!;
     await Promise.all(handlers.map((handler) => handler(event)));
-    return event.result;
+    return event.context;
   }
 
   constructor() {}

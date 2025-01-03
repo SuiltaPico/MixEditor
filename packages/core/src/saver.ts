@@ -32,7 +32,7 @@ export class Saver {
     } catch (error) {
       console.warn("[MixEditor:Saver] before_save 流程出错", error);
     }
-    const result = await this.editor.event_manager.emit({
+    const context = await this.editor.event_manager.emit({
       event_type: ".save",
     });
     try {
@@ -42,7 +42,7 @@ export class Saver {
     } catch (error) {
       console.warn("[MixEditor:Saver] after_save 流程出错", error);
     }
-    return result.tdo;
+    return context?.result;
   }
 
   /** 从文档传输数据对象加载文档，并应用到编辑器上。 */
@@ -92,6 +92,14 @@ export class Saver {
     deserializer: (data: any) => TransferDataObject
   ) {
     this.deserializer_map[type] = deserializer;
+  }
+
+  /** 注册节点加载器。 */
+  async register_loader(
+    type: string,
+    loader: (tdo: TransferDataObject) => Node
+  ) {
+    this.loader_map[type] = loader;
   }
 
   /** 序列化传输数据对象。 */

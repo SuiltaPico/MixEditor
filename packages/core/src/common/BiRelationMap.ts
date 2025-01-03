@@ -6,7 +6,7 @@ export class BiRelationMap<T> {
   private parents: Map<T, Set<T>> = new Map();
 
   /** 添加关系: parent -> child */
-  set(parent: T, child: T): this {
+  add_relation(parent: T, child: T) {
     // 处理 children 映射
     if (!this.children.has(parent)) {
       this.children.set(parent, new Set());
@@ -17,7 +17,6 @@ export class BiRelationMap<T> {
       this.parents.set(child, new Set());
     }
     this.parents.get(child)!.add(parent);
-    return this;
   }
 
   /** 获取节点的所有子节点。*/
