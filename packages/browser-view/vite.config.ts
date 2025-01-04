@@ -13,18 +13,11 @@ export default defineConfig({
   build: {
     lib: {
       entry: "src/index.ts",
-      // name: "MixEditorBrowserView",
-      // fileName: "index",
       fileName: "index",
       formats: ["es"],
     },
     rollupOptions: {
       external: ["solid-js", "@mixeditor/core", "@mixeditor/common"],
-      output: {
-        globals: {
-          "solid-js": "Solid",
-        },
-      },
     },
   },
 });

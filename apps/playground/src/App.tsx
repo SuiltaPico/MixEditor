@@ -2,6 +2,7 @@ import { onMount } from "solid-js";
 import "./App.css";
 import { MixEditor } from "@mixeditor/core";
 import { browser_view } from "@mixeditor/browser-view";
+import { text } from "@mixeditor/plugin-basic-text";
 
 function App() {
   let editor_container: HTMLDivElement | null = null;
@@ -12,6 +13,7 @@ function App() {
         browser_view({
           element: editor_container!,
         }),
+        text(),
       ],
     });
     editor.init();
@@ -19,12 +21,15 @@ function App() {
 
   return (
     <>
-      <div class="header_bar">Mixeditor 试验场</div>
-      <main class="body">
-        <div class="content">
-          <div class="editor_container" ref={(it) => (editor_container = it)}></div>
-        </div>
+      <div class="_header_bar">MixEditor 试验场</div>
+      <main class="_body">
         <div class="sidebar"></div>
+        <div class="_content">
+          <div
+            class="_editor_container"
+            ref={(it) => (editor_container = it)}
+          ></div>
+        </div>
       </main>
     </>
   );

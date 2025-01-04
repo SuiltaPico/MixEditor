@@ -7,7 +7,7 @@ export class NodeRendererManager {
   private default_renderer: NodeRenderer = () => <div>节点渲染器缺失</div>;
 
   /** 注册一个节点渲染器 */
-  public register(type: string, renderer: NodeRenderer) {
+  public register(type: string, renderer: NodeRenderer<any>) {
     this.renderers.set(type, renderer);
   }
 

@@ -1,18 +1,24 @@
+import { MaybePromise } from "../common/promise";
 import { TwoLevelTypeMap } from "../common/TwoLevelTypeMap";
-import { ParametersExceptFirst } from "../common/type";
-import { TransferDataObject } from "../Saver";
+import { ParametersExceptFirst, ParametersExceptFirst2 } from "../common/type";
+import { MixEditor } from "../MixEditor";
+import { TransferDataObject } from "../saver";
 import { Node } from "./Node";
 import { TagManager } from "./TagManager";
 
 /** Node 属性操作行为接口 */
 export interface NodeBehavior<TNode extends Node = Node> {
-  get_child(node: TNode, index: number): TNode | undefined;
-  get_children(node: TNode): TNode[];
-  get_children_count(node: TNode): number;
-  save(node: TNode): TransferDataObject;
-  clone(node: TNode): TNode;
-  slice(node: TNode, from: number, to: number): TNode;
-  handle_event(node: TNode, event: any): void;
+  get_child(
+    editor: MixEditor,
+    node: TNode,
+    index: number
+  ): MaybePromise<TNode | undefined>;
+  get_children(editor: MixEditor, node: TNode): MaybePromise<TNode[]>;
+  get_children_count(editor: MixEditor, node: TNode): MaybePromise<number>;
+  save(editor: MixEditor, node: TNode): MaybePromise<TransferDataObject>;
+  clone(editor: MixEditor, node: TNode): MaybePromise<TNode>;
+  slice(editor: MixEditor, node: TNode, from: number, to: number): MaybePromise<TNode>;
+  handle_event(editor: MixEditor, node: TNode, event: any): MaybePromise<void>;
 }
 
 /** Node 属性未找到错误 */
@@ -30,13 +36,14 @@ function gen_run_node_behavior<
 >(node_manager: NodeManager<TNodeBehavior>, behavior_name: TBehavior) {
   return function <TNode extends Node>(
     node: TNode,
-    ...args: ParametersExceptFirst<TNodeBehavior[TBehavior]>
+    ...args: ParametersExceptFirst2<TNodeBehavior[TBehavior]>
   ) {
     const behavior = node_manager.get_property<TBehavior>(
       node.type,
       behavior_name
     );
     return (behavior as any)(
+      node_manager.editor,
       node,
       ...args
     ) as TNodeBehavior[TBehavior] extends (...args: any) => any
@@ -50,7 +57,7 @@ export class NodeManager<TNodeBehavior extends NodeBehavior = NodeBehavior> {
   private tag_manager = new TagManager<string>();
 
   /** 设置节点属性行为 */
-  set_behavior<TBehavior extends keyof TNodeBehavior>(
+  register_behavior<TBehavior extends keyof TNodeBehavior>(
     node_type: string,
     property_name: TBehavior,
     behavior: TNodeBehavior[TBehavior]
@@ -88,11 +95,8 @@ export class NodeManager<TNodeBehavior extends NodeBehavior = NodeBehavior> {
     TNodeBehavior
   >(this, "get_children_count");
 
-  /** 将 Node 序列化为 JSON 字符串 */
-  save = gen_run_node_behavior<"save", TNodeBehavior>(
-    this,
-    "save"
-  );
+  /** 将 Node 保存为 TransferDataObject */
+  save = gen_run_node_behavior<"save", TNodeBehavior>(this, "save");
 
   /** 克隆一个 Node */
   clone = gen_run_node_behavior<"clone", TNodeBehavior>(this, "clone");
@@ -105,4 +109,6 @@ export class NodeManager<TNodeBehavior extends NodeBehavior = NodeBehavior> {
     this,
     "handle_event"
   );
+
+  constructor(public editor: MixEditor) {}
 }

@@ -1,0 +1,28 @@
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html,
+body,
+#root {
+  @apply m-0 p-0 w-full h-full;
+}
+
+#root {
+  @apply flex flex-col;
+
+  & > ._header_bar {
+    @apply flex h-10;
+  }
+
+  & > ._body {
+    @apply flex-1;
+  }
+}

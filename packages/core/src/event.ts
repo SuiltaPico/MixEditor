@@ -12,10 +12,21 @@ export interface Event {
   };
 }
 
+/** 事件。 */
+export interface EventForEmit {
+  /** 事件类型。 */
+  event_type: string;
+  /** 事件附带的上下文，可以用于传递数据。 */
+  context: Record<string, any> & {
+    /** 事件处理的返回结果。 */
+    result?: any;
+  };
+}
+
 /** 事件监听器。*/
 export type EventHandler = (props: {
   /** 事件。*/
-  event: Event;
+  event: EventForEmit;
   /** 等待依赖的处理器完成。*/
   wait_dependencies: () => Promise<any>;
 }) => MaybePromise<void>;
@@ -47,7 +58,7 @@ export class EventManager<TEvent extends Event> {
 
   /** 添加监听器。*/
   add_handler(
-    event_type: string,
+    event_type: TEvent["event_type"],
     handler: EventHandler,
     dependencies?: Iterable<EventHandler>
   ) {
@@ -77,7 +88,7 @@ export class EventManager<TEvent extends Event> {
   }
 
   /** 移除监听器。*/
-  remove_handler(event_type: string, handler: EventHandler) {
+  remove_handler(event_type: TEvent["event_type"], handler: EventHandler) {
     const relation_map = this.handler_relation_map.get(event_type);
     if (relation_map) {
       relation_map.delete_item(handler);
@@ -89,7 +100,16 @@ export class EventManager<TEvent extends Event> {
   }
 
   /** 触发事件。*/
-  async emit<T extends TEvent>(event: T) {
+  async emit(
+    event: TEvent,
+    options?: {
+      /** 是否快速失败。
+       * 如果为 true，则一旦有处理器抛出错误，则立即向上传递错误。
+       * 如果为 false，则等待所有处理器执行完毕。
+       */
+      fast_fail?: boolean;
+    }
+  ) {
     const event_type = event.event_type;
 
     const relation_graph = this.handler_relation_map.get(event_type)!;
@@ -100,26 +120,36 @@ export class EventManager<TEvent extends Event> {
       promise_map.set(handler, Promise.withResolvers<void>());
     }
 
-    const results = await Promise.allSettled(
-      handlers.map(async (handler) => {
-        try {
-          await handler({
-            event,
-            wait_dependencies: () => {
-              const parents = relation_graph.get_parents(handler);
-              if (!parents) return Promise.resolve();
-              return Promise.all(
-                parents.map((parent) => promise_map.get(parent)!.promise)
-              );
-            },
-          });
-          promise_map.get(handler)!.resolve();
-        } catch (error) {
-          promise_map.get(handler)!.reject(error);
-        }
-      })
-    );
-    return { context: event.context, results };
+    const fast_fail = options?.fast_fail ?? false;
+
+    if (!event.context) {
+      event.context = {};
+    }
+
+    const promises = handlers.map(async (handler) => {
+      try {
+        await handler({
+          event: event as EventForEmit,
+          wait_dependencies: () => {
+            const parents = relation_graph.get_parents(handler);
+            if (!parents) return Promise.resolve();
+            return Promise.all(
+              parents.map((parent) => promise_map.get(parent)!.promise)
+            );
+          },
+        });
+        promise_map.get(handler)!.resolve();
+      } catch (error) {
+        promise_map.get(handler)!.reject(error);
+      }
+    });
+
+    if (fast_fail) {
+      await Promise.all(promises);
+    } else {
+      await Promise.allSettled(promises);
+    }
+    return { context: event.context };
   }
 
   constructor() {}

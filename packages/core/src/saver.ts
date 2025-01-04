@@ -1,5 +1,7 @@
 import { MixEditor } from "./MixEditor";
 import { Node } from "./node/Node";
+import { DocumentTransferDataObject } from "./document.ts";
+import { MaybePromise } from "./common/promise.ts";
 
 /** 传输数据对象。用于保存和传输数据。 */
 export interface TransferDataObject {
@@ -7,63 +9,80 @@ export interface TransferDataObject {
   data: any;
 }
 
-export interface DocumentTransferDataObject extends TransferDataObject {
-  type: "document";
-  data: {
-    schema_version: number;
-    created_at: Date;
-    modified_at: Date;
-    root_node: TransferDataObject;
-  };
+declare module "./MixEditor" {
+  interface Events {
+    before_save: {
+      event_type: "before_save";
+    };
+    save: {
+      event_type: "save";
+    };
+    after_save: {
+      event_type: "after_save";
+      save_result: any;
+    };
+
+    before_load: {
+      event_type: "before_load";
+      tdo: DocumentTransferDataObject;
+    };
+    load: {
+      event_type: "load";
+      tdo: DocumentTransferDataObject;
+    };
+    after_load: {
+      event_type: "after_load";
+    };
+  }
 }
+
+export type Loader = (tdo: TransferDataObject) => MaybePromise<Node>;
 
 export class Saver {
   serializer_map: Record<string, (tdo: TransferDataObject) => any> = {};
   deserializer_map: Record<string, (data: any) => TransferDataObject> = {};
 
-  loader_map: Record<string, (tdo: TransferDataObject) => Node> = {};
+  loader_map: Record<string, Loader> = {};
 
   /** 保存编辑器的文档为文档传输数据对象。 */
   async save() {
-    try {
-      await this.editor.event_manager.emit({
-        event_type: ".before_save",
-      });
-    } catch (error) {
-      console.warn("[MixEditor:Saver] before_save 流程出错", error);
-    }
-    const context = await this.editor.event_manager.emit({
-      event_type: ".save",
+    await this.editor.event_manager.emit({
+      event_type: "before_save",
     });
-    try {
-      await this.editor.event_manager.emit({
-        event_type: ".after_save",
-      });
-    } catch (error) {
-      console.warn("[MixEditor:Saver] after_save 流程出错", error);
-    }
-    return context?.result;
+    const emit_result = await this.editor.event_manager.emit(
+      {
+        event_type: "save",
+      },
+      {
+        fast_fail: true,
+      }
+    );
+    const save_result = emit_result.context?.result;
+    await this.editor.event_manager.emit({
+      event_type: "after_save",
+      save_result,
+    });
+    return save_result;
   }
 
   /** 从文档传输数据对象加载文档，并应用到编辑器上。 */
   async load(tdo: DocumentTransferDataObject) {
-    try {
-      await this.editor.event_manager.emit({
-        event_type: ".before_load",
-      });
-    } catch (error) {
-      console.warn("[MixEditor:Saver] before_load 流程出错", error);
-    }
     await this.editor.event_manager.emit({
-      event_type: ".load",
+      event_type: "before_load",
+      tdo,
     });
-    try {
-      await this.editor.event_manager.emit({
-        event_type: ".after_load",
-      });
-    } catch (error) {
-      console.warn("[MixEditor:Saver] after_load 流程出错", error);
-    }
+    await this.editor.event_manager.emit(
+      {
+        event_type: "load",
+        tdo,
+      },
+      {
+        fast_fail: true,
+      }
+    );
+    await this.editor.event_manager.emit({
+      event_type: "after_load",
+    });
   }
 
   /** 保存节点为传输数据对象。 */
@@ -95,10 +114,7 @@ export class Saver {
   }
 
   /** 注册节点加载器。 */
-  async register_loader(
-    type: string,
-    loader: (tdo: TransferDataObject) => Node
-  ) {
+  async register_loader(type: string, loader: Loader) {
     this.loader_map[type] = loader;
   }
 

@@ -1,11 +1,13 @@
-import { MixEditor, MixEditorPluginContext, Node } from "@mixeditor/core";
+import { MixEditor, Node } from "@mixeditor/core";
 import { Component } from "solid-js";
 import { NodeRendererManager } from "./NodeRendererManager";
 
-export type NodeRendererProps = {
+export type NodeRendererProps<TNode extends Node = Node> = {
   editor: MixEditor;
   renderer_manager: NodeRendererManager;
-  node: Node;
+  node: TNode;
 };
 
-export type NodeRenderer = Component<NodeRendererProps>;
+export type NodeRenderer<TNode extends Node = Node> = Component<
+  NodeRendererProps<TNode>
+>;

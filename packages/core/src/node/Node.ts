@@ -1,8 +1,7 @@
 export type MaybeNode = Node | undefined;
 
-export interface Node<TData = any> {
+export interface Node {
   type: string;
-  data: TData;
 }
 
 export class NodeContext {
