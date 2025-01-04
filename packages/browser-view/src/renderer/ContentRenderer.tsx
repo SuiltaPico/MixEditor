@@ -65,7 +65,7 @@ export const ContentRenderer: Component<{
   return (
     <ContentRendererContext.Provider value={doc_renderer_state}>
       <NodeRendererWrapper
-        node={document}
+        node={document.get()}
         renderer_manager={props.renderer_manager}
         editor={props.editor}
       />

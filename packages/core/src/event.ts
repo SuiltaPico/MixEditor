@@ -23,10 +23,17 @@ export interface EventForEmit {
   };
 }
 
+export type EventToEventForEmit<TEvent extends Event> = Omit<
+  TEvent,
+  "context"
+> & {
+  context: Exclude<TEvent["context"], undefined>;
+};
+
 /** 事件监听器。*/
-export type EventHandler = (props: {
+export type EventHandler<TEvent extends Event = any> = (props: {
   /** 事件。*/
-  event: EventForEmit;
+  event: EventToEventForEmit<TEvent>;
   /** 等待依赖的处理器完成。*/
   wait_dependencies: () => Promise<any>;
 }) => MaybePromise<void>;
@@ -38,13 +45,13 @@ export type EventHandler = (props: {
  */
 export class EventManager<TEvent extends Event> {
   /** 监听器到监听器节点的映射。*/
-  private handler_relation_map = new Map<string, Graph<EventHandler>>();
+  private handler_relation_map = new Map<string, Graph<EventHandler<TEvent>>>();
 
   /** 检查 `ancestor_handler` 是否是 `child_handler` 的祖先。*/
   private has_ancestor_handler(
     event_type: string,
-    ancestor_handler: EventHandler,
-    child_handler: EventHandler
+    ancestor_handler: EventHandler<TEvent>,
+    child_handler: EventHandler<TEvent>
   ) {
     const relation_graph = this.handler_relation_map.get(event_type);
     if (!relation_graph) return false;
@@ -57,11 +64,17 @@ export class EventManager<TEvent extends Event> {
   }
 
   /** 添加监听器。*/
-  add_handler(
-    event_type: TEvent["event_type"],
-    handler: EventHandler,
-    dependencies?: Iterable<EventHandler>
+  add_handler<TEventType extends TEvent["event_type"]>(
+    event_type: TEventType,
+    handler: EventHandler<
+      TEvent & {
+        event_type: TEventType;
+      }
+    >,
+    dependencies?: Iterable<EventHandler<TEvent>>
   ) {
+    const _handler = handler as EventHandler<TEvent>;
+
     // 获取或创建关系映射表
     if (!this.handler_relation_map.has(event_type)) {
       this.handler_relation_map.set(event_type, new Graph());
@@ -71,27 +84,35 @@ export class EventManager<TEvent extends Event> {
     if (dependencies) {
       // 检查依赖关系是否会导致循环依赖
       for (const dependency of dependencies) {
-        if (this.has_ancestor_handler(event_type, handler, dependency)) {
+        if (this.has_ancestor_handler(event_type, _handler, dependency)) {
           throw new Error(
-            `已存在依赖关系: ${dependency.name} -> ${handler.name}，无法添加依赖关系 ${handler.name} -> ${dependency.name}。`
+            `已存在依赖关系: ${dependency.name} -> ${_handler.name}，无法添加依赖关系 ${handler.name} -> ${dependency.name}。`
           );
         }
       }
 
       // 添加依赖关系
       for (const dependency of dependencies) {
-        relation_graph.add_relation(dependency, handler);
+        relation_graph.add_relation(dependency, _handler);
       }
     }
 
-    relation_graph.add_item(handler);
+    relation_graph.add_item(_handler);
   }
 
   /** 移除监听器。*/
-  remove_handler(event_type: TEvent["event_type"], handler: EventHandler) {
+  remove_handler<TEventType extends TEvent["event_type"]>(
+    event_type: TEventType,
+    handler: EventHandler<
+      TEvent & {
+        event_type: TEventType;
+      }
+    >
+  ) {
+    const _handler = handler as EventHandler<TEvent>;
     const relation_map = this.handler_relation_map.get(event_type);
     if (relation_map) {
-      relation_map.delete_item(handler);
+      relation_map.delete_item(_handler);
       // 如果关系映射表为空，则删除整个映射
       if (relation_map.size() === 0) {
         this.handler_relation_map.delete(event_type);
@@ -112,10 +133,17 @@ export class EventManager<TEvent extends Event> {
   ) {
     const event_type = event.event_type;
 
-    const relation_graph = this.handler_relation_map.get(event_type)!;
+    const relation_graph = this.handler_relation_map.get(event_type);
+    if (!relation_graph) {
+      return { context: event.context };
+    }
+
     const handlers = relation_graph.get_items();
 
-    const promise_map = new Map<EventHandler, PromiseWithResolvers<void>>();
+    const promise_map = new Map<
+      EventHandler<TEvent>,
+      PromiseWithResolvers<void>
+    >();
     for (const handler of handlers) {
       promise_map.set(handler, Promise.withResolvers<void>());
     }
@@ -129,7 +157,7 @@ export class EventManager<TEvent extends Event> {
     const promises = handlers.map(async (handler) => {
       try {
         await handler({
-          event: event as EventForEmit,
+          event: event as any as EventToEventForEmit<TEvent>,
           wait_dependencies: () => {
             const parents = relation_graph.get_parents(handler);
             if (!parents) return Promise.resolve();

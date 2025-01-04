@@ -93,6 +93,8 @@ export class Saver {
 
   /** 从传输数据对象加载节点。 */
   async load_node(tdo: TransferDataObject) {
+    console.log(this.loader_map, tdo.type);
+    
     const node = await this.loader_map[tdo.type](tdo);
     return node;
   }

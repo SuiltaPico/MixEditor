@@ -30,7 +30,7 @@ export class MixEditor {
   /** 文档节点管理器。 */
   node_manager = new NodeManager(this);
   /** 文档。 */
-  document = new Document();
+  document = createSignal(new Document());
 
   /** 事件管理器。 */
   event_manager = new EventManager<Events[keyof Events]>();
@@ -45,7 +45,7 @@ export class MixEditor {
   handlers = {
     save: async ({ event, wait_dependencies }: Parameters<EventHandler>[0]) => {
       await wait_dependencies();
-      const tdo = await this.node_manager.save(this.document);
+      const tdo = await this.node_manager.save(this.document.get());
       event.context.save_result = tdo;
     },
   };
@@ -78,6 +78,14 @@ export class MixEditor {
         dtdo.data.modified_at
       );
       return document;
+    });
+
+    // 注册加载流程
+    this.event_manager.add_handler("load", async (props) => {
+      const new_document = (await this.saver.load_node(
+        props.event.tdo
+      )) as Document;
+      this.document.set(new_document);
     });
 
     // 注册保存流程

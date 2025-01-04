@@ -7,7 +7,7 @@ import { text } from "@mixeditor/plugin-basic-text";
 function App() {
   let editor_container: HTMLDivElement | null = null;
 
-  onMount(() => {
+  onMount(async () => {
     const editor = new MixEditor({
       plugins: [
         browser_view({
@@ -16,7 +16,23 @@ function App() {
         text(),
       ],
     });
-    editor.init();
+    await editor.init();
+    await editor.saver.load({
+      type: "document",
+      data: {
+        schema_version: 1,
+        created_at: new Date(),
+        modified_at: new Date(),
+        children: [
+          {
+            type: "text",
+            data: {
+              text: "Hello, World!",
+            },
+          },
+        ],
+      },
+    });
   });
 
   return (
