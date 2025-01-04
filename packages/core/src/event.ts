@@ -1,5 +1,5 @@
-import { BiRelationMap } from "./common/BiRelationMap";
 import { Graph } from "./common/Graph";
+import { MaybePromise } from "./common/promise";
 
 /** 事件。 */
 export interface Event {
@@ -13,18 +13,21 @@ export interface Event {
 }
 
 /** 事件监听器。*/
-export type EventHandler = (event: Event) => void;
+export type EventHandler = (props: {
+  /** 事件。*/
+  event: Event;
+  /** 等待依赖的处理器完成。*/
+  wait_dependencies: () => Promise<any>;
+}) => MaybePromise<void>;
 
 /** 事件管理器。
  *
  * ## 监听器
  * 监听器之间的依赖关系构成一个有向无环图。
  */
-export class EventManager {
+export class EventManager<TEvent extends Event> {
   /** 监听器到监听器节点的映射。*/
   private handler_relation_map = new Map<string, Graph<EventHandler>>();
-  /** 监听器触发顺序的缓存。在 emit 时构建，添加或删除监听器时清空。 */
-  private handler_order_cache_map = new Map<string, EventHandler[]>();
 
   /** 检查 `ancestor_handler` 是否是 `child_handler` 的祖先。*/
   private has_ancestor_handler(
@@ -58,7 +61,9 @@ export class EventManager {
       // 检查依赖关系是否会导致循环依赖
       for (const dependency of dependencies) {
         if (this.has_ancestor_handler(event_type, handler, dependency)) {
-          throw new Error("检测到循环依赖关系");
+          throw new Error(
+            `已存在依赖关系: ${dependency.name} -> ${handler.name}，无法添加依赖关系 ${handler.name} -> ${dependency.name}。`
+          );
         }
       }
 
@@ -69,9 +74,6 @@ export class EventManager {
     }
 
     relation_graph.add_item(handler);
-
-    // 清除缓存
-    this.handler_order_cache_map.delete(event_type);
   }
 
   /** 移除监听器。*/
@@ -84,64 +86,40 @@ export class EventManager {
         this.handler_relation_map.delete(event_type);
       }
     }
-    // 清除缓存
-    this.handler_order_cache_map.delete(event_type);
-  }
-
-  /** 生成事件的监听器触发顺序。*/
-  private generate_handler_order(event_type: string): EventHandler[] {
-    const relation_graph = this.handler_relation_map.get(event_type);
-    if (!relation_graph) return [];
-
-    const result: EventHandler[] = [];
-    const visited = new Set<EventHandler>();
-    const temp = new Set<EventHandler>();
-
-    // 深度优先搜索进行拓扑排序
-    const visit = (handler: EventHandler) => {
-      if (temp.has(handler)) {
-        throw new Error("检测到循环依赖关系");
-      }
-      if (visited.has(handler)) return;
-
-      temp.add(handler);
-      const children = relation_graph.get_children(handler);
-      if (children) {
-        for (const child of children) {
-          visit(child);
-        }
-      }
-      temp.delete(handler);
-      visited.add(handler);
-      result.push(handler);
-    };
-
-    // 遍历所有没有父节点的处理器（入度为0的节点）
-    for (const handler of relation_graph.get_items_with_parents()) {
-      if (!relation_graph.get_parents(handler)) {
-        visit(handler);
-      }
-    }
-
-    return result;
   }
 
   /** 触发事件。*/
-  async emit<T extends Event>(event: T) {
+  async emit<T extends TEvent>(event: T) {
     const event_type = event.event_type;
 
-    // 获取或生成处理器顺序
-    if (!this.handler_order_cache_map.has(event_type)) {
-      this.handler_order_cache_map.set(
-        event_type,
-        this.generate_handler_order(event_type)
-      );
+    const relation_graph = this.handler_relation_map.get(event_type)!;
+    const handlers = relation_graph.get_items();
+
+    const promise_map = new Map<EventHandler, PromiseWithResolvers<void>>();
+    for (const handler of handlers) {
+      promise_map.set(handler, Promise.withResolvers<void>());
     }
 
-    // 按顺序触发处理器
-    const handlers = this.handler_order_cache_map.get(event_type)!;
-    await Promise.all(handlers.map((handler) => handler(event)));
-    return event.context;
+    const results = await Promise.allSettled(
+      handlers.map(async (handler) => {
+        try {
+          await handler({
+            event,
+            wait_dependencies: () => {
+              const parents = relation_graph.get_parents(handler);
+              if (!parents) return Promise.resolve();
+              return Promise.all(
+                parents.map((parent) => promise_map.get(parent)!.promise)
+              );
+            },
+          });
+          promise_map.get(handler)!.resolve();
+        } catch (error) {
+          promise_map.get(handler)!.reject(error);
+        }
+      })
+    );
+    return { context: event.context, results };
   }
 
   constructor() {}

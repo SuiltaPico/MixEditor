@@ -24,7 +24,7 @@ export class Graph<T> extends BiRelationMap<T> {
 
   /** 获取所有节点。 */
   get_items() {
-    return this.nodes;
+    return [...this.nodes];
   }
 
   /** 检查节点是否存在。 */

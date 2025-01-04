@@ -20,13 +20,15 @@ export class BiRelationMap<T> {
   }
 
   /** 获取节点的所有子节点。*/
-  get_children(node: T): Set<T> | undefined {
-    return this.children.get(node);
+  get_children(node: T) {
+    if (!this.children.has(node)) return [];
+    return [...this.children.get(node)!];
   }
 
   /** 获取节点的所有父节点。*/
-  get_parents(node: T): Set<T> | undefined {
-    return this.parents.get(node);
+  get_parents(node: T) {
+    if (!this.parents.has(node)) return [];
+    return [...this.parents.get(node)!];
   }
 
   /** 获取 `tag` 的所有祖先标签。*/
