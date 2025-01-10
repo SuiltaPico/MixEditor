@@ -5,10 +5,12 @@
 		"build": "node esbuild.mjs && rollup -c rollup.config.mjs",
 		"test": "jest"
 	},
+	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
 	"exports": {
 		".": "./dist/index.js"
 	},
-	"peerDependencies": {
+	"dependencies": {
 		"@mixeditor/browser-view": "workspace:*",
 		"@mixeditor/common": "workspace:*",
 		"@mixeditor/core": "workspace:*",

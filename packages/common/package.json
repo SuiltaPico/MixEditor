@@ -5,10 +5,12 @@
 		"build": "rollup -c rollup.config.mjs",
 		"test": "jest"
 	},
+	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
 	"exports": {
 		".": "./dist/index.js"
 	},
-	"peerDependencies": {
+	"dependencies": {
 		"solid-js": "^1.9.3"
 	},
 	"devDependencies": {
