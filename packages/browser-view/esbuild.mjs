@@ -13,7 +13,6 @@ let result = await build({
   plugins: [solidPlugin()],
   external: [
     "solid-js",
-    "@mixeditor/browser-view",
     "@mixeditor/common",
     "@mixeditor/core",
   ],

@@ -4,28 +4,25 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "build": "node esbuild.mjs && rollup -c rollup.config.mjs",
     "dev": "vite",
-    "build": "vite build",
     "preview": "vite preview"
   },
   "main": "dist/index.js",
-	"types": "dist/index.d.ts",
+  "types": "dist/index.d.ts",
   "exports": {
     ".": "./dist/index.js"
   },
   "dependencies": {
-    "solid-js": "^1.9.3",
     "@mixeditor/common": "workspace:*",
-    "@mixeditor/core": "workspace:*"
+    "@mixeditor/core": "workspace:*",
+    "solid-js": "^1.9.3"
   },
   "devDependencies": {
-    "@rollup/plugin-commonjs": "^28.0.2",
-    "@rollup/plugin-node-resolve": "^16.0.0",
+    "esbuild": "^0.24.2",
+    "esbuild-plugin-solid": "^0.6.0",
     "rollup": "^4.29.1",
-    "rollup-plugin-esbuild": "^6.1.1",
-    "typescript": "~5.7.2",
-    "vite": "^6.0.7",
-    "vite-plugin-dts": "^4.4.0",
-    "vite-plugin-solid": "^2.11.0"
+    "rollup-plugin-dts": "^6.1.1",
+    "typescript": "~5.7.2"
   }
 }

@@ -18,6 +18,10 @@
     /* Linting */
     "strict": true,
     "noFallthroughCasesInSwitch": true,
+
+    "declaration": false,
+    "declarationMap": false,
+    "declarationDir": "./dist",
   },
   "include": ["src"]
 }

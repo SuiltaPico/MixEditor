@@ -8,6 +8,10 @@ export default defineConfig([
       file: "dist/index.d.ts",
       format: "esm",
     },
-    plugins: [dts()],
+    plugins: [
+      dts({
+        tsconfig: "./tsconfig.app.json",
+      }),
+    ],
   },
 ]);

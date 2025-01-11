@@ -7,3 +7,4 @@ export interface Node {
 export class NodeContext {
   constructor(public node: Node) {}
 }
+

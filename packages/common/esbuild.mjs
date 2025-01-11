@@ -1,5 +1,4 @@
 import { build } from "esbuild";
-import { solidPlugin } from "esbuild-plugin-solid";
 
 console.time("esbuild");
 let result = await build({
@@ -10,13 +9,7 @@ let result = await build({
   minify: true,
   bundle: true,
   tsconfig: "./tsconfig.json",
-  plugins: [solidPlugin()],
-  external: [
-    "solid-js",
-    "@mixeditor/browser-view",
-    "@mixeditor/common",
-    "@mixeditor/core",
-  ],
+  external: ["solid-js"],
 });
 console.timeEnd("esbuild");
 if (result.warnings.length > 0) {
