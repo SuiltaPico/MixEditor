@@ -1,6 +1,12 @@
 import { NodeRenderer } from "@mixeditor/browser-view";
 import { createSignal, WrappedSignal } from "@mixeditor/common";
-import { Node } from "@mixeditor/core";
+import { Node, TransferDataObject } from "@mixeditor/core";
+
+export interface TextNodeTDO extends TransferDataObject {
+  data: {
+    text: string;
+  };
+}
 
 export class TextNode implements Node {
   type = "text" as const;
