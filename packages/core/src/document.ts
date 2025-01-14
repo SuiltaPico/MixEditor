@@ -1,11 +1,11 @@
-import { createSignal, WrappedSignal } from "@mixeditor/common";
+import { createSignal } from "@mixeditor/common";
 import { MixEditor } from "./MixEditor";
 import type { Node } from "./node/Node";
-import { TransferDataObject } from "./saver";
+import { AnyTDO, TransferDataObject } from "./saver";
 
 /** 文档。 */
-export class Document implements Node {
-  type = "document";
+export class DocumentNode implements Node {
+  type = "document" as const;
   /** 更新最后修改时间 */
   update() {
     this.modified_at = new Date();
@@ -19,17 +19,17 @@ export class Document implements Node {
   ) {}
 }
 
-export interface DocumentTransferDataObject extends TransferDataObject {
+export interface DocumentTDO extends TransferDataObject {
   type: "document";
   data: {
     schema_version: number;
     created_at: Date;
     modified_at: Date;
-    children: TransferDataObject[];
+    children: AnyTDO[];
   };
 }
 
-export async function save_document(editor: MixEditor, document: Document) {
+export async function save_document(editor: MixEditor, document: DocumentNode) {
   return {
     type: "document",
     data: {
@@ -40,5 +40,5 @@ export async function save_document(editor: MixEditor, document: Document) {
         document.children.get().map((child) => editor.node_manager.save(child))
       ),
     },
-  } satisfies DocumentTransferDataObject;
+  } satisfies DocumentTDO;
 }

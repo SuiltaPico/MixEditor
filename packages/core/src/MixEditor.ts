@@ -1,7 +1,7 @@
 import { PluginManager } from "@mauchise/plugin-manager";
 import {
-  Document,
-  DocumentTransferDataObject,
+  DocumentNode,
+  DocumentTDO,
   save_document,
 } from "./document";
 import { EventHandler, EventManager } from "./event";
@@ -30,7 +30,7 @@ export class MixEditor {
   /** 文档节点管理器。 */
   node_manager = new NodeManager(this);
   /** 文档。 */
-  document = createSignal(new Document());
+  document = createSignal(new DocumentNode());
 
   /** 事件管理器。 */
   event_manager = new EventManager<Events[keyof Events]>();
@@ -66,11 +66,11 @@ export class MixEditor {
 
     // 注册文档节点加载行为
     this.saver.register_loader("document", async (tdo) => {
-      const dtdo = tdo as DocumentTransferDataObject;
-      const document = new Document(
+      const dtdo = tdo as DocumentTDO;
+      const document = new DocumentNode(
         createSignal(
           await Promise.all(
-            dtdo.data.children.map((child) => this.saver.load_node(child))
+            dtdo.data.children.map((child) => this.saver.load_node_from_tdo(child))
           )
         ),
         dtdo.data.schema_version,
@@ -82,9 +82,9 @@ export class MixEditor {
 
     // 注册加载流程
     this.event_manager.add_handler("load", async (props) => {
-      const new_document = (await this.saver.load_node(
+      const new_document = (await this.saver.load_node_from_tdo(
         props.event.tdo
-      )) as Document;
+      )) as DocumentNode;
       this.document.set(new_document);
     });
 

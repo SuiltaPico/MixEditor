@@ -1,6 +1,6 @@
 import { BrowserViewPluginResult } from "@mixeditor/browser-view";
 import { MixEditorPluginContext, TransferDataObject } from "@mixeditor/core";
-import { TextNode, TextRenderer } from "./nodes/Text";
+import { TextNode, TextNodeTDO, TextRenderer } from "./nodes/Text";
 import {
   ParagraphNode,
   ParagraphNodeTDO,
@@ -17,18 +17,16 @@ export function text() {
           "browser-view"
         );
 
-      editor.saver.register_loader("text", (tdo) => {
-        return new TextNode(tdo.data.text);
+      editor.saver.register_loader<TextNodeTDO>("text", (tdo) => {
+        return new TextNode(tdo.content);
       });
 
       editor.node_manager.register_behavior("text", "save", (_, node) => {
         const text_node = node as TextNode;
         return {
           type: "text",
-          data: {
-            text: text_node.text.get(),
-          },
-        } satisfies TransferDataObject;
+          content: text_node.text.get(),
+        } satisfies TextNodeTDO;
       });
 
       // 注册渲染器
@@ -52,7 +50,7 @@ export function paragraph() {
       editor.saver.register_loader("paragraph", async (_tdo) => {
         const tdo = _tdo as ParagraphNodeTDO;
         const children = await Promise.all(
-          tdo.data.children.map((child) => editor.saver.load_node(child))
+          tdo.children.map((child) => editor.saver.load_node_from_tdo(child))
         );
         return new ParagraphNode(children);
       });
@@ -64,13 +62,11 @@ export function paragraph() {
           const paragraph_node = node as ParagraphNode;
           return {
             type: "paragraph",
-            data: {
-              children: await Promise.all(
-                paragraph_node.children.map((child) =>
-                  editor.node_manager.save(child)
-                )
-              ),
-            },
+            children: await Promise.all(
+              paragraph_node.children
+                .get()
+                .map((child) => editor.node_manager.save(child))
+            ),
           } satisfies ParagraphNodeTDO;
         }
       );

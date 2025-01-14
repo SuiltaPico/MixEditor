@@ -8,6 +8,14 @@ export type NodeRendererProps<TNode extends Node = Node> = {
   node: TNode;
 };
 
+/** 节点渲染器。 */
 export type NodeRenderer<TNode extends Node = Node> = Component<
   NodeRendererProps<TNode>
->;
+> & {
+  /** 渲染器对应的节点。 */
+  mixed_node?: TNode;
+};
+
+export type WithMixEditorNode<T> = T & {
+  mixed_node?: Node;
+};

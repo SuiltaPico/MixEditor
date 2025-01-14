@@ -7,7 +7,6 @@ let result = await build({
   outdir: "./dist",
   format: "esm",
   sourcemap: true,
-  minify: true,
   bundle: true,
   tsconfig: "./tsconfig.json",
   plugins: [solidPlugin()],

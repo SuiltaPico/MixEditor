@@ -1,9 +1,8 @@
-import { Document } from "@mixeditor/core";
+import { DocumentNode } from "@mixeditor/core";
 import { NodeRenderer } from "./NodeRenderer";
 import { NodeRendererWrapper } from "./ContentRenderer";
 
-export const DocumentRenderer: NodeRenderer<Document> = (props) => {
-  
+export const DocumentRenderer: NodeRenderer<DocumentNode> = (props) => {
   return (
     <div class="_document">
       {props.node.children.get().map((child) => {

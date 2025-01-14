@@ -6,7 +6,6 @@ let result = await build({
   outdir: "./dist",
   format: "esm",
   sourcemap: true,
-  minify: true,
   bundle: true,
   tsconfig: "./tsconfig.json",
   external: ["solid-js", "@mixeditor/common"],

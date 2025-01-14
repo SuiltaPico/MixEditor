@@ -1,11 +1,11 @@
-import { NodeRenderer } from "@mixeditor/browser-view";
+import { NodeRenderer, WithMixEditorNode } from "@mixeditor/browser-view";
 import { createSignal, WrappedSignal } from "@mixeditor/common";
 import { Node, TransferDataObject } from "@mixeditor/core";
+import { onMount } from "solid-js";
 
 export interface TextNodeTDO extends TransferDataObject {
-  data: {
-    text: string;
-  };
+  type: "text";
+  content: string;
 }
 
 export class TextNode implements Node {
@@ -17,5 +17,16 @@ export class TextNode implements Node {
 }
 
 export const TextRenderer: NodeRenderer<TextNode> = (props) => {
-  return <span class="_text">{props.node.text.get()}</span>;
+  const { node } = props;
+
+  let container!: WithMixEditorNode<HTMLElement>;
+  onMount(() => {
+    container.mixed_node = node;
+  });
+
+  return (
+    <span class="_text" ref={container}>
+      {node.text.get()}
+    </span>
+  );
 };

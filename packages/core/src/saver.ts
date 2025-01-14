@@ -1,13 +1,16 @@
 import { MixEditor } from "./MixEditor";
 import { Node } from "./node/Node";
-import { DocumentTransferDataObject } from "./document.ts";
+import { DocumentTDO } from "./document.ts";
 import { MaybePromise } from "./common/promise.ts";
 
 /** 传输数据对象。用于保存和传输数据。 */
 export interface TransferDataObject {
   type: string;
-  data: any;
 }
+
+export type AnyTDO = TransferDataObject & {
+  [key: string]: any;
+};
 
 declare module "./MixEditor" {
   interface Events {
@@ -24,11 +27,11 @@ declare module "./MixEditor" {
 
     before_load: {
       event_type: "before_load";
-      tdo: DocumentTransferDataObject;
+      tdo: DocumentTDO;
     };
     load: {
       event_type: "load";
-      tdo: DocumentTransferDataObject;
+      tdo: DocumentTDO;
     };
     after_load: {
       event_type: "after_load";
@@ -36,7 +39,9 @@ declare module "./MixEditor" {
   }
 }
 
-export type Loader = (tdo: TransferDataObject) => MaybePromise<Node>;
+export type Loader<T extends TransferDataObject = AnyTDO> = (
+  tdo: T
+) => MaybePromise<Node>;
 
 export class Saver {
   serializer_map: Record<string, (tdo: TransferDataObject) => any> = {};
@@ -66,7 +71,7 @@ export class Saver {
   }
 
   /** 从文档传输数据对象加载文档，并应用到编辑器上。 */
-  async load(tdo: DocumentTransferDataObject) {
+  async load(tdo: DocumentTDO) {
     await this.editor.event_manager.emit({
       event_type: "before_load",
       tdo,
@@ -86,15 +91,13 @@ export class Saver {
   }
 
   /** 保存节点为传输数据对象。 */
-  async save_node(node: Node) {
+  async save_node_to_tdo(node: Node) {
     const tdo = await this.editor.node_manager.save(node);
     return tdo;
   }
 
   /** 从传输数据对象加载节点。 */
-  async load_node(tdo: TransferDataObject) {
-    console.log(this.loader_map, tdo.type);
-    
+  async load_node_from_tdo(tdo: TransferDataObject) {
     const node = await this.loader_map[tdo.type](tdo);
     return node;
   }
@@ -116,8 +119,11 @@ export class Saver {
   }
 
   /** 注册节点加载器。 */
-  async register_loader(type: string, loader: Loader) {
-    this.loader_map[type] = loader;
+  async register_loader<T extends TransferDataObject = AnyTDO>(
+    type: string,
+    loader: Loader<T>
+  ) {
+    this.loader_map[type] = loader as Loader<AnyTDO>;
   }
 
   /** 序列化传输数据对象。 */
@@ -148,12 +154,12 @@ export class Saver {
   /** 从指定类型的数据加载文档，并应用到编辑器上。 */
   async load_from(type: string, data: any) {
     const tdo = await this.deserialize(type, data);
-    await this.load(tdo as DocumentTransferDataObject);
+    await this.load(tdo as DocumentTDO);
   }
 
   constructor(public editor: MixEditor) {
     this.register_serializer("json", (tdo) => {
-      return JSON.stringify(tdo.data);
+      return JSON.stringify(tdo);
     });
     this.register_deserializer("json", (data) => {
       return JSON.parse(data);
