@@ -72,9 +72,6 @@ export function text() {
         slice: (_, node, start, end) => {
           return new TextNode(node.text.get().slice(start, end));
         },
-        "bv:pointer_down": (_, node, event) => {
-          
-        },
       });
 
       // 注册渲染器

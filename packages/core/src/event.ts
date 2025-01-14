@@ -1,5 +1,5 @@
 import { Graph } from "./common/Graph";
-import { MaybePromise } from "./common/promise";
+import { MaybePromise } from "@mixeditor/common";
 
 /** 事件。 */
 export interface Event {

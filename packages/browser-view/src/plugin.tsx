@@ -29,21 +29,21 @@ export function browser_view(props: { element: HTMLElement }) {
       ctx.editor.event_manager.add_handler(
         "bv:pointer_down",
         async ({ event, wait_dependencies }) => {
-          await wait_dependencies();
-          const pointer_event = event.raw;
-          const target = pointer_event.target as WithMixEditorNode<Node>;
-          const node = target.mixed_node;
-          if (!node) {
-            // continue，继续往上找，直到遇到 renderer_manager.editor_root
-          }
-          const result = await editor.node_manager.execute_behavior(
-            "bv:pointer_down",
-            node,
-            pointer_event
-          );
-          if (result.type === "skip") {
-            // continue，继续往上调用 node_manager.execute_behavior，直到找不到元素的父节点或者有一个返回结果的 type 是 handled
-          }
+          // await wait_dependencies();
+          // const pointer_event = event.raw;
+          // const target = pointer_event.target as WithMixEditorNode<Node>;
+          // const node = target.mixed_node;
+          // if (!node) {
+          //   // continue，继续往上找，直到遇到 renderer_manager.editor_root
+          // }
+          // const result = await editor.node_manager.execute_behavior(
+          //   "bv:pointer_down",
+          //   node,
+          //   pointer_event
+          // );
+          // if (result.type === "skip") {
+          //   // continue，继续往上调用 node_manager.execute_behavior，直到找不到元素的父节点或者有一个返回结果的 type 是 handled
+          // }
         }
       );
       ctx.editor.event_manager.add_handler("bv:pointer_up", (e) => {});
