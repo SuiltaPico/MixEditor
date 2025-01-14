@@ -1,7 +1,13 @@
-import { NodeRenderer, WithMixEditorNode } from "@mixeditor/browser-view";
+import { BrowserViewPluginResult, NodeRenderer, WithMixEditorNode } from "@mixeditor/browser-view";
 import { createSignal, WrappedSignal } from "@mixeditor/common";
-import { AnyTDO, Node, TransferDataObject } from "@mixeditor/core";
+import { AnyTDO, MixEditorPluginContext, Node, TransferDataObject } from "@mixeditor/core";
 import { onMount } from "solid-js";
+
+declare module "@mixeditor/core" {
+  interface AllNodes {
+    paragraph: ParagraphNode;
+  }
+}
 
 export interface ParagraphNodeTDO extends TransferDataObject {
   type: "paragraph";
@@ -36,3 +42,47 @@ export const ParagraphRenderer: NodeRenderer<ParagraphNode> = (props) => {
     </p>
   );
 };
+
+export function paragraph() {
+  return {
+    id: "paragraph",
+    init: async (ctx: MixEditorPluginContext) => {
+      const editor = ctx.editor;
+      const browser_view_plugin =
+        await editor.plugin_manager.wait_plugin_inited<BrowserViewPluginResult>(
+          "browser-view"
+        );
+
+      editor.saver.register_loader("paragraph", async (_tdo) => {
+        const tdo = _tdo as ParagraphNodeTDO;
+        const children = await Promise.all(
+          tdo.children.map((child) => editor.saver.load_node_from_tdo(child))
+        );
+        return new ParagraphNode(children);
+      });
+
+      editor.node_manager.register_behavior(
+        "paragraph",
+        "save",
+        async (_, node) => {
+          const paragraph_node = node as ParagraphNode;
+          return {
+            type: "paragraph",
+            children: await Promise.all(
+              paragraph_node.children
+                .get()
+                .map((child) =>
+                  editor.node_manager.execute_behavior("save", child)
+                )
+            ),
+          } satisfies ParagraphNodeTDO;
+        }
+      );
+
+      // 注册渲染器
+      const renderer_manager = browser_view_plugin.renderer_manager;
+      renderer_manager.register("paragraph", ParagraphRenderer);
+    },
+    dispose: () => {},
+  };
+}

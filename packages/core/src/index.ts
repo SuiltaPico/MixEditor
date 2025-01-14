@@ -1,4 +1,4 @@
-export * from "./document";
+export * from "./node/document";
 export * from "./event";
 export * from "./MixEditor";
 export * from "./node/Node";

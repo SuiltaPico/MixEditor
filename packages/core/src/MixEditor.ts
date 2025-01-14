@@ -1,24 +1,40 @@
 import { PluginManager } from "@mauchise/plugin-manager";
-import {
-  DocumentNode,
-  DocumentTDO,
-  save_document,
-} from "./document";
+import { createSignal } from "@mixeditor/common";
 import { EventHandler, EventManager } from "./event";
-import { NodeManager } from "./node/NodeManager";
+import { DocumentNode, DocumentTDO, save_document } from "./node/document";
+import { AllNodeTypes } from "./node/Node";
+import { NodeBehavior, NodeManager } from "./node/NodeManager";
 import { HistoryManager } from "./operation/HistoryManager";
 import { OperationManager } from "./operation/Operation";
 import { MixEditorPlugin, MixEditorPluginContext } from "./plugin";
 import { Saver } from "./saver";
 import { Selection } from "./selection";
-import { createSignal } from "@mixeditor/common";
 
-declare module "./MixEditor" {
-  export interface Events {
-    init: {
-      event_type: "init";
-    };
-  }
+export interface Events {
+  init: {
+    event_type: "init";
+  };
+  before_save: {
+    event_type: "before_save";
+  };
+  save: {
+    event_type: "save";
+  };
+  after_save: {
+    event_type: "after_save";
+    save_result: any;
+  };
+  before_load: {
+    event_type: "before_load";
+    tdo: DocumentTDO;
+  };
+  load: {
+    event_type: "load";
+    tdo: DocumentTDO;
+  };
+  after_load: {
+    event_type: "after_load";
+  };
 }
 
 export class MixEditor {
@@ -28,12 +44,16 @@ export class MixEditor {
   command_manager = new HistoryManager(this.operation_manager);
 
   /** 文档节点管理器。 */
-  node_manager = new NodeManager(this);
+  node_manager: NodeManager<NodeBehavior<AllNodeTypes>> = new NodeManager<
+    NodeBehavior<AllNodeTypes>
+  >(this);
   /** 文档。 */
   document = createSignal(new DocumentNode());
 
   /** 事件管理器。 */
-  event_manager = new EventManager<Events[keyof Events]>();
+  event_manager: EventManager<Events[keyof Events]> = new EventManager<
+    Events[keyof Events]
+  >();
   /** 插件管理器。 */
   plugin_manager = new PluginManager<MixEditorPluginContext>();
   /** 文档选区管理。 */
@@ -45,7 +65,10 @@ export class MixEditor {
   handlers = {
     save: async ({ event, wait_dependencies }: Parameters<EventHandler>[0]) => {
       await wait_dependencies();
-      const tdo = await this.node_manager.save(this.document.get());
+      const tdo = await this.node_manager.execute_behavior(
+        "save",
+        this.document.get()
+      );
       event.context.save_result = tdo;
     },
   };
@@ -70,12 +93,12 @@ export class MixEditor {
       const document = new DocumentNode(
         createSignal(
           await Promise.all(
-            dtdo.data.children.map((child) => this.saver.load_node_from_tdo(child))
+            dtdo.children.map((child) => this.saver.load_node_from_tdo(child))
           )
         ),
-        dtdo.data.schema_version,
-        dtdo.data.created_at,
-        dtdo.data.modified_at
+        dtdo.schema_version,
+        dtdo.created_at,
+        dtdo.modified_at
       );
       return document;
     });

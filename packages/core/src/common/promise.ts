@@ -1,3 +1,5 @@
+import { MaybePromise } from "@mixeditor/common";
+
 export function defer<T>(timeout: number = 0): Promise<T> {
   return new Promise<T>((resolve, reject) => {
     setTimeout(() => {
@@ -5,8 +7,6 @@ export function defer<T>(timeout: number = 0): Promise<T> {
     }, timeout);
   });
 }
-
-export type MaybePromise<T> = T | Promise<T>;
 
 /** 异步任务。
  * `fn` 只会执行一次，后续的调用都会返回同一个 Promise。

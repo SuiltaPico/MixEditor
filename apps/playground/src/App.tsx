@@ -1,10 +1,9 @@
 import { onMount } from "solid-js";
-import { MixEditor } from "@mixeditor/core";
+import { create_DocumentTDO, MixEditor } from "@mixeditor/core";
 import { browser_view } from "@mixeditor/browser-view";
 import { paragraph, text } from "@mixeditor/plugin-basic-text";
 import "./App.css";
 import "@mixeditor/browser-view/index.css";
-
 
 function App() {
   let editor_container: HTMLDivElement | null = null;
@@ -20,12 +19,8 @@ function App() {
       ],
     });
     await editor.init();
-    await editor.saver.load({
-      type: "document",
-      data: {
-        schema_version: 1,
-        created_at: new Date(),
-        modified_at: new Date(),
+    await editor.saver.load(
+      create_DocumentTDO({
         children: [
           {
             type: "paragraph",
@@ -78,8 +73,8 @@ function App() {
             ],
           },
         ],
-      },
-    });
+      })
+    );
   });
 
   return (

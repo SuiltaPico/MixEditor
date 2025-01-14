@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "build": "node esbuild.mjs && rollup -c rollup.config.mjs",
+    "build": "concurrently \"node esbuild.mjs\" \"rollup -c rollup.config.mjs\"",
     "dev": "vite",
     "preview": "vite preview"
   },
@@ -20,6 +20,7 @@
     "solid-js": "^1.9.3"
   },
   "devDependencies": {
+    "concurrently": "^9.1.2",
     "esbuild": "^0.24.2",
     "esbuild-plugin-solid": "^0.6.0",
     "rollup": "^4.29.1",
