@@ -89,16 +89,18 @@ export class MixEditor {
     // 注册文档节点加载行为
     this.saver.register_loader("document", async (tdo) => {
       const dtdo = tdo as DocumentTDO;
+      const nodes = await Promise.all(
+        dtdo.children.map((child) => this.saver.load_node_from_tdo(child))
+      );
       const document = new DocumentNode(
-        createSignal(
-          await Promise.all(
-            dtdo.children.map((child) => this.saver.load_node_from_tdo(child))
-          )
-        ),
+        createSignal(nodes),
         dtdo.schema_version,
         dtdo.created_at,
         dtdo.modified_at
       );
+      nodes.forEach((node) => {
+        this.node_manager.set_parent(node, document);
+      });
       return document;
     });
 

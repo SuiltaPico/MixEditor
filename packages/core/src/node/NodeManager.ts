@@ -59,6 +59,22 @@ export class NodeManager<
     TNode
   >["execute_handler"];
 
+  /** 设置节点父节点 */
+  set_parent(node: Node, parent: Node) {
+    const context = this.node_contexts.get(node);
+    if (context) {
+      context.parent = parent;
+    } else {
+      this.node_contexts.set(node, new NodeContext(node, parent));
+    }
+  }
+
+  /** 获取节点上下文 */
+  get_context(node: Node) {
+    const context = this.node_contexts.get(node);
+    return context;
+  }
+
   constructor(public editor: MixEditor) {
     this.handler_manager = new HandlerManager<
       TNodeHandler,

@@ -40,7 +40,7 @@ declare module "@mixeditor/core" {
     // TODO：添加更多事件
   }
 
-  interface NodeBehavior {
+  interface NodeHandlerMap {
     "bv:handle_pointer_down": PointerEventBehavior;
     "bv:handle_pointer_up": PointerEventBehavior;
     "bv:handle_pointer_move": PointerEventBehavior;

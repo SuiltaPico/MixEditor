@@ -46,68 +46,47 @@ mixeditor/
 
 该包主要由以下几个部分组成：
 - 插件：`PluginManager`
-- 节点：`NodeManager`
 - 操作：`OperationManager`
-- 历史：`HistoryManager`
+  - 历史：`HistoryManager`
+- 节点：`NodeManager`
 - 选区：`SelectionManager`
 
-* [x] `PluginManager` 的设计和实现
+### 插件
+使用了 `@mauchise/plugin-manager` 来管理插件的注册、卸载和生命周期。
 
-  使用了 `@mauchise/plugin-manager` 来管理插件的注册、卸载和生命周期。
+### 操作
+- **`Operation`**: 
+`Operation` 是编辑器中**最小的操作单元**，代表编辑器
+  进行的一次原子操作，例如插入文本、删除文本、设置样式等。操作可以用于事务和历史记录。
+  每个 `Operation` 都包含执自身所需的所有信息。
+- **`OperationManager`**: 
+`OperationManager` 负责管理 `Operation` 的处理器。
 
-* [x] `Operation`、`OperationManager` 的设计和实现
-
-  - **`Operation`**: `Operation` 是编辑器中**最小的操作单元**，代表用户对编辑器
-    进行的一次原子操作，例如插入文本、删除文本、设置样式等。每个 `Operation` 都
-    包含执行该操作所需的所有信息。
-  - **`OperationManager`**: `OperationManager` 是 `Operation` 的管理器，负责管理
-    `Operation` 的执行、撤销、错误处理和合并。
-
-  **工作流程:**
-
-  1. 当用户执行一个操作时，编辑器会创建一个 `Operation` 对象。
-  2. `OperationManager` 根据 `Operation` 的 `type` 查找对应的
-     `OperationBehavior`。
-  3. 如果找到了对应的 `OperationBehavior`，则将 `Operation` 交给对应的执行器执行
-     。
-  4. 如果没有找到对应的 `OperationBehavior`，则抛出错误。
-
-* [x] `HistoryManager` 的设计和实现
-
-  `HistoryManager` 负责管理编辑器的操作历史，提供**撤销 (undo)** 和**重做
-  (redo)** 功能。它被设计为**异步串行执行**，确保操作的执行顺序和一致性。
+### 历史
+- **`HistoryManager`**
+  `HistoryManager` 负责管理编辑器的操作历史，提供**撤销 (undo)** 和**重做(redo)** 功能。它被设计为**异步串行执行**，确保操作的执行顺序和一致性。
 
   **核心特性:**
 
-  - **异步串行执行:** `HistoryManager` 内部维护一个操作队列，所有操作都按照顺序
-    执行。在同一时间，只有一个操作在执行中。操作的执行和撤销都是异步的，这意味着
-    操作的执行不会阻塞主线程，提升了编辑器的响应速度。
-  - **环形队列存储:** `HistoryManager` 使用**环形队列**来存储操作历史。环形队列
-    具有以下优点：
+  - **异步串行执行:** `HistoryManager` 内部维护一个操作队列，所有操作都按照顺序执行。在同一时间，只有一个操作在执行中。
+  - **环形队列存储:** `HistoryManager` 使用**环形队列**来存储操作历史。环形队列具有以下优点：
     - **固定大小:** 可以限制历史记录的数量，避免内存占用过高。
     - **高效访问:** 提供 O(1) 的时间复杂度来访问队首和队尾元素，以及 O(1) 的时间
       复杂度来添加和删除元素。
-  - **提前撤销:** `HistoryManager` 支持**提前撤销**功能。当一个 `Operation` 还在
-    执行队列中但尚未被执行时，如果用户此时触发了撤销操作，`HistoryManager` 会直
-    接将该 `Operation` 从队列中移除，而不会执行其撤销逻辑，从而优化性能。
+  - **提前撤销:** `HistoryManager` 支持**提前撤销**功能。当一个 `Operation` 还在执行队列中但尚未被执行时，如果用户此时触发了撤销操作，`HistoryManager` 会直接将该 `Operation` 从队列中移除，而不会执行其撤销逻辑，从而优化性能。
 
-* [ ] `Node` 的数据模型
+## 节点
+- **`Node`**:
+  `Node` 是编辑器文档中的基本组成单元，代表编辑器中的一个节点，例如一个文本节点、一个块节点等。
 
-  `Node` 是编辑器中的基本组成单元，代表编辑器中的一个节点，例如一个文本节点、一
-  个块节点等。
-
-  `Node` 可以包含 0 到多个子节点，每个子节点都是一个 `Node` 实例。当节点没有子节
-  点时，其子节点列表为空；当节点在某个位置上没有子节点时，该位置的子节点为
-  falsy。`Node` 通过这种方式构成树状数据结构。
+  `Node` 可以包含 0 到多个子节点，每个子节点都是一个 `Node` 实例。当节点没有子节点时，其子节点列表为空；当节点在某个位置上没有子节点时，该位置的子节点为 falsy。`Node` 通过这种方式构成树状数据结构。
 
   每个 `Node` 都包含以下基本属性：
 
-  - `type`: 字符串类型，用于标识节点的类型，例如 `text`、`paragraph`、`image` 等
-    。
+  - `type`: 字符串类型，用于标识节点的类型，例如 `text`、`paragraph`、`image` 等。
 
-* [x] `NodeManager` 的设计和实现
-
-  `NodeManager` 负责管理 `Node` 相关的处理函数和元数据，主要职责包括：
+- **`NodeManager`**:
+  `NodeManager` 负责管理 `Node` 相关的处理器和元数据，主要职责包括：
 
   - 提供 `Node` `的通用操作接口：NodeManager` 管理了一系列通用的 Node 操作接口，
     这些接口通过 `NodeBehavior` 接口定义，并由 `NodeManager` 统一调度执行。这些

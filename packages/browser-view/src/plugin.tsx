@@ -25,6 +25,41 @@ export function browser_view(props: { element: HTMLElement }) {
       // 创建选区管理器
       const bv_selection = new BvSelection(ctx.editor);
 
+      function generate_handler<THandlerName extends keyof Events>(
+        handler_name: THandlerName
+      ) {
+        return async (
+          params: Parameters<EventHandler<Events[THandlerName]>>[0]
+        ) => {
+          const target = (params.event as any).raw
+            .target as WithMixEditorNode<HTMLElement>;
+          let current = target;
+
+          // 向上查找最近的带有 mixed_node 属性的元素
+          while (current && !current.mixed_node) {
+            current = current.parentElement!;
+          }
+
+          if (!current) return;
+
+          let current_node = current.mixed_node;
+          while (current_node) {
+            // 执行节点的指针事件处理
+            const result = await editor.node_manager.execute_handler(
+              handler_name,
+              current_node,
+              (params.event as any).raw as any
+            );
+
+            if (result.type === "handled") {
+              return;
+            }
+            current_node =
+              editor.node_manager.get_context(current_node)!.parent;
+          }
+        };
+      }
+
       async function handle_pointer_down(
         params: Parameters<EventHandler<Events["bv:pointer_down"]>>[0]
       ) {
@@ -37,25 +72,22 @@ export function browser_view(props: { element: HTMLElement }) {
           current = current.parentElement!;
         }
 
-        if (current) {
-          const node = current.mixed_node!;
-          if (!node) return;
+        if (!current) return;
 
+        let current_node = current.mixed_node;
+        while (current_node) {
           // 执行节点的指针事件处理
           const result = await editor.node_manager.execute_handler(
             "bv:handle_pointer_down",
-            node,
+            current_node,
             params.event.raw
           );
 
           if (result.type === "handled") {
             return;
           }
+          current_node = editor.node_manager.get_context(current_node)!.parent;
         }
-        // TODO: 向上查找寻找最近的带有 mixed_node 属性的元素
-        // TODO: 如果找到，则以 mixed_node 开启责任链循环，
-        // TODO: 不停向责任链的元素执行 "bv:handle_pointer_down" 行为，直到找到一个返回结果的 type 是 handled 的节点
-        // TODO: 如果直达最顶层，则忽略。现在有一个问题，节点并不知道自己的父节点，所以不知道怎么做
       }
 
       async function handle_pointer_up(

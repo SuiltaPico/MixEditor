@@ -67,7 +67,11 @@ export function paragraph() {
         const children = await Promise.all(
           tdo.children.map((child) => editor.saver.load_node_from_tdo(child))
         );
-        return new ParagraphNode(children);
+        const paragraph_node = new ParagraphNode(children);
+        children.forEach((child) => {
+          editor.node_manager.set_parent(child, paragraph_node);
+        });
+        return paragraph_node;
       });
 
       editor.node_manager.register_handler(

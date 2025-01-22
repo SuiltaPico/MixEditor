@@ -1,8 +1,7 @@
-export class NodeContext {
-  /** 父节点上下文 */
-  parent?: NodeContext;
+import { Node } from "./Node";
 
-  constructor(public node: Node, parent?: NodeContext) {
+export class NodeContext {
+  constructor(public node: Node, public parent?: Node) {
     this.parent = parent;
   }
 }
