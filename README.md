@@ -5,12 +5,12 @@ Headless 富文本编辑器。不依赖 `contenteditable` 和 DOM。
 ### milestone 1
 基础文本编辑。
 
-- `@mixeditor/core@1.0.0`
-- `@mixeditor/browser-view@1.0.0`
-- `@mixeditor/plugin-heading@1.0.0`
-- `@mixeditor/plugin-basic-text-style@1.0.0`
-- `@mixeditor/plugin-block-indent@1.0.0`
-- `@mixeditor/plugin-quote-block@1.0.0`
+- `@mixeditor/core@1.0.0`：提供编辑器的核心功能。
+- `@mixeditor/browser-view@1.0.0`：提供浏览器视图支持。
+- `@mixeditor/plugin-basic-text@1.0.0`：提供基础文本编辑的插件，例如文本节点和段落节点。
+- `@mixeditor/plugin-heading@1.0.0`：提供标题的插件。
+- `@mixeditor/plugin-block-indent@1.0.0`：提供块缩进的插件。
+- `@mixeditor/plugin-quote-block@1.0.0`: 引用块
 - `@mixeditor/plugin-list@1.0.0`
 - `@mixeditor/plugin-text-align@1.0.0`
 - `@mixeditor/plugin-code@1.0.0`

@@ -1,6 +1,9 @@
 import { EmitterSignal } from "@mixeditor/common";
 import { NodeRenderer } from "./NodeRenderer";
 
+/** 节点渲染器管理器。
+ * 提供管理所有节点渲染相关的功能。
+ */
 export class NodeRendererManager {
   editor_root!: HTMLDivElement;
   private renderers: Map<string, NodeRenderer> = new Map();

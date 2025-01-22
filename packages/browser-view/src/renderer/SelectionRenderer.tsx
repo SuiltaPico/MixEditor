@@ -3,18 +3,23 @@ import { MixEditor } from "@mixeditor/core";
 import { BvSelection } from "../BvSelection";
 import "./SelectionRenderer.css";
 
+/** 选区渲染器。
+ * 负责渲染选区。
+ */
 export const SelectionRenderer: Component<{
   editor: MixEditor;
   bv_selection: BvSelection;
 }> = (props) => {
+  // TODO: 之后添加多选区范围渲染
   return (
     <div class="_mixeditor_selection">
-      <CaretRenderer editor={props.editor} bv_selection={props.bv_selection} />
+      <RangeRenderer editor={props.editor} bv_selection={props.bv_selection} />
     </div>
   );
 };
 
-export const CaretRenderer: Component<{
+/** 选区范围渲染器 */
+export const RangeRenderer: Component<{
   editor: MixEditor;
   bv_selection: BvSelection;
 }> = (props) => {
@@ -23,14 +28,15 @@ export const CaretRenderer: Component<{
   const selected_type = createMemo(() => selection.selected.get()?.type);
   let start_caret: HTMLDivElement | null = null;
   let end_caret: HTMLDivElement | null = null;
+  /** 选区输入框。用于激活浏览器输入法。 */
   let inputer: HTMLDivElement | null = null;
 
   const handle_inputer_composition_end = () => {
-    console.log("composition end");
+    // TODO: 处理输入法结束
   };
 
   const handle_inputer_input = () => {
-    console.log("input");
+    // TODO: 处理输入
   };
 
   return (

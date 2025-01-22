@@ -20,6 +20,9 @@ export class ContentRendererState {
   }
 }
 
+/** 内容渲染器上下文。
+ * 提供内容渲染器相关的功能。
+ */
 export const ContentRendererContext = createContext<
   ContentRendererState | undefined
 >(undefined);

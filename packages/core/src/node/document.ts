@@ -48,7 +48,7 @@ export async function save_document(editor: MixEditor, document: DocumentNode) {
     children: await Promise.all(
       document.children
         .get()
-        .map((child) => editor.node_manager.execute_behavior("save", child))
+        .map((child) => editor.node_manager.execute_handler("save", child))
     ),
   } satisfies DocumentTDO;
 }

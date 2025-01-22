@@ -5,6 +5,9 @@ import { NodeRendererManager } from "./NodeRendererManager";
 import { SelectionRenderer } from "./SelectionRenderer";
 import { BvSelection } from "../BvSelection";
 
+/** 编辑器渲染器。
+ * 入口组件，负责渲染整个编辑器。
+ */
 export const EditorRenderer: Component<{
   editor: MixEditor;
   renderer_manager: NodeRendererManager;

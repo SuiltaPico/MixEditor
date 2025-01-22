@@ -3,7 +3,7 @@ import { createSignal } from "@mixeditor/common";
 import { EventHandler, EventManager } from "./event";
 import { DocumentNode, DocumentTDO, save_document } from "./node/document";
 import { AllNodeTypes } from "./node/Node";
-import { NodeBehavior, NodeManager } from "./node/NodeManager";
+import { NodeHandlerMap, NodeManager } from "./node/NodeManager";
 import { HistoryManager } from "./operation/HistoryManager";
 import { OperationManager } from "./operation/Operation";
 import { MixEditorPlugin, MixEditorPluginContext } from "./plugin";
@@ -39,14 +39,13 @@ export interface Events {
 
 export class MixEditor {
   /** 操作管理器。 */
-  operation_manager = new OperationManager();
+  operation_manager = new OperationManager(this);
   /** 命令管理器。 */
   command_manager = new HistoryManager(this.operation_manager);
 
   /** 文档节点管理器。 */
-  node_manager: NodeManager<NodeBehavior<AllNodeTypes>> = new NodeManager<
-    NodeBehavior<AllNodeTypes>
-  >(this);
+  node_manager: NodeManager<NodeHandlerMap<AllNodeTypes>, AllNodeTypes> =
+    new NodeManager<NodeHandlerMap<AllNodeTypes>, AllNodeTypes>(this);
   /** 文档。 */
   document = createSignal(new DocumentNode());
 
@@ -65,7 +64,7 @@ export class MixEditor {
   handlers = {
     save: async ({ event, wait_dependencies }: Parameters<EventHandler>[0]) => {
       await wait_dependencies();
-      const tdo = await this.node_manager.execute_behavior(
+      const tdo = await this.node_manager.execute_handler(
         "save",
         this.document.get()
       );
@@ -85,7 +84,7 @@ export class MixEditor {
     });
 
     // 注册文档节点保存行为
-    this.node_manager.register_behavior("document", "save", save_document);
+    this.node_manager.register_handler("document", "save", save_document);
 
     // 注册文档节点加载行为
     this.saver.register_loader("document", async (tdo) => {

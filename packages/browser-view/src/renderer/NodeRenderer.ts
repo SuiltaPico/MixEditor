@@ -16,6 +16,7 @@ export type NodeRenderer<TNode extends Node = Node> = Component<
   mixed_node?: TNode;
 };
 
+/** 带有 mixed_node 属性的组件。 */
 export type WithMixEditorNode<T> = T & {
   mixed_node?: Node;
 };

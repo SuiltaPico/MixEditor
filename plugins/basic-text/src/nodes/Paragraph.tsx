@@ -1,6 +1,15 @@
-import { BrowserViewPluginResult, NodeRenderer, WithMixEditorNode } from "@mixeditor/browser-view";
+import {
+  BrowserViewPluginResult,
+  NodeRenderer,
+  WithMixEditorNode,
+} from "@mixeditor/browser-view";
 import { createSignal, WrappedSignal } from "@mixeditor/common";
-import { AnyTDO, MixEditorPluginContext, Node, TransferDataObject } from "@mixeditor/core";
+import {
+  AnyTDO,
+  MixEditorPluginContext,
+  Node,
+  TransferDataObject,
+} from "@mixeditor/core";
 import { onMount } from "solid-js";
 
 declare module "@mixeditor/core" {
@@ -61,7 +70,7 @@ export function paragraph() {
         return new ParagraphNode(children);
       });
 
-      editor.node_manager.register_behavior(
+      editor.node_manager.register_handler(
         "paragraph",
         "save",
         async (_, node) => {
@@ -72,7 +81,7 @@ export function paragraph() {
               paragraph_node.children
                 .get()
                 .map((child) =>
-                  editor.node_manager.execute_behavior("save", child)
+                  editor.node_manager.execute_handler("save", child)
                 )
             ),
           } satisfies ParagraphNodeTDO;

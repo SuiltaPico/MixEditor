@@ -59,7 +59,7 @@ export function text() {
         return new TextNode(tdo.content);
       });
 
-      editor.node_manager.register_behaviors("text", {
+      editor.node_manager.register_handlers("text", {
         save: (_, node) => {
           return {
             type: "text",
@@ -69,9 +69,11 @@ export function text() {
         get_children_count: (_, node) => {
           return node.text.get().length;
         },
+        
         slice: (_, node, start, end) => {
           return new TextNode(node.text.get().slice(start, end));
         },
+      
       });
 
       // 注册渲染器

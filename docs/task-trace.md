@@ -10,7 +10,7 @@
 
 - **`packages`**: 存放所有**核心**、**可复用**的代码包，每个包都是一个独立的 npm
   包，可以单独发布和使用。这些包提供了编辑器的基础功能和通用组件。
-- **`apps`**: 存放所有**应用级**的项目，例如 MixEditor 的官方文档、在线演示环境
+- **`apps`**: 存放所有**应用级**的项目，例如 MixEditor 的文档、在线演示环境
   (playground) 等。这些应用依赖于 `packages` 中的核心包构建。
 - **`plugins`**: 存放所有**插件**，每个插件都是一个独立的 npm 包，用于扩展编辑器
   的功能。插件可以依赖 `packages` 中的核心包，并注册到 `@mixeditor/core` 中，从
@@ -45,12 +45,11 @@ mixeditor/
 供了插件扩展机制，允许开发者通过插件自定义编辑器的行为。
 
 该包主要由以下几个部分组成：
-
-- `PluginManager`
-- `Node`、`NodeManager`
-- `Operation`、`OperationManager`
-- `HistoryManager`
-- `SelectionManager`
+- 插件：`PluginManager`
+- 节点：`NodeManager`
+- 操作：`OperationManager`
+- 历史：`HistoryManager`
+- 选区：`SelectionManager`
 
 * [x] `PluginManager` 的设计和实现
 

@@ -1,6 +1,6 @@
 import {
   Operation,
-  OperationBehavior,
+  OperationHandlerMap,
   OperationManager,
   OperationManagerNoBehaviorError,
 } from "../../src/operation/Operation";
@@ -8,7 +8,7 @@ import { describe, test, expect, jest, beforeEach } from "@jest/globals";
 
 describe("OperationManager", () => {
   let manager: OperationManager;
-  let mockBehavior: OperationBehavior;
+  let mockBehavior: OperationHandlerMap;
   let testOperation: Operation;
 
   beforeEach(() => {
@@ -31,20 +31,20 @@ describe("OperationManager", () => {
 
   describe("行为管理", () => {
     test("应该能够设置行为", () => {
-      manager.set_behavior("test-type", mockBehavior);
+      manager.set_handler("test-type", mockBehavior);
       expect(manager.behaviors_map.get("test-type")).toBe(mockBehavior);
     });
 
     test("应该能够移除行为", () => {
-      manager.set_behavior("test-type", mockBehavior);
-      manager.remove_behavior("test-type");
+      manager.set_handler("test-type", mockBehavior);
+      manager.remove_handler("test-type");
       expect(manager.behaviors_map.has("test-type")).toBeFalsy();
     });
   });
 
   describe("操作执行", () => {
     test("应该能够执行操作", async () => {
-      manager.set_behavior("test-type", mockBehavior);
+      manager.set_handler("test-type", mockBehavior);
       await manager.execute(testOperation);
       expect(mockBehavior.execute).toHaveBeenCalledWith(testOperation);
     });
@@ -58,7 +58,7 @@ describe("OperationManager", () => {
 
   describe("操作撤销", () => {
     test("应该能够撤销操作", async () => {
-      manager.set_behavior("test-type", mockBehavior);
+      manager.set_handler("test-type", mockBehavior);
       await manager.undo(testOperation);
       expect(mockBehavior.undo).toHaveBeenCalledWith(testOperation);
     });
@@ -72,7 +72,7 @@ describe("OperationManager", () => {
 
   describe("操作取消", () => {
     test("应该能够取消操作", async () => {
-      manager.set_behavior("test-type", mockBehavior);
+      manager.set_handler("test-type", mockBehavior);
       await manager.cancel(testOperation);
       expect(mockBehavior.cancel).toHaveBeenCalledWith(testOperation, undefined);
     });
@@ -86,7 +86,7 @@ describe("OperationManager", () => {
 
   describe("操作合并", () => {
     test("应该能够合并操作", async () => {
-      manager.set_behavior("test-type", mockBehavior);
+      manager.set_handler("test-type", mockBehavior);
       const targetOperation = { ...testOperation, id: "target-id" };
       await manager.merge(testOperation, targetOperation);
       expect(mockBehavior.merge).toHaveBeenCalledWith(targetOperation);
@@ -103,7 +103,7 @@ describe("OperationManager", () => {
   describe("错误处理", () => {
     test("应该能够处理错误", async () => {
       const errorBehavior = { ...mockBehavior };
-      manager.set_behavior("error", errorBehavior);
+      manager.set_handler("error", errorBehavior);
       const error = new Error("测试错误");
       await manager.handle_error(testOperation, error);
       expect(errorBehavior.handle_error).toHaveBeenCalledWith(

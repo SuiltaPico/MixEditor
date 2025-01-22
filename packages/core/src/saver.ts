@@ -66,7 +66,7 @@ export class Saver {
 
   /** 保存节点为传输数据对象。 */
   async save_node_to_tdo(node: Node) {
-    const tdo = await this.editor.node_manager.execute_behavior("save", node);
+    const tdo = await this.editor.node_manager.execute_handler("save", node);
     return tdo;
   }
 

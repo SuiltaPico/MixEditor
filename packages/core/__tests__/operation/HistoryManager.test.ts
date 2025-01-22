@@ -6,7 +6,7 @@ import {
 import {
   OperationManager,
   Operation,
-  OperationBehavior,
+  OperationHandlerMap,
 } from "../../src/operation/Operation";
 import { describe, test, expect, jest, beforeEach } from "@jest/globals";
 
@@ -40,9 +40,9 @@ class LongUndoingOperation implements Operation {
 describe("HistoryManager", () => {
   let historyManager: HistoryManager;
   let operationManager: OperationManager;
-  let behavior: OperationBehavior;
-  let long_executing_behavior: OperationBehavior;
-  let long_undoing_behavior: OperationBehavior;
+  let behavior: OperationHandlerMap;
+  let long_executing_behavior: OperationHandlerMap;
+  let long_undoing_behavior: OperationHandlerMap;
 
   beforeEach(() => {
     historyManager = new HistoryManager(new OperationManager());
@@ -61,9 +61,9 @@ describe("HistoryManager", () => {
       ...behavior,
       undo: jest.fn(() => defer(100)) as any,
     };
-    operationManager.set_behavior("test-type", behavior);
-    operationManager.set_behavior("long-task", long_executing_behavior);
-    operationManager.set_behavior("long-undo", long_undoing_behavior);
+    operationManager.set_handler("test-type", behavior);
+    operationManager.set_handler("long-task", long_executing_behavior);
+    operationManager.set_handler("long-undo", long_undoing_behavior);
     jest.clearAllMocks();
   });
 

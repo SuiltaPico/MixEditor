@@ -129,7 +129,11 @@ export class HistoryManager {
         await this.cancel_current_operation?.execute("execute");
         break;
       case OperationState.Pending:
-        await this.operation_manager.cancel(operation, undefined);
+        await this.operation_manager.execute_handler(
+          "cancel",
+          operation,
+          undefined
+        );
         // 从待执行队列中移除
         this.pending_operations = this.pending_operations.filter(
           (op) => op.operation !== operation
@@ -162,7 +166,11 @@ export class HistoryManager {
         await this.cancel_current_operation?.execute("undo");
         break;
       case OperationState.Pending:
-        await this.operation_manager.cancel(operation, undefined);
+        await this.operation_manager.execute_handler(
+          "cancel",
+          operation,
+          undefined
+        );
         // 从待执行队列中移除
         this.pending_operations = this.pending_operations.filter(
           (op) => op.operation !== operation
@@ -180,8 +188,6 @@ export class HistoryManager {
     this.scheduleOperations();
   }
 
-  
-
   /** 调度操作执行 */
   private async scheduleOperations() {
     if (this.is_scheduling) return;
@@ -195,7 +201,8 @@ export class HistoryManager {
       // 设置取消函数
       this.cancel_current_operation = new AsyncTask(
         async (running_behavior) => {
-          await this.operation_manager.cancel(
+          await this.operation_manager.execute_handler(
+            "cancel",
             execution.operation,
             running_behavior
           );
@@ -215,9 +222,15 @@ export class HistoryManager {
       // 执行操作
       try {
         if (execution.type === "undo") {
-          await this.operation_manager.undo(execution.operation);
+          await this.operation_manager.execute_handler(
+            "undo",
+            execution.operation
+          );
         } else {
-          await this.operation_manager.execute(execution.operation);
+          await this.operation_manager.execute_handler(
+            "execute",
+            execution.operation
+          );
           // 检查是否需要合并操作
           if (execution.operation.merge_with) {
             const target_op = this.history_buffer.find_last(
@@ -227,10 +240,7 @@ export class HistoryManager {
               // 从历史缓冲区中移除当前操作
               this.history_buffer.remove(execution.operation);
               // 合并操作
-              await this.operation_manager.merge(
-                target_op,
-                execution.operation
-              );
+              await this.operation_manager.execute_handler("merge", target_op);
             }
           }
         }
@@ -243,7 +253,8 @@ export class HistoryManager {
       } catch (error) {
         try {
           // 让操作管理器处理错误，操作管理器应该正确恢复编辑器的状态
-          await this.operation_manager.handle_error(
+          await this.operation_manager.execute_handler(
+            "handle_error",
             execution.operation,
             error as Error
           );
@@ -277,18 +288,20 @@ export class HistoryManager {
   async clear_history() {
     // 取消所有待执行的操作
     for (const execution of this.pending_operations) {
-      await this.operation_manager.cancel(execution.operation, undefined);
-      
-      // 调用 reject
-      const pwr = this.operation_done_promise_map.get(
-        execution.operation
+      await this.operation_manager.execute_handler(
+        "cancel",
+        execution.operation,
+        undefined
       );
+
+      // 调用 reject
+      const pwr = this.operation_done_promise_map.get(execution.operation);
       pwr?.reject(new CanceledError("History was cleared"));
     }
-    
+
     // 清空待执行队列
     this.pending_operations = [];
-    
+
     // 如果有正在执行的操作，等待其完成
     if (this.current_execution) {
       await this.cancel_current_operation?.execute(undefined);

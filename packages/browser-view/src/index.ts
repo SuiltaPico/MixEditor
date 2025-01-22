@@ -20,8 +20,10 @@ export type PointerEventBehavior = (
   event: PointerEvent
 ) => MaybePromise<PointerBehaviorResult>;
 
+// 扩展主模块
 declare module "@mixeditor/core" {
   interface Events {
+    // --- 指针事件 ---
     "bv:pointer_down": {
       event_type: "bv:pointer_down";
       raw: PointerEvent;
@@ -34,10 +36,14 @@ declare module "@mixeditor/core" {
       event_type: "bv:pointer_move";
       raw: PointerEvent;
     };
+
+    // TODO：添加更多事件
   }
+
   interface NodeBehavior {
-    "bv:pointer_down": PointerEventBehavior;
-    "bv:pointer_up": PointerEventBehavior;
-    "bv:pointer_move": PointerEventBehavior;
+    "bv:handle_pointer_down": PointerEventBehavior;
+    "bv:handle_pointer_up": PointerEventBehavior;
+    "bv:handle_pointer_move": PointerEventBehavior;
+    // TODO：添加更多行为
   }
 }
