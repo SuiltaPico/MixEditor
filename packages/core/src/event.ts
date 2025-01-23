@@ -4,7 +4,7 @@ import { MaybePromise } from "@mixeditor/common";
 /** 事件。 */
 export interface Event {
   /** 事件类型。 */
-  event_type: string;
+  type: string;
   /** 事件附带的上下文，可以用于传递数据。 */
   context?: Record<string, any> & {
     /** 事件处理的返回结果。 */
@@ -15,7 +15,7 @@ export interface Event {
 /** 事件。 */
 export interface EventForEmit {
   /** 事件类型。 */
-  event_type: string;
+  type: string;
   /** 事件附带的上下文，可以用于传递数据。 */
   context: Record<string, any> & {
     /** 事件处理的返回结果。 */
@@ -64,11 +64,11 @@ export class EventManager<TEvent extends Event> {
   }
 
   /** 添加监听器。*/
-  add_handler<TEventType extends TEvent["event_type"]>(
-    event_type: TEventType,
+  add_handler<TEventType extends TEvent["type"]>(
+    type: TEventType,
     handler: EventHandler<
       TEvent & {
-        event_type: TEventType;
+        type: TEventType;
       }
     >,
     dependencies?: Iterable<EventHandler<TEvent>>
@@ -76,15 +76,15 @@ export class EventManager<TEvent extends Event> {
     const _handler = handler as EventHandler<TEvent>;
 
     // 获取或创建关系映射表
-    if (!this.handler_relation_map.has(event_type)) {
-      this.handler_relation_map.set(event_type, new Graph());
+    if (!this.handler_relation_map.has(type)) {
+      this.handler_relation_map.set(type, new Graph());
     }
-    const relation_graph = this.handler_relation_map.get(event_type)!;
+    const relation_graph = this.handler_relation_map.get(type)!;
 
     if (dependencies) {
       // 检查依赖关系是否会导致循环依赖
       for (const dependency of dependencies) {
-        if (this.has_ancestor_handler(event_type, _handler, dependency)) {
+        if (this.has_ancestor_handler(type, _handler, dependency)) {
           throw new Error(
             `已存在依赖关系: ${dependency.name} -> ${_handler.name}，无法添加依赖关系 ${handler.name} -> ${dependency.name}。`
           );
@@ -101,7 +101,7 @@ export class EventManager<TEvent extends Event> {
   }
 
   /** 移除监听器。*/
-  remove_handler<TEventType extends TEvent["event_type"]>(
+  remove_handler<TEventType extends TEvent["type"]>(
     event_type: TEventType,
     handler: EventHandler<
       TEvent & {
@@ -131,7 +131,7 @@ export class EventManager<TEvent extends Event> {
       fast_fail?: boolean;
     }
   ) {
-    const event_type = event.event_type;
+    const event_type = event.type;
 
     const relation_graph = this.handler_relation_map.get(event_type);
     if (!relation_graph) {

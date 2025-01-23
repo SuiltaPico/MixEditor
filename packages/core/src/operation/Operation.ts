@@ -58,30 +58,6 @@ export interface OperationHandlerMap<TData = any>
   ): string | Promise<string>;
 }
 
-function gen_run_operation_behavior<
-  TBehavior extends keyof TOperationBehavior,
-  TOperationBehavior extends OperationHandlerMap = OperationHandlerMap
->(
-  operation_manager: OperationManager<TOperationBehavior>,
-  behavior_name: TBehavior
-) {
-  return function <TData>(
-    operation: Operation<TData>,
-    ...args: ParametersExceptFirst<TOperationBehavior[TBehavior]>
-  ) {
-    const behavior = operation_manager.get_handler<TBehavior>(
-      operation.type,
-      behavior_name
-    );
-    return (behavior as any)(
-      operation,
-      ...args
-    ) as TOperationBehavior[TBehavior] extends (...args: any) => any
-      ? ReturnType<TOperationBehavior[TBehavior]>
-      : never;
-  };
-}
-
 type OperationManagerHandlerManager<
   TOperationHandler extends OperationHandlerMap = any
 > = HandlerManager<TOperationHandler, Operation, Operation, MixEditor>;
@@ -113,9 +89,17 @@ export class OperationManager<
       Operation,
       MixEditor
     >(this.editor);
-    this.register_handler = this.handler_manager.register_handler;
-    this.register_handlers = this.handler_manager.register_handlers;
-    this.get_handler = this.handler_manager.get_handler;
-    this.execute_handler = this.handler_manager.execute_handler;
+    this.register_handler = this.handler_manager.register_handler.bind(
+      this.handler_manager
+    );
+    this.register_handlers = this.handler_manager.register_handlers.bind(
+      this.handler_manager
+    );
+    this.get_handler = this.handler_manager.get_handler.bind(
+      this.handler_manager
+    );
+    this.execute_handler = this.handler_manager.execute_handler.bind(
+      this.handler_manager
+    );
   }
 }

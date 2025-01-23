@@ -25,26 +25,30 @@ export const EditorRenderer: Component<{
       class="mix_editor"
       onPointerDown={(e) => {
         editor.event_manager.emit({
-          event_type: "bv:pointer_down",
-          raw: e,
-        });
-      }}
-      onPointerUp={(e) => {
-        editor.event_manager.emit({
-          event_type: "bv:pointer_up",
-          raw: e,
+          type: "bv:pointer_down",
+          raw: e as PointerEvent,
         });
       }}
       onPointerMove={(e) => {
         editor.event_manager.emit({
-          event_type: "bv:pointer_move",
+          type: "bv:pointer_move",
+          raw: e,
+        });
+      }}
+      onKeyDown={(e) => {
+        editor.event_manager.emit({
+          type: "bv:key_down",
           raw: e,
         });
       }}
       ref={container}
     >
       <ContentRenderer editor={editor} renderer_manager={renderer_manager} />
-      <SelectionRenderer editor={editor} bv_selection={bv_selection} />
+      <SelectionRenderer
+        editor={editor}
+        renderer_manager={renderer_manager}
+        bv_selection={bv_selection}
+      />
     </div>
   );
 };

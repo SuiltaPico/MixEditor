@@ -26,6 +26,17 @@ export interface NodeHandlerMap<TNode extends Node = Node>
     from: number,
     to: number
   ): MaybePromise<TNode>;
+  /** 移动节点 */
+  move_enter(
+    editor: MixEditor,
+    node: TNode,
+    /** 移动目标索引 */
+    to: number,
+    /** 移动方向 */
+    direction: "next" | "prev",
+    /** 移动来源 */
+    from?: "child" | "parent"
+  ): MaybePromise<TNode>;
 }
 
 type NodeManagerHandlerManager<
@@ -82,9 +93,17 @@ export class NodeManager<
       Node,
       MixEditor
     >(this.editor);
-    this.register_handlers = this.handler_manager.register_handlers;
-    this.register_handler = this.handler_manager.register_handler;
-    this.get_handler = this.handler_manager.get_handler;
-    this.execute_handler = this.handler_manager.execute_handler;
+    this.register_handlers = this.handler_manager.register_handlers.bind(
+      this.handler_manager
+    );
+    this.register_handler = this.handler_manager.register_handler.bind(
+      this.handler_manager
+    );
+    this.get_handler = this.handler_manager.get_handler.bind(
+      this.handler_manager
+    );
+    this.execute_handler = this.handler_manager.execute_handler.bind(
+      this.handler_manager
+    );
   }
 }

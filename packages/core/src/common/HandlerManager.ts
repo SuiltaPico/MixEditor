@@ -1,12 +1,6 @@
 import { TwoLevelTypeMap } from "./TwoLevelTypeMap";
 import { ParametersExceptFirst2 } from "./type";
 
-export class HandlerManagerNoHandlerError extends Error {
-  constructor(public handler_name: string, public item_type: string) {
-    super(`No handler for item type: ${item_type}, handler: ${handler_name}`);
-  }
-}
-
 /** 项目的处理器表 */
 export type ItemHandlerMap<TContext, TItem> = Record<
   string,
@@ -25,6 +19,8 @@ export type ItemOfHandlerBehavior<
   THandlerMap extends ItemHandlerMap<any, any>
 > = THandlerMap extends ItemHandlerMap<any, infer TItem> ? TItem : never;
 
+export const HandlerManagerDefaultItemType = "default";
+
 /** 项目处理器管理器 */
 export class HandlerManager<
   THandlerMap extends ItemHandlerMap<TContext, TItem>,
@@ -32,8 +28,6 @@ export class HandlerManager<
   TAbstractItem extends { type: string },
   TContext
 > {
-  static readonly default_item_type = "default";
-
   /** 项目处理器 */
   private handler_map = new TwoLevelTypeMap<THandlerMap>();
 
@@ -48,7 +42,9 @@ export class HandlerManager<
 
   /** 为所有项目注册处理器。如果项目类型为默认类型，则设置为默认处理器。 */
   register_handlers<
-    TItemType extends ItemOfHandlerBehavior<THandlerMap>["type"],
+    TItemType extends
+      | ItemOfHandlerBehavior<THandlerMap>["type"]
+      | typeof HandlerManagerDefaultItemType,
     THandlers extends {
       [key in keyof THandlerMap]?: (
         context: TContext,
@@ -70,12 +66,17 @@ export class HandlerManager<
   get_handler<THandler extends keyof THandlerMap>(
     item_type: string,
     handler_name: THandler
-  ): THandlerMap[THandler] {
-    const handler = this.handler_map.get(handler_name, item_type);
-    if (!handler) {
-      throw new HandlerManagerNoHandlerError(handler_name as string, item_type);
+  ): THandlerMap[THandler] | undefined {
+    let handler = this.handler_map.get(handler_name, item_type) as
+      | THandlerMap[THandler]
+      | undefined;
+    if (handler === undefined) {
+      handler = this.handler_map.get(
+        handler_name,
+        HandlerManagerDefaultItemType
+      ) as THandlerMap[THandler] | undefined;
     }
-    return handler as THandlerMap[THandler];
+    return handler;
   }
 
   /** 执行处理器。 */
@@ -84,21 +85,9 @@ export class HandlerManager<
     item: TAbstractItem,
     ...args: ParametersExceptFirst2<THandlerMap[THandler]>
   ) {
-    let handler: THandlerMap[THandler] | undefined = this.get_handler(
-      item.type,
-      handler_name
-    );
-    if (!handler) {
-      handler = this.get_handler(
-        HandlerManager.default_item_type,
-        handler_name
-      ) as THandlerMap[THandler] | undefined;
-      if (!handler) {
-        throw new HandlerManagerNoHandlerError(
-          handler_name as string,
-          item.type
-        );
-      }
+    let handler = this.get_handler(item.type, handler_name);
+    if (handler === undefined) {
+      return undefined;
     }
     return (handler as any)(
       this.context,

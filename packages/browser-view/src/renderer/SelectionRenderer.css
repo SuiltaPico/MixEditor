@@ -14,10 +14,17 @@
     pointer-events: none;
 
     & > .__caret {
-      position: absolute;
-      width: 2px;
-      background: #000;
-      animation: blink 1s step-end infinite;
+      & > .__start_caret,
+      & > .__end_caret {
+        width: 1px;
+        background: #000;
+        animation: blink 1s step-end infinite;
+        position: absolute;
+
+        & > .__inputer {
+          opacity: 0;
+        }
+      }
     }
   }
 

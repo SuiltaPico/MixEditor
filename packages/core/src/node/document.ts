@@ -45,10 +45,12 @@ export async function save_document(editor: MixEditor, document: DocumentNode) {
     schema_version: document.schema_version,
     created_at: document.created_at,
     modified_at: document.modified_at,
-    children: await Promise.all(
-      document.children
-        .get()
-        .map((child) => editor.node_manager.execute_handler("save", child))
-    ),
+    children: (
+      await Promise.all(
+        document.children
+          .get()
+          .map((child) => editor.node_manager.execute_handler("save", child))
+      )
+    ).filter((child) => child !== undefined),
   } satisfies DocumentTDO;
 }

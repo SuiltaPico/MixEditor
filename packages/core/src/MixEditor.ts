@@ -12,28 +12,32 @@ import { Selection } from "./selection";
 
 export interface Events {
   init: {
-    event_type: "init";
+    type: "init";
   };
   before_save: {
-    event_type: "before_save";
+    type: "before_save";
   };
   save: {
-    event_type: "save";
+    type: "save";
   };
   after_save: {
-    event_type: "after_save";
+    type: "after_save";
     save_result: any;
   };
   before_load: {
-    event_type: "before_load";
+    type: "before_load";
     tdo: DocumentTDO;
   };
   load: {
-    event_type: "load";
+    type: "load";
     tdo: DocumentTDO;
   };
   after_load: {
-    event_type: "after_load";
+    type: "after_load";
+  };
+  caret_move: {
+    type: "caret_move";
+    direction: "next" | "prev";
   };
 }
 
@@ -70,11 +74,21 @@ export class MixEditor {
       );
       event.context.save_result = tdo;
     },
+    caret_move: async ({
+      event,
+      wait_dependencies,
+    }: Parameters<EventHandler<Events["caret_move"]>>[0]) => {
+      await wait_dependencies();
+      const direction = event.direction;
+
+      // 移动责任链
+
+    },
   };
 
   async init() {
     await this.plugin_manager.init_plugins({ editor: this });
-    this.event_manager.emit({ event_type: "init" });
+    this.event_manager.emit({ type: "init" });
   }
 
   constructor(config: { plugins: MixEditorPlugin[] }) {

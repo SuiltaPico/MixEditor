@@ -45,6 +45,17 @@ export class Selection {
     });
   }
 
+  /** 移动选择。 */
+  move(direction: "next" | "prev") {
+    const current = this.selected.get();
+    if (!current) return;
+    // 触发光标移动事件，会触发责任链以完成移动
+    this.editor.event_manager.emit({
+      type: "caret_move",
+      direction,
+    });
+  }
+
   /** 扩展到指定位置。 */
   extend_to(position: SelectedNodeInfo) {
     const current = this.selected.get();

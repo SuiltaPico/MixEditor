@@ -25,11 +25,11 @@ export class Saver {
   /** 保存编辑器的文档为文档传输数据对象。 */
   async save() {
     await this.editor.event_manager.emit({
-      event_type: "before_save",
+      type: "before_save",
     });
     const emit_result = await this.editor.event_manager.emit(
       {
-        event_type: "save",
+        type: "save",
       },
       {
         fast_fail: true,
@@ -37,7 +37,7 @@ export class Saver {
     );
     const save_result = emit_result.context?.result;
     await this.editor.event_manager.emit({
-      event_type: "after_save",
+      type: "after_save",
       save_result,
     });
     return save_result;
@@ -46,12 +46,12 @@ export class Saver {
   /** 从文档传输数据对象加载文档，并应用到编辑器上。 */
   async load(tdo: DocumentTDO) {
     await this.editor.event_manager.emit({
-      event_type: "before_load",
+      type: "before_load",
       tdo,
     });
     await this.editor.event_manager.emit(
       {
-        event_type: "load",
+        type: "load",
         tdo,
       },
       {
@@ -59,7 +59,7 @@ export class Saver {
       }
     );
     await this.editor.event_manager.emit({
-      event_type: "after_load",
+      type: "after_load",
     });
   }
 

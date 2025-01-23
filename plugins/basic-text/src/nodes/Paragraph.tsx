@@ -81,13 +81,15 @@ export function paragraph() {
           const paragraph_node = node as ParagraphNode;
           return {
             type: "paragraph",
-            children: await Promise.all(
-              paragraph_node.children
-                .get()
-                .map((child) =>
-                  editor.node_manager.execute_handler("save", child)
-                )
-            ),
+            children: (
+              await Promise.all(
+                paragraph_node.children
+                  .get()
+                  .map((child) =>
+                    editor.node_manager.execute_handler("save", child)
+                  )
+              )
+            ).filter((child) => child !== undefined),
           } satisfies ParagraphNodeTDO;
         }
       );
