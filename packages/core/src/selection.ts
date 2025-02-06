@@ -3,7 +3,7 @@ import { MixEditor } from "./MixEditor";
 import { Node } from "./node/Node";
 
 /** 选择节点信息。 */
-export type SelectedNodeInfo = {
+export type SelectedData = {
   node: Node;
   /** 子区域路径。 */
   child_path: number;
@@ -12,14 +12,14 @@ export type SelectedNodeInfo = {
 /** 折叠选择。 */
 export type CollapsedSelected = {
   type: "collapsed";
-  start: SelectedNodeInfo;
+  start: SelectedData;
 };
 
 /** 扩展选择。 */
 export type ExtendedSelected = {
   type: "extended";
-  start: SelectedNodeInfo;
-  end: SelectedNodeInfo;
+  start: SelectedData;
+  end: SelectedData;
 };
 
 export type Selected = CollapsedSelected | ExtendedSelected;
@@ -29,7 +29,7 @@ export class Selection {
   selected = createSignal<Selected | undefined>(undefined);
 
   /** 折叠选择。 */
-  collapsed_select(selected: SelectedNodeInfo) {
+  collapsed_select(selected: SelectedData) {
     this.selected.set({
       type: "collapsed",
       start: selected,
@@ -37,7 +37,7 @@ export class Selection {
   }
 
   /** 扩展选择。 */
-  extended_select(start: SelectedNodeInfo, end: SelectedNodeInfo) {
+  extended_select(start: SelectedData, end: SelectedData) {
     this.selected.set({
       type: "extended",
       start,
@@ -57,7 +57,7 @@ export class Selection {
   }
 
   /** 扩展到指定位置。 */
-  extend_to(position: SelectedNodeInfo) {
+  extend_to(position: SelectedData) {
     const current = this.selected.get();
     if (!current) {
       // 如果当前没有选择,创建一个折叠选择

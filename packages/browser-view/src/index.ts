@@ -37,6 +37,6 @@ declare module "@mixeditor/core" {
 
   interface NodeContext {
     /** 对应的 HTML 节点。 */
-    "bv:html_node"?: Node;
+    "bv:html_node"?: HTMLElement;
   }
 }

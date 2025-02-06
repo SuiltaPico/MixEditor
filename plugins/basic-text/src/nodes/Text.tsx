@@ -90,7 +90,6 @@ export function text() {
             node,
             child_path: result.offset,
           });
-          bv_selection.start_caret.height.set(height);
           return PointerBehaviorResult.handled;
         },
         "bv:get_child_pos": (_, node, index) => {
@@ -102,16 +101,37 @@ export function text() {
             renderer_manager.editor_root.getBoundingClientRect();
 
           const range = document.createRange();
+          const textNode = html_node.firstChild;
+          if (!textNode) throw new Error("文本节点的起始节点丢失。");
+
           if (index < node.text.get().length) {
             range.setStart(html_node.firstChild!, index);
-            range.setEnd(html_node.firstChild!, index + 1);
+            // range.setEnd(html_node.firstChild!, index + 1);
           } else {
             range.setStart(html_node.firstChild!, index);
-            range.setEnd(html_node.firstChild!, index);
+            // range.setEnd(html_node.firstChild!, index);
           }
 
-          const rect = range.getBoundingClientRect();
-          return { x: rect.left - root_rect.left, y: rect.top - root_rect.top };
+          range.collapse(true);
+
+          const range_rects = range.getClientRects();
+          if (range_rects.length > 0) {
+            const caret_rect = range_rects[0];
+            bv_selection.start_caret.height.set(caret_rect.height);
+            return {
+              x: caret_rect.left - root_rect.left - 1,
+              y: caret_rect.top - root_rect.top,
+            };
+          } else {
+            // 处理没有rect的情况，比如文本为空
+            // 使用html_node的位置作为默认
+            const node_rect = html_node.getBoundingClientRect();
+            bv_selection.start_caret.height.set(node_rect.height);
+            return {
+              x: node_rect.left - root_rect.left - 1,
+              y: node_rect.top - root_rect.top,
+            };
+          }
         },
       });
 

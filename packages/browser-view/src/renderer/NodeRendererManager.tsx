@@ -1,4 +1,4 @@
-import { EmitterSignal } from "@mixeditor/common";
+import { createEmitterSignal, EmitterSignal } from "@mixeditor/common";
 import { NodeRenderer } from "./NodeRenderer";
 
 /** 节点渲染器管理器。
@@ -7,7 +7,7 @@ import { NodeRenderer } from "./NodeRenderer";
 export class NodeRendererManager {
   editor_root!: HTMLDivElement;
   private renderers: Map<string, NodeRenderer> = new Map();
-  private reload_renderer_signal = new EmitterSignal();
+  private reload_renderer_signal = createEmitterSignal()
   private default_renderer: NodeRenderer = () => <div>节点渲染器缺失</div>;
 
   /** 注册一个节点渲染器 */
