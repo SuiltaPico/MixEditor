@@ -14,7 +14,7 @@ import { WithMixEditorNode } from "./renderer/NodeRenderer";
 import {
   BvPointerEvent,
   BvPointerEventHandlerName,
-  PointerBehaviorResult,
+  PointerEventResult,
 } from ".";
 
 export interface BrowserViewPluginResult {
@@ -80,7 +80,7 @@ export function browser_view(props: { element: HTMLElement }) {
       editor.event_manager.add_handler("bv:pointer_up", handle_pointer_up);
       editor.event_manager.add_handler("bv:pointer_move", handle_pointer_move);
 
-      const default_handler = () => PointerBehaviorResult.skip;
+      const default_handler = () => PointerEventResult.skip;
       editor.node_manager.register_handlers(DefaultItemType, {
         "bv:handle_pointer_down": default_handler,
         "bv:handle_pointer_up": default_handler,

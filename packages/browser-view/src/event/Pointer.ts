@@ -1,7 +1,7 @@
 import { MaybePromise } from "@mixeditor/common";
 import { MixEditor } from "@mixeditor/core";
 
-export const PointerBehaviorResult = {
+export const PointerEventResult = {
   skip: {
     type: "skip",
   },
@@ -10,16 +10,16 @@ export const PointerBehaviorResult = {
   },
 } as const;
 
-export type PointerBehaviorResult =
-  | (typeof PointerBehaviorResult)["skip"]
-  | (typeof PointerBehaviorResult)["handled"];
+export type PointerEventResult =
+  | (typeof PointerEventResult)["skip"]
+  | (typeof PointerEventResult)["handled"];
 
 export type PointerEventHandler = (
   editor: MixEditor,
   node: Node,
   element: HTMLElement,
   event: PointerEvent
-) => MaybePromise<PointerBehaviorResult>;
+) => MaybePromise<PointerEventResult>;
 
 export type BvPointerDownEvent = {
   type: "bv:pointer_down";

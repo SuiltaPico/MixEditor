@@ -1,7 +1,7 @@
 import {
   BrowserViewPluginResult,
   NodeRenderer,
-  PointerBehaviorResult,
+  PointerEventResult,
   WithMixEditorNode,
   get_caret_pos_from_point,
 } from "@mixeditor/browser-view";
@@ -84,13 +84,31 @@ export function text() {
             event.clientX,
             event.clientY
           )!;
-          if (!result) return PointerBehaviorResult.skip;
-          const height = parseFloat(getComputedStyle(element).fontSize);
+          if (!result) return PointerEventResult.skip;
           editor.selection.collapsed_select({
             node,
             child_path: result.offset,
           });
-          return PointerBehaviorResult.handled;
+          return PointerEventResult.handled;
+        },
+        "bv:handle_selected": (_, node, element, event) => {
+          // 如果是折叠选区，则返回 SelectedResult.skip。
+          // 否则返回 SelectedResult.default，让渲染器自己负责绘制。
+        },
+        "bv:handle_pointer_move": (_, node, element, event) => {
+          if (event.buttons !== 1) return PointerEventResult.skip;
+          // 获取选区
+          // 下面函数通过节流函数触发，确保最小采样率是 60fps
+          const selection = editor.selection.selected.get();
+          if (!selection) return PointerEventResult.skip;
+          // 获取选区起始节点
+          // 获取自己的路径和选区起始节点的路径
+          // 移动并不会影响节点树的变化，节点可以缓存自己的路径，甚至是比较结果。
+          // 因为节点变更会更新 update_count，只需要比对 update_count 即可判断要不要重新计算一次先后了。
+          // 利用比较函数，计算鼠标位置相对于选区起始节点的位置在前还是后
+          // 如果在前，则让自己成为选区结束节点
+          // 如果在后，则让自己成为选区起始节点，让选区节点变成后置节点
+          return PointerEventResult.handled;
         },
         "bv:get_child_pos": (_, node, index) => {
           const context = editor.node_manager.get_context(node);
@@ -106,10 +124,8 @@ export function text() {
 
           if (index < node.text.get().length) {
             range.setStart(html_node.firstChild!, index);
-            // range.setEnd(html_node.firstChild!, index + 1);
           } else {
             range.setStart(html_node.firstChild!, index);
-            // range.setEnd(html_node.firstChild!, index);
           }
 
           range.collapse(true);
