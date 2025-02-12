@@ -82,7 +82,6 @@ export class MixEditor {
       const direction = event.direction;
 
       // 移动责任链
-
     },
   };
 
@@ -95,6 +94,19 @@ export class MixEditor {
     // 注册插件
     config.plugins.forEach((plugin) => {
       this.plugin_manager.register(plugin);
+    });
+
+    // 注册节点的默认处理器
+    this.node_manager.register_handlers("default", {
+      get_child: (_, node, index) => {
+        return undefined;
+      },
+      get_children_count: (_, node) => {
+        return 0;
+      },
+      get_index_of_child: (_, node, child) => {
+        return -1;
+      },
     });
 
     // 注册文档节点保存行为

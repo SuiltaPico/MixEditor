@@ -17,6 +17,12 @@ export interface NodeHandlerMap<TNode extends Node = Node>
   ): MaybePromise<TNode | undefined>;
   /** 获取子节点数量 */
   get_children_count(editor: MixEditor, node: TNode): MaybePromise<number>;
+  /** 获取子节点索引 */
+  get_index_of_child(
+    editor: MixEditor,
+    node: TNode,
+    child: TNode
+  ): MaybePromise<number>;
   /** 保存节点 */
   save(editor: MixEditor, node: TNode): MaybePromise<TransferDataObject>;
   /** 切片节点 */
@@ -43,6 +49,20 @@ type NodeManagerHandlerManager<
   TNodeHandler extends NodeHandlerMap<any> = any,
   TNode extends Node = Node
 > = HandlerManager<TNodeHandler, TNode, Node, MixEditor>;
+
+/** 获取节点祖先（不包含自身） */
+export async function get_node_ancestors(
+  node_manager: NodeManager<NodeHandlerMap<any>, any>,
+  node: Node
+) {
+  let result: Node[] = [];
+  let current: Node | undefined = node_manager.get_context(node)?.parent;
+  while (current) {
+    result.push(current);
+    current = node_manager.get_context(current)?.parent;
+  }
+  return result.reverse();
+}
 
 /** 节点管理器 */
 export class NodeManager<
@@ -84,6 +104,12 @@ export class NodeManager<
   get_context(node: Node) {
     const context = this.node_contexts.get(node);
     return context;
+  }
+
+  /** 获取节点父节点 */
+  get_parent(node: Node) {
+    const context = this.node_contexts.get(node);
+    return context?.parent;
   }
 
   constructor(public editor: MixEditor) {

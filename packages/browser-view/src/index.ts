@@ -5,10 +5,12 @@ import {
   BvPointerMoveEvent,
   BvPointerUpEvent,
   PointerEventHandler,
-} from "./event/Pointer";
+} from "./respo_chain/Pointer";
 import { MixEditor } from "@mixeditor/core";
-import { BvKeyDownEvent } from "./event/Key";
-export * from "./event/Pointer";
+import { BvKeyDownEvent } from "./respo_chain/Key";
+import { SelectedMaskResult } from "./respo_chain/Selection";
+export * from "./respo_chain/Pointer";
+export * from "./respo_chain/Selection";
 export * from "./plugin";
 export * from "./renderer/EditorRenderer";
 export * from "./renderer/NodeRenderer";
@@ -32,7 +34,13 @@ declare module "@mixeditor/core" {
       node: Node,
       child_index: number
     ) => MaybePromise<{ x: number; y: number } | undefined>;
-    /** 获取子节点的位置。 */
+    /** 处理如何绘制选区遮罩层。 */
+    "bv:handle_selected_mask": (
+      context: MixEditor,
+      node: Node,
+      from: number,
+      to: number
+    ) => MaybePromise<SelectedMaskResult>;
   }
 
   interface NodeContext {

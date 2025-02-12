@@ -2,13 +2,16 @@ import {
   BrowserViewPluginResult,
   NodeRenderer,
   PointerEventResult,
+  SelectedMaskResult,
   WithMixEditorNode,
   get_caret_pos_from_point,
 } from "@mixeditor/browser-view";
 import { createSignal, WrappedSignal } from "@mixeditor/common";
 import {
+  get_node_path,
   MixEditorPluginContext,
   Node,
+  path_compare,
   TransferDataObject,
 } from "@mixeditor/core";
 import { onMount } from "solid-js";
@@ -91,30 +94,95 @@ export function text() {
           });
           return PointerEventResult.handled;
         },
-        "bv:handle_selected": (_, node, element, event) => {
-          // 如果是折叠选区，则返回 SelectedResult.skip。
-          // 否则返回 SelectedResult.default，让渲染器自己负责绘制。
+        "bv:handle_selected_mask": (_, node, from, to) => {
+          const selection = editor.selection.get_selected();
+          if (selection?.type === "collapsed") return SelectedMaskResult.skip;
+
+          const context = editor.node_manager.get_context(node);
+          const html_node = context?.["bv:html_node"];
+          if (!html_node) return SelectedMaskResult.skip;
+
+          const root_rect =
+            renderer_manager.editor_root.getBoundingClientRect();
+          const range = document.createRange();
+          const textNode = html_node.firstChild;
+          if (!textNode) return SelectedMaskResult.skip;
+
+          console.log(from, to);
+
+          range.setStart(textNode, from);
+          range.setEnd(textNode, to);
+
+          const range_rect = range.getBoundingClientRect();
+
+          return SelectedMaskResult.render({
+            x: range_rect.left - root_rect.left,
+            y: range_rect.top - root_rect.top,
+            width: range_rect.width,
+            height: range_rect.height,
+          });
         },
-        "bv:handle_pointer_move": (_, node, element, event) => {
+        "bv:handle_pointer_move": async (_, node, element, event) => {
           if (event.buttons !== 1) return PointerEventResult.skip;
+          // TODO：下面函数通过节流函数触发，确保最小采样率是 60fps
+
           // 获取选区
-          // 下面函数通过节流函数触发，确保最小采样率是 60fps
-          const selection = editor.selection.selected.get();
+          const selection = editor.selection.get_selected();
           if (!selection) return PointerEventResult.skip;
+
           // 获取选区起始节点
+          const start_node = selection.start.node;
+
+          // 计算鼠标所在的字符索引
+          const mouse_index = get_caret_pos_from_point(
+            event.clientX,
+            event.clientY
+          )?.offset;
+          if (!mouse_index) return PointerEventResult.skip;
+
           // 获取自己的路径和选区起始节点的路径
-          // 移动并不会影响节点树的变化，节点可以缓存自己的路径，甚至是比较结果。
-          // 因为节点变更会更新 update_count，只需要比对 update_count 即可判断要不要重新计算一次先后了。
+          const self_path = await get_node_path(editor.node_manager, node);
+          const start_path = await get_node_path(
+            editor.node_manager,
+            start_node
+          );
+
+          // TODO：移动并不会影响节点树的变化，节点可以缓存自己的路径，甚至是比较结果。
+          // TODO：因为节点变更会更新 update_count，只需要比对 update_count 即可判断要不要重新计算一次先后了。
+
           // 利用比较函数，计算鼠标位置相对于选区起始节点的位置在前还是后
-          // 如果在前，则让自己成为选区结束节点
-          // 如果在后，则让自己成为选区起始节点，让选区节点变成后置节点
+          const compare_result = path_compare(self_path, start_path);
+          // 如果在前，则让自己成为选区起始节点
+          if (compare_result === -1) {
+            editor.selection.extended_select(
+              {
+                node,
+                child_path: mouse_index,
+              },
+              {
+                node: start_node,
+                child_path: selection.start.child_path,
+              }
+            );
+          } else {
+            // 如果在后，则让自己成为选区结束节点
+            editor.selection.extended_select(
+              {
+                node: start_node,
+                child_path: selection.start.child_path,
+              },
+              {
+                node,
+                child_path: mouse_index,
+              }
+            );
+          }
           return PointerEventResult.handled;
         },
         "bv:get_child_pos": (_, node, index) => {
           const context = editor.node_manager.get_context(node);
           const html_node = context?.["bv:html_node"];
           if (!html_node) return undefined;
-
           const root_rect =
             renderer_manager.editor_root.getBoundingClientRect();
 

@@ -11,8 +11,7 @@ export const PointerEventResult = {
 } as const;
 
 export type PointerEventResult =
-  | (typeof PointerEventResult)["skip"]
-  | (typeof PointerEventResult)["handled"];
+  | (typeof PointerEventResult)[keyof typeof PointerEventResult];
 
 export type PointerEventHandler = (
   editor: MixEditor,

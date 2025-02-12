@@ -24,7 +24,10 @@
       }
     }
     & > .__ranges {
-      background-color: #0080ff5a;
+      & > .__range {
+        position: absolute;
+        background-color: #0080ff5a;
+      }
     }
   }
 

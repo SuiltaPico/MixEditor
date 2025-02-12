@@ -28,6 +28,16 @@ export type Selected = CollapsedSelected | ExtendedSelected;
 export class Selection {
   selected = createSignal<Selected | undefined>(undefined);
 
+  /** 获取选区。 */
+  get_selected() {
+    return this.selected.get();
+  }
+
+  /** 设置选区。 */
+  set_selected(selected: Selected | undefined) {
+    this.selected.set(selected);
+  }
+
   /** 折叠选择。 */
   collapsed_select(selected: SelectedData) {
     this.selected.set({
