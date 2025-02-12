@@ -77,7 +77,7 @@ async function execute_selected_mask_respo_chain(
     }
     await Promise.all(promises);
   } else if (type === "render") {
-    rects.push((result as SelectedMaskResultRender).rect);
+    rects.push(...(result as SelectedMaskResultRender).rects);
   }
 }
 
@@ -256,7 +256,7 @@ export const RangeRenderer: Component<{
   >([]);
   const selected_type = createMemo(() => selection.selected.get()?.type);
 
-  let start_caret: HTMLDivElement | null = null;
+  let caret: HTMLDivElement | null = null;
   /** 选区输入框。用于激活浏览器输入法。 */
   let inputer: HTMLDivElement | null = null;
 
@@ -288,15 +288,17 @@ export const RangeRenderer: Component<{
     on(selection.selected.get, async (selected) => {
       if (selected) {
         const info =
-          selected.type === "collapsed" ? selected.start : selected.end;
+          selected.type === "collapsed"
+            ? selected.start
+            : selected[selected.anchor];
         const result = await editor.node_manager.execute_handler(
           "bv:get_child_pos",
           info.node,
           info.child_path
         );
         if (!result) return;
-        start_caret!.style.left = `${result.x}px`;
-        start_caret!.style.top = `${result.y}px`;
+        caret!.style.left = `${result.x}px`;
+        caret!.style.top = `${result.y}px`;
       }
 
       if (selected && selected.type === "extended") {
@@ -321,7 +323,7 @@ export const RangeRenderer: Component<{
       >
         <div
           class="__caret"
-          ref={(it) => (start_caret = it)}
+          ref={(it) => (caret = it)}
           style={{
             height: `${bv_selection.start_caret.height.get()}px`,
           }}

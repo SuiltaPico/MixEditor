@@ -11,7 +11,7 @@ export type SelectedMaskResultEnter = {
 export type SelectedMaskResultRender = {
   type: "render";
   /** 选区范围。 */
-  rect: Rect;
+  rects: Rect[];
 };
 
 /** 选区绘制决策。 */
@@ -25,10 +25,10 @@ export const SelectedMaskResult = {
     type: "enter",
   },
   /** 默认行为。（直接在当前节点绘制选区） */
-  render: (rect: Rect) => ({
+  render: (rects: Rect[]) => ({
     type: "render" as const,
     /** 选区范围。 */
-    rect,
+    rects,
   }),
 } as const;
 

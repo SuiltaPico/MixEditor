@@ -20,6 +20,7 @@ export type ExtendedSelected = {
   type: "extended";
   start: SelectedData;
   end: SelectedData;
+  anchor: "start" | "end";
 };
 
 export type Selected = CollapsedSelected | ExtendedSelected;
@@ -47,11 +48,16 @@ export class Selection {
   }
 
   /** 扩展选择。 */
-  extended_select(start: SelectedData, end: SelectedData) {
+  extended_select(
+    start: SelectedData,
+    end: SelectedData,
+    anchor: "start" | "end"
+  ) {
     this.selected.set({
       type: "extended",
       start,
       end,
+      anchor,
     });
   }
 
@@ -64,18 +70,6 @@ export class Selection {
       type: "caret_move",
       direction,
     });
-  }
-
-  /** 扩展到指定位置。 */
-  extend_to(position: SelectedData) {
-    const current = this.selected.get();
-    if (!current) {
-      // 如果当前没有选择,创建一个折叠选择
-      this.collapsed_select(position);
-      return;
-    }
-    // 不管当前是折叠还是扩展选择,都使用原始起点和新位置创建扩展选择
-    this.extended_select(current.start, position);
   }
 
   constructor(public editor: MixEditor) {}

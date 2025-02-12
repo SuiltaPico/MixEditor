@@ -31,6 +31,10 @@
     }
   }
 
+  & > ._document {
+    user-select: none;
+  }
+
   & > ._paragraph {
     margin: 1em 0;
     line-height: 1.5;
