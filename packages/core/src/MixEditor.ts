@@ -110,7 +110,18 @@ export class MixEditor {
     });
 
     // 注册文档节点保存行为
-    this.node_manager.register_handler("document", "save", save_document);
+    this.node_manager.register_handlers("document", {
+      save: save_document,
+      get_children_count: (_, node) => {
+        return node.children.get().length;
+      },
+      get_child: (_, node, index) => {
+        return node.children.get()[index] as any;
+      },
+      get_index_of_child: (_, node, child) => {
+        return node.children.get().indexOf(child);
+      },
+    });
 
     // 注册文档节点加载行为
     this.saver.register_loader("document", async (tdo) => {

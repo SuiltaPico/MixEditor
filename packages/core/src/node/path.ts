@@ -64,13 +64,13 @@ export async function get_common_ancestor_from_node(
   let current_child = node2;
   let current: Node | undefined = node_manager.get_parent(node2);
   while (current) {
+    ancestors2.push(current);
     const index = await node_manager.execute_handler(
       "get_index_of_child",
       current,
       current_child
     );
     path2.push(index ?? 0);
-    ancestors2.push(current);
     current_child = current;
     current = node_manager.get_parent(current);
     ancestor_index_of_node1 = ancestors1.indexOf(current!);
@@ -91,9 +91,11 @@ export async function get_common_ancestor_from_node(
   return {
     common_ancestor,
     path1,
-    path2: path1.slice(0, ancestor_index_of_node1).concat(path2),
+    path2: path1.slice(0, ancestor_index_of_node1 + 1).concat(path2),
     ancestors1,
-    ancestors2: ancestors1.slice(0, ancestor_index_of_node1).concat(ancestors2),
+    ancestors2: ancestors1
+      .slice(0, ancestor_index_of_node1 + 1)
+      .concat(ancestors2),
     ancestor_index: ancestor_index_of_node1,
   };
 }

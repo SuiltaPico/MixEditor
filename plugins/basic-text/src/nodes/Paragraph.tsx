@@ -1,6 +1,7 @@
 import {
   BrowserViewPluginResult,
   NodeRenderer,
+  SelectedMaskResult,
   WithMixEditorNode,
 } from "@mixeditor/browser-view";
 import { createSignal, WrappedSignal } from "@mixeditor/common";
@@ -74,10 +75,8 @@ export function paragraph() {
         return paragraph_node;
       });
 
-      editor.node_manager.register_handler(
-        "paragraph",
-        "save",
-        async (_, node) => {
+      editor.node_manager.register_handlers("paragraph", {
+        save: async (_, node) => {
           const paragraph_node = node as ParagraphNode;
           return {
             type: "paragraph",
@@ -91,8 +90,25 @@ export function paragraph() {
               )
             ).filter((child) => child !== undefined),
           } satisfies ParagraphNodeTDO;
-        }
-      );
+        },
+        slice: (_, node, start, end) => {
+          return new ParagraphNode(node.children.get().slice(start, end));
+        },
+        get_children_count: (_, node) => {
+          return node.children.get().length;
+        },
+        get_child: (_, node, index) => {
+          return node.children.get()[index] as any;
+        },
+        get_index_of_child: (_, node, child) => {
+          return node.children.get().indexOf(child);
+        },
+        "bv:handle_selected_mask": (_, node, from, to) => {
+          const selection = editor.selection.get_selected();
+          if (selection?.type === "collapsed") return SelectedMaskResult.skip;
+          return SelectedMaskResult.enter;
+        },
+      });
 
       // 注册渲染器
       const renderer_manager = browser_view_plugin.renderer_manager;

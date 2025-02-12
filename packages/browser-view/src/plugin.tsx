@@ -15,6 +15,7 @@ import {
   BvPointerEvent,
   BvPointerEventHandlerName,
   PointerEventResult,
+  SelectedMaskResult,
 } from ".";
 
 export interface BrowserViewPluginResult {
@@ -87,6 +88,12 @@ export function browser_view(props: { element: HTMLElement }) {
         "bv:handle_pointer_move": default_handler,
         "bv:get_child_pos": () => {
           return undefined;
+        },
+      });
+
+      editor.node_manager.register_handlers("document", {
+        "bv:handle_selected_mask": () => {
+          return SelectedMaskResult.enter;
         },
       });
 

@@ -105,11 +105,12 @@ export function text() {
           const root_rect =
             renderer_manager.editor_root.getBoundingClientRect();
           const range = document.createRange();
-          const textNode = html_node.firstChild;
-          if (!textNode) return SelectedMaskResult.skip;
+          const text_node = html_node.firstChild;
+          if (!text_node) return SelectedMaskResult.skip;
 
-          range.setStart(textNode, from);
-          range.setEnd(textNode, to);
+          const adjusted_to = Math.min(node.text.get().length, to);
+          range.setStart(text_node, from);
+          range.setEnd(text_node, adjusted_to);
 
           const range_rects = range.getClientRects();
           if (range_rects.length > 0) {
@@ -251,8 +252,8 @@ export function text() {
             renderer_manager.editor_root.getBoundingClientRect();
 
           const range = document.createRange();
-          const textNode = html_node.firstChild;
-          if (!textNode) throw new Error("文本节点的起始节点丢失。");
+          const text_node = html_node.firstChild;
+          if (!text_node) throw new Error("文本节点的起始节点丢失。");
 
           if (index < node.text.get().length) {
             range.setStart(html_node.firstChild!, index);

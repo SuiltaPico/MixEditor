@@ -56,9 +56,9 @@ async function execute_selected_mask_respo_chain(
   if (type === "skip") return;
   else if (type === "enter") {
     const length = await editor.node_manager.execute_handler(
-      "bv:get_children_count",
+      "get_children_count",
       node
-    );
+    )!;
     if (to > length) {
       to = length - 1;
     }
@@ -68,7 +68,11 @@ async function execute_selected_mask_respo_chain(
       promises.push(
         execute_selected_mask_respo_chain(
           editor,
-          await editor.node_manager.execute_handler("bv:get_child", node, i),
+          (await editor.node_manager.execute_handler(
+            "get_child",
+            node,
+            i
+          )) as Node,
           0,
           Number.MAX_SAFE_INTEGER,
           rects
@@ -124,6 +128,7 @@ async function get_rect_of_extended_selected(
     common_ancestor,
     ancestors1: start_ancestors,
     ancestors2: end_ancestors,
+    ancestor_index,
   } = result;
 
   const promises: Promise<void>[] = [
@@ -145,8 +150,12 @@ async function get_rect_of_extended_selected(
   ];
 
   let current: Node | undefined;
-  const reversed_start_ancestors = start_ancestors.toReversed();
-  const reversed_end_ancestors = end_ancestors.toReversed();
+  const reversed_start_ancestors = start_ancestors
+    .slice(ancestor_index + 1)
+    .toReversed();
+  const reversed_end_ancestors = end_ancestors
+    .slice(ancestor_index + 1)
+    .toReversed();
 
   // 从起始节点向上遍历，直到共同祖先
   current = start_node;
@@ -169,7 +178,11 @@ async function get_rect_of_extended_selected(
       promises.push(
         execute_selected_mask_respo_chain(
           editor,
-          await node_manager.execute_handler("bv:get_child", current_parent, i),
+          (await node_manager.execute_handler(
+            "get_child",
+            current_parent,
+            i
+          )) as Node,
           0,
           Number.MAX_SAFE_INTEGER,
           rects
@@ -195,7 +208,11 @@ async function get_rect_of_extended_selected(
       promises.push(
         execute_selected_mask_respo_chain(
           editor,
-          await node_manager.execute_handler("bv:get_child", current_parent, i),
+          (await node_manager.execute_handler(
+            "get_child",
+            current_parent,
+            i
+          )) as Node,
           0,
           Number.MAX_SAFE_INTEGER,
           rects
@@ -209,21 +226,33 @@ async function get_rect_of_extended_selected(
   const start_ancestor_index = await node_manager.execute_handler(
     "get_index_of_child",
     common_ancestor,
-    start_node as any
+    start_ancestors[ancestor_index + 1] as any
   )!;
 
   // 结束节点在共同祖先的子节点索引
   const end_ancestor_index = await node_manager.execute_handler(
     "get_index_of_child",
     common_ancestor,
-    end_node as any
+    end_ancestors[ancestor_index + 1] as any
   )!;
 
+  console.log(start_ancestor_index, end_ancestor_index);
+
   for (let i = start_ancestor_index + 1; i < end_ancestor_index; i++) {
+    console.log(
+      "get_child",
+      i,
+      await node_manager.execute_handler("get_child", common_ancestor, i)
+    );
+
     promises.push(
       execute_selected_mask_respo_chain(
         editor,
-        await node_manager.execute_handler("bv:get_child", common_ancestor, i),
+        (await node_manager.execute_handler(
+          "get_child",
+          common_ancestor,
+          i
+        )) as Node,
         0,
         Number.MAX_SAFE_INTEGER,
         rects
