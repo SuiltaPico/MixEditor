@@ -17,7 +17,7 @@ import { NodeRendererManager } from "./NodeRendererManager";
 import { BvSelection } from "../BvSelection";
 import "./SelectionRenderer.css";
 import { createSignal, Rect } from "@mixeditor/common";
-import { SelectedMaskResultRender } from "../respo_chain/Selection";
+import { SelectedMaskResultRender } from "../resp_chain/Selection";
 
 /** 选区渲染器。
  * 负责渲染选区。

@@ -1,6 +1,7 @@
 import { createSignal } from "@mixeditor/common";
 import { MixEditor } from "./MixEditor";
 import { Node } from "./node/Node";
+import { CaretNavigateDirection } from "./resp_chain/caret_navigate";
 
 /** 选择节点信息。 */
 export type SelectedData = {
@@ -62,14 +63,26 @@ export class Selection {
   }
 
   /** 移动选择。 */
-  move(direction: "next" | "prev") {
+  async navigate(direction: CaretNavigateDirection) {
     const current = this.selected.get();
     if (!current) return;
     // 触发光标移动事件，会触发责任链以完成移动
-    this.editor.event_manager.emit({
-      type: "caret_move",
+    await this.editor.event_manager.emit({
+      type: "caret_navigate",
       direction,
     });
+
+    const next = this.selected.get();
+
+    console.log(
+      "core:selection.navigate",
+      "from:",
+      current.type,
+      current.start,
+      "to:",
+      next?.type,
+      next?.start
+    );
   }
 
   constructor(public editor: MixEditor) {}

@@ -7,11 +7,14 @@ import {
 import { createSignal, WrappedSignal } from "@mixeditor/common";
 import {
   AnyTDO,
+  CaretNavigateEnterDecision,
+  CaretNavigateFrom,
   MixEditorPluginContext,
   Node,
   TransferDataObject,
 } from "@mixeditor/core";
 import { onMount } from "solid-js";
+import { CaretNavigateDirection } from "@mixeditor/core";
 
 declare module "@mixeditor/core" {
   interface AllNodes {
@@ -103,10 +106,69 @@ export function paragraph() {
         get_index_of_child: (_, node, child) => {
           return node.children.get().indexOf(child);
         },
+        caret_navigate_enter: (_, node, to, direction, from) => {
+          const children_count = node.children.get().length;
+          const to_prev = direction === CaretNavigateDirection.Prev;
+
+          if ((to_prev && to > children_count) || (!to_prev && to < 0)) {
+            // 进入时超出该方向的首边界，跳转至首边界
+            return CaretNavigateEnterDecision.enter(
+              to_prev ? children_count : 0
+            );
+          } else if (from === CaretNavigateFrom.Child) {
+            // 从子区域跳入，跳转至指定索引
+            return CaretNavigateEnterDecision.enter(
+              to + (direction === CaretNavigateDirection.Prev ? 0 : 1)
+            );
+          } else if (from === CaretNavigateFrom.Parent) {
+            // 从父区域跳入
+            if ((to_prev && to < 0) || (!to_prev && to >= children_count)) {
+              // 超出该方向的尾边界，则跳过
+              return CaretNavigateEnterDecision.skip;
+            }
+            return CaretNavigateEnterDecision.enter(to);
+          } else {
+            to += direction === CaretNavigateDirection.Prev ? -1 : 0;
+            // 从自身索引移动，跳入子区域
+            if ((to_prev && to < 0) || (!to_prev && to >= children_count)) {
+              // 超出该方向的尾边界，则跳过
+              return CaretNavigateEnterDecision.skip;
+            }
+
+            // 跳入子区域
+            return CaretNavigateEnterDecision.enter_child(to);
+          }
+        },
         "bv:handle_selected_mask": (_, node, from, to) => {
           const selection = editor.selection.get_selected();
           if (selection?.type === "collapsed") return SelectedMaskResult.skip;
           return SelectedMaskResult.enter;
+        },
+        "bv:get_child_pos": (_, node, child_index) => {
+          const children = node.children.get();
+          const root_rect =
+            renderer_manager.editor_root.getBoundingClientRect();
+          if (child_index === children.length) {
+            // 最后一个子节点
+            const last_child = children[children.length - 1] as any;
+            const last_child_context =
+              editor.node_manager.get_context(last_child)!;
+            const rects = last_child_context["bv:html_node"]!.getClientRects();
+            const last_rect = rects[rects.length - 1];
+            return {
+              x: last_rect.right - root_rect.left,
+              y: last_rect.top - root_rect.top,
+            };
+          } else {
+            const child = children[child_index] as any;
+            const child_context = editor.node_manager.get_context(child)!;
+            const rects = child_context["bv:html_node"]!.getClientRects();
+            const rect = rects[0];
+            return {
+              x: rect.left - root_rect.left,
+              y: rect.top - root_rect.top,
+            };
+          }
         },
       });
 

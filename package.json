@@ -1,7 +1,8 @@
 {
 	"name": "mix-editor",
 	"scripts": {
-		"build": "turbo run build"
+		"build": "turbo run build",
+		"scc": "scc -a --min-gen --avg-wage 120000 --currency-symbol ¥ --overhead 1.5"
 	},
 	"devDependencies": {
 		"concurrently": "^9.1.2",

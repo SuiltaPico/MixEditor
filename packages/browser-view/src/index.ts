@@ -5,12 +5,12 @@ import {
   BvPointerMoveEvent,
   BvPointerUpEvent,
   PointerEventHandler,
-} from "./respo_chain/Pointer";
+} from "./resp_chain/Pointer";
 import { MixEditor } from "@mixeditor/core";
-import { BvKeyDownEvent } from "./respo_chain/Key";
-import { SelectedMaskResult } from "./respo_chain/Selection";
-export * from "./respo_chain/Pointer";
-export * from "./respo_chain/Selection";
+import { BvKeyDownEvent } from "./resp_chain/Key";
+import { SelectedMaskResult } from "./resp_chain/Selection";
+export * from "./resp_chain/Pointer";
+export * from "./resp_chain/Selection";
 export * from "./plugin";
 export * from "./renderer/EditorRenderer";
 export * from "./renderer/NodeRenderer";
@@ -19,6 +19,7 @@ export * from "./common/dom";
 
 // 扩展主模块
 declare module "@mixeditor/core" {
+  // 添加浏览器视图新增的事件
   interface Events {
     "bv:pointer_down": BvPointerDownEvent;
     "bv:pointer_up": BvPointerUpEvent;

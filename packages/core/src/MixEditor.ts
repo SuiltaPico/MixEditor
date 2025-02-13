@@ -8,7 +8,13 @@ import { HistoryManager } from "./operation/HistoryManager";
 import { OperationManager } from "./operation/Operation";
 import { MixEditorPlugin, MixEditorPluginContext } from "./plugin";
 import { Saver } from "./saver";
-import { Selection } from "./selection";
+import { SelectedData, Selection } from "./selection";
+import {
+  CaretNavigateDirection,
+  CaretNavigateEnterDecision,
+  execute_caret_navigate_from_selected_data,
+  CaretNavigateFrom,
+} from "./resp_chain/caret_navigate";
 
 export interface Events {
   init: {
@@ -35,9 +41,9 @@ export interface Events {
   after_load: {
     type: "after_load";
   };
-  caret_move: {
-    type: "caret_move";
-    direction: "next" | "prev";
+  caret_navigate: {
+    type: "caret_navigate";
+    direction: CaretNavigateDirection;
   };
 }
 
@@ -74,14 +80,34 @@ export class MixEditor {
       );
       event.context.save_result = tdo;
     },
-    caret_move: async ({
+    /** 光标导航流程，根据指定方向跳转到下一个或上一个位置 */
+    caret_navigate: async ({
       event,
       wait_dependencies,
-    }: Parameters<EventHandler<Events["caret_move"]>>[0]) => {
+    }: Parameters<EventHandler<Events["caret_navigate"]>>[0]) => {
       await wait_dependencies();
       const direction = event.direction;
+      const selected = this.selection.get_selected();
+      if (!selected) return;
 
-      // 移动责任链
+      let result: SelectedData | undefined;
+
+      if (selected.type === "collapsed") {
+        result = await execute_caret_navigate_from_selected_data(
+          this,
+          selected.start,
+          direction
+        );
+        if (!result) return;
+        this.selection.collapsed_select(result);
+      } else if (selected.type === "extended") {
+        // 退化成 collapsed 类型
+        if (direction === CaretNavigateDirection.Prev) {
+          this.selection.collapsed_select(selected.start);
+        } else {
+          this.selection.collapsed_select(selected.end);
+        }
+      }
     },
   };
 
@@ -121,6 +147,30 @@ export class MixEditor {
       get_index_of_child: (_, node, child) => {
         return node.children.get().indexOf(child);
       },
+      caret_navigate_enter: (_, node, to, direction, from) => {
+        const children_count = node.children.get().length;
+        const to_prev = direction === CaretNavigateDirection.Prev;
+
+        to += direction;
+
+        if (from === CaretNavigateFrom.Child) {
+          // 从子区域跳入
+          if ((to_prev && to < 0) || (!to_prev && to >= children_count)) {
+            // 超出该方向的尾边界，则跳过
+            return CaretNavigateEnterDecision.skip;
+          }
+          // 进入下一个子区域，注意前向时索引需要-1
+          return CaretNavigateEnterDecision.enter_child(to_prev ? to - 1 : to);
+        } else if (from === CaretNavigateFrom.Parent) {
+          // 根区域不应该从父区域进入
+          throw new Error(
+            "根区域顶层索引约定为无界，所以不可能从根区域顶层索引进入。这可能是插件直接设置了选区导致的错误选择了根区域的索引。"
+          );
+        } else {
+          // 从自身索引移动（Self），根区域不应该有这种情况
+          throw new Error("根区域不应该有自身索引移动的情况");
+        }
+      },
     });
 
     // 注册文档节点加载行为
@@ -151,5 +201,10 @@ export class MixEditor {
 
     // 注册保存流程
     this.event_manager.add_handler("save", this.handlers.save);
+    // 注册光标导航流程
+    this.event_manager.add_handler(
+      "caret_navigate",
+      this.handlers.caret_navigate
+    );
   }
 }

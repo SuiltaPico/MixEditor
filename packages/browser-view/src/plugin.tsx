@@ -1,22 +1,22 @@
 import {
+  CaretNavigateDirection,
   DefaultItemType,
   EventHandler,
-  Events,
   MixEditorPluginContext,
-  NodeManager,
 } from "@mixeditor/core";
 import { render } from "solid-js/web";
-import { BvSelection } from "./BvSelection";
-import { DocumentRenderer } from "./renderer/DocumentRenderer";
-import { EditorRenderer } from "./renderer/EditorRenderer";
-import { NodeRendererManager } from "./renderer/NodeRendererManager";
-import { WithMixEditorNode } from "./renderer/NodeRenderer";
 import {
   BvPointerEvent,
   BvPointerEventHandlerName,
   PointerEventResult,
   SelectedMaskResult,
 } from ".";
+import { BvSelection } from "./BvSelection";
+import { DocumentRenderer } from "./renderer/DocumentRenderer";
+import { EditorRenderer } from "./renderer/EditorRenderer";
+import { WithMixEditorNode } from "./renderer/NodeRenderer";
+import { NodeRendererManager } from "./renderer/NodeRendererManager";
+import { BvKeyDownEvent } from "./resp_chain/Key";
 
 export interface BrowserViewPluginResult {
   renderer_manager: NodeRendererManager;
@@ -76,16 +76,29 @@ export function browser_view(props: { element: HTMLElement }) {
       const handle_pointer_up = generate_handler("bv:handle_pointer_up");
       const handle_pointer_move = generate_handler("bv:handle_pointer_move");
 
+      function handle_key_down(
+        params: Parameters<EventHandler<BvKeyDownEvent>>[0]
+      ) {
+        const event = params.event.raw;
+        if (event.key === "ArrowLeft") {
+          editor.selection.navigate(CaretNavigateDirection.Prev);
+        } else if (event.key === "ArrowRight") {
+          editor.selection.navigate(CaretNavigateDirection.Next);
+        }
+      }
+
       // 责任链注册
       editor.event_manager.add_handler("bv:pointer_down", handle_pointer_down);
       editor.event_manager.add_handler("bv:pointer_up", handle_pointer_up);
       editor.event_manager.add_handler("bv:pointer_move", handle_pointer_move);
+      editor.event_manager.add_handler("bv:key_down", handle_key_down);
 
       const default_handler = () => PointerEventResult.skip;
       editor.node_manager.register_handlers(DefaultItemType, {
         "bv:handle_pointer_down": default_handler,
         "bv:handle_pointer_up": default_handler,
         "bv:handle_pointer_move": default_handler,
+
         "bv:get_child_pos": () => {
           return undefined;
         },

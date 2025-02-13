@@ -5,6 +5,7 @@ import { TransferDataObject } from "../saver";
 import { Node } from "./Node";
 import { NodeContext } from "./NodeContext";
 import { TagManager } from "./TagManager";
+import { CaretNavigateDirection, CaretNavigateEnterDecision } from "../resp_chain/caret_navigate";
 
 /** 节点处理器类型表。 */
 export interface NodeHandlerMap<TNode extends Node = Node>
@@ -25,7 +26,7 @@ export interface NodeHandlerMap<TNode extends Node = Node>
   ): MaybePromise<number>;
   /** 保存节点 */
   save(editor: MixEditor, node: TNode): MaybePromise<TransferDataObject>;
-  /** 切片节点 */
+  /** 节点切片 */
   slice(
     editor: MixEditor,
     node: TNode,
@@ -33,16 +34,16 @@ export interface NodeHandlerMap<TNode extends Node = Node>
     to: number
   ): MaybePromise<TNode>;
   /** 移动节点 */
-  move_enter(
+  caret_navigate_enter(
     editor: MixEditor,
     node: TNode,
     /** 移动目标索引 */
     to: number,
     /** 移动方向 */
-    direction: "next" | "prev",
+    direction: CaretNavigateDirection,
     /** 移动来源 */
     from?: "child" | "parent"
-  ): MaybePromise<TNode>;
+  ): MaybePromise<CaretNavigateEnterDecision>;
 }
 
 type NodeManagerHandlerManager<

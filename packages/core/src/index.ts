@@ -9,6 +9,7 @@ export * from "./operation/Command";
 export * from "./operation/HistoryManager";
 export * from "./operation/Operation";
 export * from "./operation/operations";
+export * from "./resp_chain/caret_navigate";
 export * from "./plugin";
 export * from "./saver";
 export * from "./selection";

@@ -1,13 +1,15 @@
 import {
   BrowserViewPluginResult,
+  get_caret_pos_from_point,
   NodeRenderer,
   PointerEventResult,
   SelectedMaskResult,
   WithMixEditorNode,
-  get_caret_pos_from_point,
 } from "@mixeditor/browser-view";
 import { createSignal, WrappedSignal } from "@mixeditor/common";
 import {
+  CaretNavigateDirection,
+  CaretNavigateEnterDecision,
   get_node_path,
   MixEditorPluginContext,
   Node,
@@ -76,12 +78,36 @@ export function text() {
             content: node.text.get(),
           } satisfies TextNodeTDO;
         },
+
         get_children_count: (_, node) => {
           return node.text.get().length;
         },
+
         slice: (_, node, start, end) => {
           return new TextNode(node.text.get().slice(start, end));
         },
+
+        caret_navigate_enter: (_, node, to, direction) => {
+          const text = node.text.get();
+          to += direction;
+          if (to > text.length) {
+            to = text.length;
+          }
+          const to_prev = direction === CaretNavigateDirection.Prev;
+
+          if ((to_prev && to >= text.length) || (!to_prev && to <= 0)) {
+            // 顺方向前边界进入
+            return CaretNavigateEnterDecision.enter(
+              to_prev ? text.length - 1 : 1
+            );
+          } else if ((to_prev && to <= 0) || (!to_prev && to >= text.length)) {
+            // 顺方向后边界跳过
+            return CaretNavigateEnterDecision.skip;
+          } else {
+            return CaretNavigateEnterDecision.enter(to);
+          }
+        },
+
         "bv:handle_pointer_down": (_, node, element, event) => {
           const result = get_caret_pos_from_point(
             event.clientX,
@@ -94,6 +120,7 @@ export function text() {
           });
           return PointerEventResult.handled;
         },
+
         "bv:handle_selected_mask": (_, node, from, to) => {
           const selection = editor.selection.get_selected();
           if (selection?.type === "collapsed") return SelectedMaskResult.skip;
@@ -126,6 +153,7 @@ export function text() {
             return SelectedMaskResult.skip;
           }
         },
+
         "bv:handle_pointer_move": async (_, node, element, event) => {
           if (event.buttons !== 1) return PointerEventResult.skip;
           // TODO：下面函数通过节流函数触发，确保最小采样率是 60fps
@@ -150,13 +178,18 @@ export function text() {
           // 利用比较函数，计算鼠标位置相对于选区起始节点或者锚点位置在前还是后，
           // 然后根据比较结果，选择之前选区到新选区的转换模式。
 
+          const new_selected_info = {
+            node,
+            child_path: mouse_index,
+          };
+
           if (selected.type === "collapsed") {
             const start_path = await get_node_path(
               editor.node_manager,
               selected.start.node
             );
-            let compare_result;
 
+            let compare_result;
             if (selected.start.node === node) {
               compare_result = mouse_index - selected.start.child_path;
             } else {
@@ -168,14 +201,8 @@ export function text() {
               // s c
               // s e
               editor.selection.extended_select(
-                {
-                  node,
-                  child_path: mouse_index,
-                },
-                {
-                  node: selected.start.node,
-                  child_path: selected.start.child_path,
-                },
+                new_selected_info,
+                selected.start,
                 "end"
               );
             } else if (compare_result > 0) {
@@ -183,45 +210,33 @@ export function text() {
               // s c
               // s e
               editor.selection.extended_select(
-                {
-                  node: selected.start.node,
-                  child_path: selected.start.child_path,
-                },
-                {
-                  node,
-                  child_path: mouse_index,
-                },
+                selected.start,
+                new_selected_info,
                 "start"
               );
             }
           } else if (selected.type === "extended") {
+            const anchor = selected["anchor"];
+            const anchor_info = selected[anchor];
             const anchor_path = await get_node_path(
               editor.node_manager,
-              selected.start.node
+              anchor_info.node
             );
-            let compare_result;
 
-            if (selected.start.node === node) {
-              compare_result = mouse_index - selected.start.child_path;
+            let compare_result;
+            if (anchor_info.node === node) {
+              compare_result = mouse_index - anchor_info.child_path;
             } else {
               compare_result = path_compare(self_path, anchor_path);
             }
-
-            const anchor = selected["anchor"];
 
             if (compare_result < 0) {
               // 转换模式：
               // c a
               // s e
               editor.selection.extended_select(
-                {
-                  node,
-                  child_path: mouse_index,
-                },
-                {
-                  node: selected[anchor].node,
-                  child_path: selected[anchor].child_path,
-                },
+                new_selected_info,
+                anchor_info,
                 "end"
               );
             } else if (compare_result > 0) {
@@ -229,14 +244,8 @@ export function text() {
               // a c
               // s e
               editor.selection.extended_select(
-                {
-                  node: selected[anchor].node,
-                  child_path: selected[anchor].child_path,
-                },
-                {
-                  node,
-                  child_path: mouse_index,
-                },
+                anchor_info,
+                new_selected_info,
                 "start"
               );
             }
@@ -244,6 +253,7 @@ export function text() {
 
           return PointerEventResult.handled;
         },
+
         "bv:get_child_pos": (_, node, index) => {
           const context = editor.node_manager.get_context(node);
           const html_node = context?.["bv:html_node"];
