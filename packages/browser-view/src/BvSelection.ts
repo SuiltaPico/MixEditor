@@ -6,12 +6,10 @@ export class BvSelection {
   start_caret = {
     x: createSignal(0),
     y: createSignal(0),
-    height: createSignal(0),
   };
   end_caret = {
     x: createSignal(0),
     y: createSignal(0),
-    height: createSignal(0),
   };
 
   constructor(private editor: MixEditor) {}

@@ -8,8 +8,8 @@ import { render } from "solid-js/web";
 import {
   BvPointerEvent,
   BvPointerEventHandlerName,
-  PointerEventResult,
-  SelectedMaskResult,
+  PointerEventDecision,
+  SelectedMaskDecision,
 } from ".";
 import { BvSelection } from "./BvSelection";
 import { DocumentRenderer } from "./renderer/DocumentRenderer";
@@ -63,7 +63,7 @@ export function browser_view(props: { element: HTMLElement }) {
               params.event.raw
             )!;
 
-            if (result.type === "handled") {
+            if (result.type === "stop_propagation") {
               return;
             }
             current_node =
@@ -93,20 +93,20 @@ export function browser_view(props: { element: HTMLElement }) {
       editor.event_manager.add_handler("bv:pointer_move", handle_pointer_move);
       editor.event_manager.add_handler("bv:key_down", handle_key_down);
 
-      const default_handler = () => PointerEventResult.skip;
+      const default_handler = () => PointerEventDecision.none;
       editor.node_manager.register_handlers(DefaultItemType, {
         "bv:handle_pointer_down": default_handler,
         "bv:handle_pointer_up": default_handler,
         "bv:handle_pointer_move": default_handler,
 
-        "bv:get_child_pos": () => {
+        "bv:get_child_caret": () => {
           return undefined;
         },
       });
 
       editor.node_manager.register_handlers("document", {
         "bv:handle_selected_mask": () => {
-          return SelectedMaskResult.enter;
+          return SelectedMaskDecision.enter;
         },
       });
 

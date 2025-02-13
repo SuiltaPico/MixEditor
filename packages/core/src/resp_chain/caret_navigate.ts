@@ -59,15 +59,6 @@ export async function execute_caret_navigate_from_selected_data(
   );
 
   const decision_type = result?.type ?? "skip";
-  console.log(
-    "core:execute_caret_navigate_from_selected_data",
-    "input[direction]:",
-    { direction, from, to: selected_data.child_path + direction },
-    "decision:",
-    result,
-    "by:",
-    selected_data.node
-  );
 
   if (decision_type === "skip") {
     // 跳过当前节点，往下一个节点移动
@@ -81,18 +72,6 @@ export async function execute_caret_navigate_from_selected_data(
       parent,
       node as any
     )!;
-
-    // console.log(
-    //   "core:execute_caret_navigate_from_selected_data",
-    //   "skip to parent",
-    //   parent!,
-    //   "index:",
-    //   index_in_parent,
-    //   "direction:",
-    //   direction,
-    //   "final_index:",
-    //   index_in_parent + direction
-    // );
 
     return await execute_caret_navigate_from_selected_data(
       editor,

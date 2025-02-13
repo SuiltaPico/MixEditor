@@ -2,8 +2,8 @@ import {
   BrowserViewPluginResult,
   get_caret_pos_from_point,
   NodeRenderer,
-  PointerEventResult,
-  SelectedMaskResult,
+  PointerEventDecision,
+  SelectedMaskDecision,
   WithMixEditorNode,
 } from "@mixeditor/browser-view";
 import { createSignal, WrappedSignal } from "@mixeditor/common";
@@ -113,27 +113,27 @@ export function text() {
             event.clientX,
             event.clientY
           )!;
-          if (!result) return PointerEventResult.skip;
+          if (!result) return PointerEventDecision.none;
           editor.selection.collapsed_select({
             node,
             child_path: result.offset,
           });
-          return PointerEventResult.handled;
+          return PointerEventDecision.none;
         },
 
         "bv:handle_selected_mask": (_, node, from, to) => {
           const selection = editor.selection.get_selected();
-          if (selection?.type === "collapsed") return SelectedMaskResult.skip;
+          if (selection?.type === "collapsed") return SelectedMaskDecision.skip;
 
           const context = editor.node_manager.get_context(node);
           const html_node = context?.["bv:html_node"];
-          if (!html_node) return SelectedMaskResult.skip;
+          if (!html_node) return SelectedMaskDecision.skip;
 
           const root_rect =
             renderer_manager.editor_root.getBoundingClientRect();
           const range = document.createRange();
           const text_node = html_node.firstChild;
-          if (!text_node) return SelectedMaskResult.skip;
+          if (!text_node) return SelectedMaskDecision.skip;
 
           const adjusted_to = Math.min(node.text.get().length, to);
           range.setStart(text_node, from);
@@ -141,7 +141,7 @@ export function text() {
 
           const range_rects = range.getClientRects();
           if (range_rects.length > 0) {
-            return SelectedMaskResult.render(
+            return SelectedMaskDecision.render(
               Array.from(range_rects).map((rect) => ({
                 x: rect.left - root_rect.left,
                 y: rect.top - root_rect.top,
@@ -150,24 +150,24 @@ export function text() {
               }))
             );
           } else {
-            return SelectedMaskResult.skip;
+            return SelectedMaskDecision.skip;
           }
         },
 
         "bv:handle_pointer_move": async (_, node, element, event) => {
-          if (event.buttons !== 1) return PointerEventResult.skip;
+          if (event.buttons !== 1) return PointerEventDecision.none;
           // TODO：下面函数通过节流函数触发，确保最小采样率是 60fps
 
           // 获取选区
           const selected = editor.selection.get_selected();
-          if (!selected) return PointerEventResult.skip;
+          if (!selected) return PointerEventDecision.none;
 
           // 计算鼠标所在的字符索引
           const mouse_index = get_caret_pos_from_point(
             event.clientX,
             event.clientY
           )?.offset;
-          if (!mouse_index) return PointerEventResult.skip;
+          if (!mouse_index) return PointerEventDecision.none;
 
           // 获取自己的路径和选区起始节点的路径
           const self_path = await get_node_path(editor.node_manager, node);
@@ -251,10 +251,10 @@ export function text() {
             }
           }
 
-          return PointerEventResult.handled;
+          return PointerEventDecision.none;
         },
 
-        "bv:get_child_pos": (_, node, index) => {
+        "bv:get_child_caret": (_, node, index) => {
           const context = editor.node_manager.get_context(node);
           const html_node = context?.["bv:html_node"];
           if (!html_node) return undefined;
@@ -276,19 +276,19 @@ export function text() {
           const range_rects = range.getClientRects();
           if (range_rects.length > 0) {
             const caret_rect = range_rects[0];
-            bv_selection.start_caret.height.set(caret_rect.height);
             return {
               x: caret_rect.left - root_rect.left - 1,
               y: caret_rect.top - root_rect.top,
+              height: caret_rect.height,
             };
           } else {
             // 处理没有rect的情况，比如文本为空
             // 使用html_node的位置作为默认
             const node_rect = html_node.getBoundingClientRect();
-            bv_selection.start_caret.height.set(node_rect.height);
             return {
               x: node_rect.left - root_rect.left - 1,
               y: node_rect.top - root_rect.top,
+              height: node_rect.height,
             };
           }
         },

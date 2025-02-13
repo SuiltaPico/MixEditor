@@ -1,7 +1,8 @@
 import {
   BrowserViewPluginResult,
   NodeRenderer,
-  SelectedMaskResult,
+  PointerEventDecision,
+  SelectedMaskDecision,
   WithMixEditorNode,
 } from "@mixeditor/browser-view";
 import { createSignal, WrappedSignal } from "@mixeditor/common";
@@ -139,12 +140,16 @@ export function paragraph() {
             return CaretNavigateEnterDecision.enter_child(to);
           }
         },
+        "bv:handle_pointer_down": (_, node) => {
+          // TODO：搜索 y 轴位置最近的子节点，并触发它的 pointer_down 事件。
+          return PointerEventDecision.none;
+        },
         "bv:handle_selected_mask": (_, node, from, to) => {
           const selection = editor.selection.get_selected();
-          if (selection?.type === "collapsed") return SelectedMaskResult.skip;
-          return SelectedMaskResult.enter;
+          if (selection?.type === "collapsed") return SelectedMaskDecision.skip;
+          return SelectedMaskDecision.enter;
         },
-        "bv:get_child_pos": (_, node, child_index) => {
+        "bv:get_child_caret": (_, node, child_index) => {
           const children = node.children.get();
           const root_rect =
             renderer_manager.editor_root.getBoundingClientRect();
@@ -158,6 +163,7 @@ export function paragraph() {
             return {
               x: last_rect.right - root_rect.left,
               y: last_rect.top - root_rect.top,
+              height: last_rect.height,
             };
           } else {
             const child = children[child_index] as any;
@@ -167,6 +173,7 @@ export function paragraph() {
             return {
               x: rect.left - root_rect.left,
               y: rect.top - root_rect.top,
+              height: rect.height,
             };
           }
         },

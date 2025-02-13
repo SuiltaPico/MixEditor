@@ -71,18 +71,6 @@ export class Selection {
       type: "caret_navigate",
       direction,
     });
-
-    const next = this.selected.get();
-
-    console.log(
-      "core:selection.navigate",
-      "from:",
-      current.type,
-      current.start,
-      "to:",
-      next?.type,
-      next?.start
-    );
   }
 
   constructor(public editor: MixEditor) {}

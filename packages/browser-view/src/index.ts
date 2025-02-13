@@ -8,7 +8,7 @@ import {
 } from "./resp_chain/Pointer";
 import { MixEditor } from "@mixeditor/core";
 import { BvKeyDownEvent } from "./resp_chain/Key";
-import { SelectedMaskResult } from "./resp_chain/Selection";
+import { SelectedMaskDecision } from "./resp_chain/Selection";
 export * from "./resp_chain/Pointer";
 export * from "./resp_chain/Selection";
 export * from "./plugin";
@@ -30,18 +30,18 @@ declare module "@mixeditor/core" {
   interface NodeHandlerMap
     extends Record<BvPointerEventHandlerName, PointerEventHandler> {
     /** 获取子节点的位置。 */
-    "bv:get_child_pos": (
+    "bv:get_child_caret": (
       context: MixEditor,
       node: Node,
       child_index: number
-    ) => MaybePromise<{ x: number; y: number } | undefined>;
+    ) => MaybePromise<{ x: number; y: number; height: number } | undefined>;
     /** 处理如何绘制选区遮罩层。 */
     "bv:handle_selected_mask": (
       context: MixEditor,
       node: Node,
       from: number,
       to: number
-    ) => MaybePromise<SelectedMaskResult>;
+    ) => MaybePromise<SelectedMaskDecision>;
   }
 
   interface NodeContext {

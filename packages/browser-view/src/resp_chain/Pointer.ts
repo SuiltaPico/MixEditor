@@ -1,24 +1,24 @@
 import { MaybePromise } from "@mixeditor/common";
 import { MixEditor } from "@mixeditor/core";
 
-export const PointerEventResult = {
-  skip: {
-    type: "skip",
+export const PointerEventDecision = {
+  none: {
+    type: "none",
   },
-  handled: {
-    type: "handled",
+  stop_propagation: {
+    type: "stop_propagation",
   },
 } as const;
 
-export type PointerEventResult =
-  | (typeof PointerEventResult)[keyof typeof PointerEventResult];
+export type PointerEventDecision =
+  | (typeof PointerEventDecision)[keyof typeof PointerEventDecision];
 
 export type PointerEventHandler = (
   editor: MixEditor,
   node: Node,
   element: HTMLElement,
   event: PointerEvent
-) => MaybePromise<PointerEventResult>;
+) => MaybePromise<PointerEventDecision>;
 
 export type BvPointerDownEvent = {
   type: "bv:pointer_down";

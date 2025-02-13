@@ -33,6 +33,7 @@
 
   & > ._document {
     user-select: none;
+    cursor: text;
   }
 
   & > ._paragraph {

@@ -17,7 +17,7 @@ import { NodeRendererManager } from "./NodeRendererManager";
 import { BvSelection } from "../BvSelection";
 import "./SelectionRenderer.css";
 import { createSignal, Rect } from "@mixeditor/common";
-import { SelectedMaskResultRender } from "../resp_chain/Selection";
+import { SelectedMaskDecisionRender } from "../resp_chain/Selection";
 
 /** 选区渲染器。
  * 负责渲染选区。
@@ -81,7 +81,7 @@ async function execute_selected_mask_respo_chain(
     }
     await Promise.all(promises);
   } else if (type === "render") {
-    rects.push(...(result as SelectedMaskResultRender).rects);
+    rects.push(...(result as SelectedMaskDecisionRender).rects);
   }
 }
 
@@ -236,15 +236,7 @@ async function get_rect_of_extended_selected(
     end_ancestors[ancestor_index + 1] as any
   )!;
 
-  console.log(start_ancestor_index, end_ancestor_index);
-
   for (let i = start_ancestor_index + 1; i < end_ancestor_index; i++) {
-    console.log(
-      "get_child",
-      i,
-      await node_manager.execute_handler("get_child", common_ancestor, i)
-    );
-
     promises.push(
       execute_selected_mask_respo_chain(
         editor,
@@ -321,13 +313,14 @@ export const RangeRenderer: Component<{
             ? selected.start
             : selected[selected.anchor];
         const result = await editor.node_manager.execute_handler(
-          "bv:get_child_pos",
+          "bv:get_child_caret",
           info.node,
           info.child_path
         );
         if (!result) return;
         caret!.style.left = `${result.x}px`;
         caret!.style.top = `${result.y}px`;
+        caret!.style.height = `${result.height}px`;
       }
 
       if (selected && selected.type === "extended") {
@@ -350,13 +343,7 @@ export const RangeRenderer: Component<{
       <Show
         when={selected_type() === "collapsed" || selected_type() === "extended"}
       >
-        <div
-          class="__caret"
-          ref={(it) => (caret = it)}
-          style={{
-            height: `${bv_selection.start_caret.height.get()}px`,
-          }}
-        >
+        <div class="__caret" ref={(it) => (caret = it)}>
           <div
             class="__inputer"
             contentEditable

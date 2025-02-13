@@ -1,21 +1,21 @@
 import { Rect } from "@mixeditor/common";
 
-export type SelectedMaskResultSkip = {
+export type SelectedMaskDecisionSkip = {
   type: "skip";
 };
 
-export type SelectedMaskResultEnter = {
+export type SelectedMaskDecisionEnter = {
   type: "enter";
 };
 
-export type SelectedMaskResultRender = {
+export type SelectedMaskDecisionRender = {
   type: "render";
   /** 选区范围。 */
   rects: Rect[];
 };
 
 /** 选区绘制决策。 */
-export const SelectedMaskResult = {
+export const SelectedMaskDecision = {
   /** 跳过，不绘制选区。 */
   skip: {
     type: "skip",
@@ -33,7 +33,7 @@ export const SelectedMaskResult = {
 } as const;
 
 /** 选区绘制决策。 */
-export type SelectedMaskResult =
-  | SelectedMaskResultSkip
-  | SelectedMaskResultEnter
-  | SelectedMaskResultRender;
+export type SelectedMaskDecision =
+  | SelectedMaskDecisionSkip
+  | SelectedMaskDecisionEnter
+  | SelectedMaskDecisionRender;
