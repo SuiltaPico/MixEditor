@@ -157,14 +157,6 @@ async function get_rect_of_extended_selected(
     .slice(ancestor_index + 1)
     .toReversed();
 
-  console.log(
-    start_ancestors,
-    end_ancestors,
-    ancestor_index,
-    reversed_start_ancestors,
-    reversed_end_ancestors
-  );
-
   // 从起始节点向上遍历，直到共同祖先
   current = start_node;
   for (let i = 0; i < reversed_start_ancestors.length; i++) {

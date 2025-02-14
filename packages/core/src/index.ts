@@ -5,7 +5,6 @@ export * from "./node/Node";
 export * from "./node/NodeContext";
 export * from "./node/NodeManager";
 export * from "./node/path";
-export * from "./operation/Command";
 export * from "./operation/HistoryManager";
 export * from "./operation/Operation";
 export * from "./operation/operations";

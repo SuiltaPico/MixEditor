@@ -1,10 +1,7 @@
 import {
-  Handler,
   HandlerManager,
-  ItemHandlerMap,
+  ItemHandlerMap
 } from "../common/HandlerManager";
-import { TwoLevelTypeMap } from "../common/TwoLevelTypeMap";
-import { ParametersExceptFirst } from "../common/type";
 import { MixEditor } from "../MixEditor";
 
 /** 操作。 */
@@ -17,8 +14,6 @@ export interface Operation<TData = any> {
   /** 操作的数据。*/
   data: TData;
 
-  /** 操作所基于的版本。*/
-  version: number;
   /** 合并到哪个 Operation。*/
   merge_with?: string;
 }

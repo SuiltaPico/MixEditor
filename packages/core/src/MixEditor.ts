@@ -17,6 +17,7 @@ import {
 } from "./resp_chain/caret_navigate";
 
 export interface Events {
+  /** 编辑器核心初始化。 */
   init: {
     type: "init";
   };
@@ -41,17 +42,22 @@ export interface Events {
   after_load: {
     type: "after_load";
   };
+  /** 光标导航。 */
   caret_navigate: {
     type: "caret_navigate";
     direction: CaretNavigateDirection;
+  };
+  /** 删除选区。 */
+  delete_selected: {
+    type: "delete_selected";
   };
 }
 
 export class MixEditor {
   /** 操作管理器。 */
   operation_manager = new OperationManager(this);
-  /** 命令管理器。 */
-  command_manager = new HistoryManager(this.operation_manager);
+  /** 历史管理器。 */
+  history_manager = new HistoryManager(this.operation_manager);
 
   /** 文档节点管理器。 */
   node_manager: NodeManager<NodeHandlerMap<AllNodeTypes>, AllNodeTypes> =
@@ -205,6 +211,22 @@ export class MixEditor {
     this.event_manager.add_handler(
       "caret_navigate",
       this.handlers.caret_navigate
+    );
+    // 注册删除选区事件处理
+    this.event_manager.add_handler(
+      "delete_selected",
+      async ({ wait_dependencies }) => {
+        await wait_dependencies();
+
+        const selected = this.selection.get_selected();
+        if (!selected) return;
+
+        // 生成删除操作
+        // this.history_manager.execute(new DeleteRangeOperation(selected.id));
+
+        // 执行删除逻辑
+        // ...具体删除节点内容实现...
+      }
     );
   }
 }

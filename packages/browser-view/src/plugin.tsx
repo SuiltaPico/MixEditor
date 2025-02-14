@@ -78,14 +78,22 @@ export function browser_view(props: { element: HTMLElement }) {
       const handle_pointer_up = generate_handler("bv:handle_pointer_up");
       const handle_pointer_move = generate_handler("bv:handle_pointer_move");
 
-      function handle_key_down(
+      async function handle_key_down(
         params: Parameters<EventHandler<BvKeyDownEvent>>[0]
       ) {
         const event = params.event.raw;
-        if (event.key === "ArrowLeft") {
-          editor.selection.navigate(CaretNavigateDirection.Prev);
-        } else if (event.key === "ArrowRight") {
-          editor.selection.navigate(CaretNavigateDirection.Next);
+        if (!event.ctrlKey) {
+          if (event.key === "ArrowLeft") {
+            await editor.selection.navigate(CaretNavigateDirection.Prev);
+          } else if (event.key === "ArrowRight") {
+            await editor.selection.navigate(CaretNavigateDirection.Next);
+          }
+        } else if (event.ctrlKey) {
+          if (event.key === "z") {
+            await editor.history_manager.undo();
+          } else if (event.key === "y") {
+            await editor.history_manager.redo();
+          }
         }
       }
 
