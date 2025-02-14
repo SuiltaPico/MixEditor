@@ -27,7 +27,7 @@ export const SelectionRenderer: Component<{
   renderer_manager: NodeRendererManager;
   bv_selection: BvSelection;
 }> = (props) => {
-  // TODO: 之后添加多选区范围渲染
+  // TODO: 添加多选区范围渲染
   return (
     <div class="_mixeditor_selection">
       <RangeRenderer
@@ -156,6 +156,14 @@ async function get_rect_of_extended_selected(
   const reversed_end_ancestors = end_ancestors
     .slice(ancestor_index + 1)
     .toReversed();
+
+  console.log(
+    start_ancestors,
+    end_ancestors,
+    ancestor_index,
+    reversed_start_ancestors,
+    reversed_end_ancestors
+  );
 
   // 从起始节点向上遍历，直到共同祖先
   current = start_node;

@@ -167,11 +167,6 @@ export function paragraph() {
           for (const child of children) {
             const child_context = node_manager.get_context(child)!;
             const child_element = child_context["bv:html_node"]!;
-            console.log(
-              caret_pos.node,
-              child_element,
-              is_ancestor(caret_pos.node, child_element)
-            );
 
             if (is_ancestor(caret_pos.node, child_element)) {
               // 交给子节点处理
