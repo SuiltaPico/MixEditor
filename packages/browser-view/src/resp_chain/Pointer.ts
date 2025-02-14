@@ -1,5 +1,6 @@
 import { MaybePromise } from "@mixeditor/common";
-import { MixEditor } from "@mixeditor/core";
+import { EventToEventForEmit, MixEditor } from "@mixeditor/core";
+import { DOMCaretPos } from "../common/dom";
 
 export const PointerEventDecision = {
   none: {
@@ -17,23 +18,27 @@ export type PointerEventHandler = (
   editor: MixEditor,
   node: Node,
   element: HTMLElement,
-  event: PointerEvent
+  event: EventToEventForEmit<BvPointerEvent>
 ) => MaybePromise<PointerEventDecision>;
 
-export type BvPointerDownEvent = {
+type BvPointerBaseEvent = {
+  raw: PointerEvent;
+  context: {
+    bv_handled?: boolean;
+  };
+};
+
+export interface BvPointerDownEvent extends BvPointerBaseEvent {
   type: "bv:pointer_down";
-  raw: PointerEvent;
-};
+}
 
-export type BvPointerUpEvent = {
+export interface BvPointerUpEvent extends BvPointerBaseEvent {
   type: "bv:pointer_up";
-  raw: PointerEvent;
-};
+}
 
-export type BvPointerMoveEvent = {
+export interface BvPointerMoveEvent extends BvPointerBaseEvent {
   type: "bv:pointer_move";
-  raw: PointerEvent;
-};
+}
 
 export type BvPointerEvent =
   | BvPointerDownEvent
@@ -44,3 +49,10 @@ export type BvPointerEventHandlerName =
   | "bv:handle_pointer_down"
   | "bv:handle_pointer_up"
   | "bv:handle_pointer_move";
+
+export type BvDelegatedPointerEventHandler = (
+  editor: MixEditor,
+  node: Node,
+  event: EventToEventForEmit<BvPointerEvent>,
+  caret_pos: DOMCaretPos
+) => MaybePromise<void>;

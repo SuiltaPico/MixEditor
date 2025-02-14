@@ -61,17 +61,18 @@ export function text() {
     id: "text",
     async init(ctx: MixEditorPluginContext) {
       const { editor } = ctx;
+      const { node_manager, plugin_manager, saver, selection } = editor;
       const browser_view_plugin =
-        await editor.plugin_manager.wait_plugin_inited<BrowserViewPluginResult>(
+        await plugin_manager.wait_plugin_inited<BrowserViewPluginResult>(
           "browser-view"
         );
       const { renderer_manager, bv_selection } = browser_view_plugin;
 
-      editor.saver.register_loader<TextNodeTDO>("text", (tdo) => {
+      saver.register_loader<TextNodeTDO>("text", (tdo) => {
         return new TextNode(tdo.content);
       });
 
-      editor.node_manager.register_handlers("text", {
+      node_manager.register_handlers("text", {
         save: (_, node) => {
           return {
             type: "text",
@@ -108,10 +109,25 @@ export function text() {
           }
         },
 
+        "bv:handle_delegated_pointer_down": (_, node, event, caret_pos) => {
+          const html_node = node_manager.get_context(node)?.["bv:html_node"];
+          // 应该是文本节点
+          if (!html_node || caret_pos.node !== html_node.firstChild) return;
+
+          const rect_index = caret_pos.offset;
+          selection.collapsed_select({
+            node,
+            child_path: rect_index,
+          });
+          return;
+        },
+
         "bv:handle_pointer_down": (_, node, element, event) => {
+          event.context.bv_handled = true;
+          const raw_event = event.raw;
           const result = get_caret_pos_from_point(
-            event.clientX,
-            event.clientY
+            raw_event.clientX,
+            raw_event.clientY
           )!;
           if (!result) return PointerEventDecision.none;
           editor.selection.collapsed_select({
@@ -125,7 +141,7 @@ export function text() {
           const selection = editor.selection.get_selected();
           if (selection?.type === "collapsed") return SelectedMaskDecision.skip;
 
-          const context = editor.node_manager.get_context(node);
+          const context = node_manager.get_context(node);
           const html_node = context?.["bv:html_node"];
           if (!html_node) return SelectedMaskDecision.skip;
 
@@ -155,7 +171,8 @@ export function text() {
         },
 
         "bv:handle_pointer_move": async (_, node, element, event) => {
-          if (event.buttons !== 1) return PointerEventDecision.none;
+          const raw_event = event.raw;
+          if (raw_event.buttons !== 1) return PointerEventDecision.none;
           // TODO：下面函数通过节流函数触发，确保最小采样率是 60fps
 
           // 获取选区
@@ -164,8 +181,8 @@ export function text() {
 
           // 计算鼠标所在的字符索引
           const mouse_index = get_caret_pos_from_point(
-            event.clientX,
-            event.clientY
+            raw_event.clientX,
+            raw_event.clientY
           )?.offset;
           if (!mouse_index) return PointerEventDecision.none;
 

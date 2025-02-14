@@ -1,5 +1,6 @@
 import { MaybePromise } from "@mixeditor/common";
 import {
+  BvDelegatedPointerEventHandler,
   BvPointerDownEvent,
   BvPointerEventHandlerName,
   BvPointerMoveEvent,
@@ -29,6 +30,7 @@ declare module "@mixeditor/core" {
 
   interface NodeHandlerMap
     extends Record<BvPointerEventHandlerName, PointerEventHandler> {
+    "bv:handle_delegated_pointer_down": BvDelegatedPointerEventHandler;
     /** 获取子节点的位置。 */
     "bv:get_child_caret": (
       context: MixEditor,

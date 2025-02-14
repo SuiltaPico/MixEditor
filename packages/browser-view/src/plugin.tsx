@@ -29,6 +29,7 @@ export function browser_view(props: { element: HTMLElement }) {
     id: "browser-view",
     init: (ctx: MixEditorPluginContext) => {
       const { editor } = ctx;
+      const node_manager = editor.node_manager;
 
       // 创建渲染器管理器
       const renderer_manager = new NodeRendererManager();
@@ -53,21 +54,22 @@ export function browser_view(props: { element: HTMLElement }) {
           if (!current) return;
 
           let current_node = current.mixed_node;
+
+          // 向上开始传播
           while (current_node) {
             // 执行节点的指针事件处理
-            const result = await editor.node_manager.execute_handler(
+            const result = await node_manager.execute_handler(
               handler_name,
               current_node,
               current,
               // @ts-ignore
-              params.event.raw
+              params.event
             )!;
 
             if (result.type === "stop_propagation") {
               return;
             }
-            current_node =
-              editor.node_manager.get_context(current_node)?.parent;
+            current_node = node_manager.get_parent(current_node);
           }
         };
       }
@@ -94,7 +96,7 @@ export function browser_view(props: { element: HTMLElement }) {
       editor.event_manager.add_handler("bv:key_down", handle_key_down);
 
       const default_handler = () => PointerEventDecision.none;
-      editor.node_manager.register_handlers(DefaultItemType, {
+      node_manager.register_handlers(DefaultItemType, {
         "bv:handle_pointer_down": default_handler,
         "bv:handle_pointer_up": default_handler,
         "bv:handle_pointer_move": default_handler,
@@ -104,7 +106,7 @@ export function browser_view(props: { element: HTMLElement }) {
         },
       });
 
-      editor.node_manager.register_handlers("document", {
+      node_manager.register_handlers("document", {
         "bv:handle_selected_mask": () => {
           return SelectedMaskDecision.enter;
         },

@@ -1,4 +1,12 @@
-export function get_caret_pos_from_point(x: number, y: number) {
+export type DOMCaretPos = {
+  node: Node;
+  offset: number;
+};
+
+export function get_caret_pos_from_point(
+  x: number,
+  y: number
+): DOMCaretPos | undefined {
   let range;
   let node;
   let offset;
@@ -21,7 +29,17 @@ export function get_caret_pos_from_point(x: number, y: number) {
     return;
   }
   return {
-    textNode: node,
+    node,
     offset,
   };
+}
+
+export function is_ancestor(node: Node, ancestor: Node) {
+  if (node === ancestor) return true;
+  let parent = node.parentNode;
+  while (parent) {
+    if (parent === ancestor) return true;
+    parent = parent.parentNode;
+  }
+  return false;
 }

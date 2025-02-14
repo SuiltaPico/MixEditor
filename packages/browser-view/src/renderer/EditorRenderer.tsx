@@ -27,12 +27,14 @@ export const EditorRenderer: Component<{
         editor.event_manager.emit({
           type: "bv:pointer_down",
           raw: e as PointerEvent,
+          context: {},
         });
       }}
       onPointerMove={(e) => {
         editor.event_manager.emit({
           type: "bv:pointer_move",
           raw: e,
+          context: {},
         });
       }}
       onKeyDown={(e) => {

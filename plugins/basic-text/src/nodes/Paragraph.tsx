@@ -1,11 +1,17 @@
 import {
   BrowserViewPluginResult,
+  get_caret_pos_from_point,
+  is_ancestor,
   NodeRenderer,
   PointerEventDecision,
   SelectedMaskDecision,
   WithMixEditorNode,
 } from "@mixeditor/browser-view";
-import { createSignal, WrappedSignal } from "@mixeditor/common";
+import {
+  createSignal,
+  get_closest_rect,
+  WrappedSignal,
+} from "@mixeditor/common";
 import {
   AnyTDO,
   CaretNavigateEnterDecision,
@@ -62,6 +68,7 @@ export function paragraph() {
     id: "paragraph",
     init: async (ctx: MixEditorPluginContext) => {
       const editor = ctx.editor;
+      const { node_manager, event_manager } = editor;
       const browser_view_plugin =
         await editor.plugin_manager.wait_plugin_inited<BrowserViewPluginResult>(
           "browser-view"
@@ -74,12 +81,12 @@ export function paragraph() {
         );
         const paragraph_node = new ParagraphNode(children);
         children.forEach((child) => {
-          editor.node_manager.set_parent(child, paragraph_node);
+          node_manager.set_parent(child, paragraph_node);
         });
         return paragraph_node;
       });
 
-      editor.node_manager.register_handlers("paragraph", {
+      node_manager.register_handlers("paragraph", {
         save: async (_, node) => {
           const paragraph_node = node as ParagraphNode;
           return {
@@ -88,25 +95,28 @@ export function paragraph() {
               await Promise.all(
                 paragraph_node.children
                   .get()
-                  .map((child) =>
-                    editor.node_manager.execute_handler("save", child)
-                  )
+                  .map((child) => node_manager.execute_handler("save", child))
               )
             ).filter((child) => child !== undefined),
           } satisfies ParagraphNodeTDO;
         },
+
         slice: (_, node, start, end) => {
           return new ParagraphNode(node.children.get().slice(start, end));
         },
+
         get_children_count: (_, node) => {
           return node.children.get().length;
         },
+
         get_child: (_, node, index) => {
           return node.children.get()[index] as any;
         },
+
         get_index_of_child: (_, node, child) => {
           return node.children.get().indexOf(child);
         },
+
         caret_navigate_enter: (_, node, to, direction, from) => {
           const children_count = node.children.get().length;
           const to_prev = direction === CaretNavigateDirection.Prev;
@@ -140,15 +150,50 @@ export function paragraph() {
             return CaretNavigateEnterDecision.enter_child(to);
           }
         },
-        "bv:handle_pointer_down": (_, node) => {
-          // TODO：搜索 y 轴位置最近的子节点，并触发它的 pointer_down 事件。
+
+        "bv:handle_pointer_down": async (_, node, element, event) => {
+          if (event.context.bv_handled) return PointerEventDecision.none;
+          const raw_event = event.raw;
+
+          const caret_pos = get_caret_pos_from_point(
+            raw_event.clientX,
+            raw_event.clientY
+          );
+          if (!caret_pos) return PointerEventDecision.none;
+
+          const children = node.children.get();
+
+          // 分发给对应的子节点进行处理
+          for (const child of children) {
+            const child_context = node_manager.get_context(child)!;
+            const child_element = child_context["bv:html_node"]!;
+            console.log(
+              caret_pos.node,
+              child_element,
+              is_ancestor(caret_pos.node, child_element)
+            );
+
+            if (is_ancestor(caret_pos.node, child_element)) {
+              // 交给子节点处理
+              await node_manager.execute_handler(
+                "bv:handle_delegated_pointer_down",
+                child,
+                event,
+                caret_pos
+              );
+              break;
+            }
+          }
+
           return PointerEventDecision.none;
         },
+
         "bv:handle_selected_mask": (_, node, from, to) => {
           const selection = editor.selection.get_selected();
           if (selection?.type === "collapsed") return SelectedMaskDecision.skip;
           return SelectedMaskDecision.enter;
         },
+
         "bv:get_child_caret": (_, node, child_index) => {
           const children = node.children.get();
           const root_rect =
@@ -156,8 +201,7 @@ export function paragraph() {
           if (child_index === children.length) {
             // 最后一个子节点
             const last_child = children[children.length - 1] as any;
-            const last_child_context =
-              editor.node_manager.get_context(last_child)!;
+            const last_child_context = node_manager.get_context(last_child)!;
             const rects = last_child_context["bv:html_node"]!.getClientRects();
             const last_rect = rects[rects.length - 1];
             return {
@@ -167,7 +211,7 @@ export function paragraph() {
             };
           } else {
             const child = children[child_index] as any;
-            const child_context = editor.node_manager.get_context(child)!;
+            const child_context = node_manager.get_context(child)!;
             const rects = child_context["bv:html_node"]!.getClientRects();
             const rect = rects[0];
             return {
