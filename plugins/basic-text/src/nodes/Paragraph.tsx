@@ -37,7 +37,7 @@ export interface ParagraphNodeTDO extends TransferDataObject {
 export class ParagraphNode implements Node {
   type = "paragraph" as const;
   children: WrappedSignal<Node[]>;
-  constructor(children: Node[]) {
+  constructor(public id: string, children: Node[]) {
     this.children = createSignal(children);
   }
 }
@@ -79,7 +79,7 @@ export function paragraph() {
         const children = await Promise.all(
           tdo.children.map((child) => editor.saver.load_node_from_tdo(child))
         );
-        const paragraph_node = new ParagraphNode(children);
+        const paragraph_node = new ParagraphNode(tdo.id, children);
         children.forEach((child) => {
           node_manager.set_parent(child, paragraph_node);
         });
@@ -90,6 +90,7 @@ export function paragraph() {
         save: async (_, node) => {
           const paragraph_node = node as ParagraphNode;
           return {
+            id: paragraph_node.id,
             type: "paragraph",
             children: (
               await Promise.all(
@@ -102,7 +103,10 @@ export function paragraph() {
         },
 
         slice: (_, node, start, end) => {
-          return new ParagraphNode(node.children.get().slice(start, end));
+          return new ParagraphNode(
+            node_manager.generate_id(),
+            node.children.get().slice(start, end)
+          );
         },
 
         get_children_count: (_, node) => {

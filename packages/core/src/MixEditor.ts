@@ -7,7 +7,7 @@ import { NodeHandlerMap, NodeManager } from "./node/NodeManager";
 import { HistoryManager } from "./operation/HistoryManager";
 import { OperationManager } from "./operation/Operation";
 import { MixEditorPlugin, MixEditorPluginContext } from "./plugin";
-import { Saver } from "./saver";
+import { Saver } from "./saver/saver";
 import { SelectedData, Selection } from "./selection";
 import {
   CaretNavigateDirection,
@@ -63,7 +63,7 @@ export class MixEditor {
   node_manager: NodeManager<NodeHandlerMap<AllNodeTypes>, AllNodeTypes> =
     new NodeManager<NodeHandlerMap<AllNodeTypes>, AllNodeTypes>(this);
   /** 文档。 */
-  document = createSignal(new DocumentNode());
+  document = createSignal(new DocumentNode(this.node_manager.generate_id()));
 
   /** 事件管理器。 */
   event_manager: EventManager<Events[keyof Events]> = new EventManager<
@@ -186,6 +186,7 @@ export class MixEditor {
         dtdo.children.map((child) => this.saver.load_node_from_tdo(child))
       );
       const document = new DocumentNode(
+        this.node_manager.generate_id(),
         createSignal(nodes),
         dtdo.schema_version,
         dtdo.created_at,

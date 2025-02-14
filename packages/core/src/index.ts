@@ -10,6 +10,7 @@ export * from "./operation/Operation";
 export * from "./operation/operations";
 export * from "./resp_chain/caret_navigate";
 export * from "./plugin";
-export * from "./saver";
+export * from "./saver/saver";
+export * from "./saver/TransferDataObject";
 export * from "./selection";
 export { HandlerManagerDefaultItemType as DefaultItemType } from "./common/HandlerManager";

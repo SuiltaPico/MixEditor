@@ -1,12 +1,8 @@
-import { MixEditor } from "./MixEditor";
-import { Node } from "./node/Node";
-import { DocumentTDO } from "./node/document.ts";
+import { MixEditor } from "../MixEditor.ts";
+import { Node } from "../node/Node.ts";
+import { DocumentTDO } from "../node/document.ts";
 import { MaybePromise } from "@mixeditor/common";
-
-/** 传输数据对象。用于保存和传输数据。 */
-export interface TransferDataObject {
-  type: string;
-}
+import { TransferDataObject } from "./TransferDataObject.ts";
 
 export type AnyTDO = TransferDataObject & {
   [key: string]: any;
@@ -62,7 +58,6 @@ export class Saver {
       type: "after_load",
     });
   }
-
 
   /** 保存节点为传输数据对象。 */
   async save_node_to_tdo(node: Node) {

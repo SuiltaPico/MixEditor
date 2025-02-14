@@ -1,11 +1,14 @@
-import { MaybePromise } from "@mixeditor/common";
+import { MaybePromise, UlidIdGenerator } from "@mixeditor/common";
 import { HandlerManager, ItemHandlerMap } from "../common/HandlerManager";
 import { MixEditor } from "../MixEditor";
-import { TransferDataObject } from "../saver";
+import { TransferDataObject } from "../saver/TransferDataObject";
 import { Node } from "./Node";
 import { NodeContext } from "./NodeContext";
 import { TagManager } from "./TagManager";
-import { CaretNavigateDirection, CaretNavigateEnterDecision } from "../resp_chain/caret_navigate";
+import {
+  CaretNavigateDirection,
+  CaretNavigateEnterDecision,
+} from "../resp_chain/caret_navigate";
 
 /** 节点处理器类型表。 */
 export interface NodeHandlerMap<TNode extends Node = Node>
@@ -70,6 +73,8 @@ export class NodeManager<
   TNodeHandler extends NodeHandlerMap<any> = any,
   TNode extends Node = Node
 > {
+  /** 节点 ID 管理器 */
+  private idgen = new UlidIdGenerator();
   /** 处理器管理器 */
   private handler_manager: NodeManagerHandlerManager<TNodeHandler, TNode>;
   /** 标签管理器 */
@@ -90,6 +95,11 @@ export class NodeManager<
     TNodeHandler,
     TNode
   >["execute_handler"];
+
+  /** 获取节点 ID */
+  generate_id() {
+    return this.idgen.next();
+  }
 
   /** 设置节点父节点 */
   set_parent(node: Node, parent: Node) {

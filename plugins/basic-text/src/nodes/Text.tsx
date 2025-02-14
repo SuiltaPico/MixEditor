@@ -32,7 +32,7 @@ export interface TextNodeTDO extends TransferDataObject {
 export class TextNode implements Node {
   type = "text" as const;
   text: WrappedSignal<string>;
-  constructor(text: string) {
+  constructor(public id: string, text: string) {
     this.text = createSignal(text);
   }
 }
@@ -69,12 +69,13 @@ export function text() {
       const { renderer_manager, bv_selection } = browser_view_plugin;
 
       saver.register_loader<TextNodeTDO>("text", (tdo) => {
-        return new TextNode(tdo.content);
+        return new TextNode(tdo.id, tdo.content);
       });
 
       node_manager.register_handlers("text", {
         save: (_, node) => {
           return {
+            id: node.id,
             type: "text",
             content: node.text.get(),
           } satisfies TextNodeTDO;
@@ -85,7 +86,10 @@ export function text() {
         },
 
         slice: (_, node, start, end) => {
-          return new TextNode(node.text.get().slice(start, end));
+          return new TextNode(
+            node_manager.generate_id(),
+            node.text.get().slice(start, end)
+          );
         },
 
         caret_navigate_enter: (_, node, to, direction) => {
