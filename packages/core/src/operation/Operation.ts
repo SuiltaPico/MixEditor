@@ -1,7 +1,5 @@
-import {
-  HandlerManager,
-  ItemHandlerMap
-} from "../common/HandlerManager";
+import { UlidIdGenerator } from "@mixeditor/common";
+import { HandlerManager, ItemHandlerMap } from "../common/HandlerManager";
 import { MixEditor } from "../MixEditor";
 
 /** 操作。 */
@@ -64,6 +62,8 @@ type OperationManagerHandlerManager<
 export class OperationManager<
   TOperationHandler extends OperationHandlerMap = OperationHandlerMap
 > {
+  /** 操作 ID 管理器 */
+  private idgen = new UlidIdGenerator();
   /** 处理器管理器 */
   private handler_manager: HandlerManager<
     TOperationHandler,
@@ -76,6 +76,11 @@ export class OperationManager<
   register_handlers!: OperationManagerHandlerManager<TOperationHandler>["register_handlers"];
   get_handler!: OperationManagerHandlerManager<TOperationHandler>["get_handler"];
   execute_handler!: OperationManagerHandlerManager<TOperationHandler>["execute_handler"];
+
+  /** 生成操作 ID */
+  generate_id() {
+    return this.idgen.next();
+  }
 
   constructor(public editor: MixEditor) {
     this.handler_manager = new HandlerManager<

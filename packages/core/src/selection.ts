@@ -1,7 +1,7 @@
 import { createSignal } from "@mixeditor/common";
 import { MixEditor } from "./MixEditor";
 import { Node } from "./node/Node";
-import { CaretNavigateDirection } from "./resp_chain/caret_navigate";
+import { NavigateDirection } from "./common/navigate";
 
 /** 选择节点信息。 */
 export type SelectedData = {
@@ -63,7 +63,7 @@ export class Selection {
   }
 
   /** 移动选择。 */
-  async navigate(direction: CaretNavigateDirection) {
+  async navigate(direction: NavigateDirection) {
     const current = this.selected.get();
     if (!current) return;
     // 触发光标移动事件，会触发责任链以完成移动

@@ -10,11 +10,11 @@ import { MixEditorPlugin, MixEditorPluginContext } from "./plugin";
 import { Saver } from "./saver/saver";
 import { SelectedData, Selection } from "./selection";
 import {
-  CaretNavigateDirection,
   CaretNavigateEnterDecision,
   execute_caret_navigate_from_selected_data,
   CaretNavigateFrom,
 } from "./resp_chain/caret_navigate";
+import { NavigateDirection } from "./common/navigate";
 
 export interface Events {
   /** 编辑器核心初始化。 */
@@ -45,7 +45,7 @@ export interface Events {
   /** 光标导航。 */
   caret_navigate: {
     type: "caret_navigate";
-    direction: CaretNavigateDirection;
+    direction: NavigateDirection;
   };
   /** 删除选区。 */
   delete_selected: {
@@ -108,7 +108,7 @@ export class MixEditor {
         this.selection.collapsed_select(result);
       } else if (selected.type === "extended") {
         // 退化成 collapsed 类型
-        if (direction === CaretNavigateDirection.Prev) {
+        if (direction === NavigateDirection.Prev) {
           this.selection.collapsed_select(selected.start);
         } else {
           this.selection.collapsed_select(selected.end);
@@ -153,9 +153,9 @@ export class MixEditor {
       get_index_of_child: (_, node, child) => {
         return node.children.get().indexOf(child);
       },
-      caret_navigate_enter: (_, node, to, direction, from) => {
+      handle_caret_navigate: (_, node, to, direction, from) => {
         const children_count = node.children.get().length;
-        const to_prev = direction === CaretNavigateDirection.Prev;
+        const to_prev = direction === NavigateDirection.Prev;
 
         to += direction;
 
@@ -222,11 +222,30 @@ export class MixEditor {
         const selected = this.selection.get_selected();
         if (!selected) return;
 
-        // 生成删除操作
-        // this.history_manager.execute(new DeleteRangeOperation(selected.id));
+        if (selected.type === "collapsed") {
+          // 如果是光标，不执行任何操作
+          return;
+        }
 
-        // 执行删除逻辑
-        // ...具体删除节点内容实现...
+        // 如果是范围选区，执行删除操作
+        if (selected.type === "extended") {
+          const { start, end } = selected;
+
+          // 创建并执行删除范围的操作
+          await this.history_manager.execute({
+            id: this.node_manager.generate_id(),
+            type: "delete_range",
+            data: {
+              start,
+              end,
+              start_path: [start.child_path],
+              end_path: [end.child_path],
+            },
+          });
+
+          // 删除后，将选区设置为起始位置
+          this.selection.collapsed_select(start);
+        }
       }
     );
   }

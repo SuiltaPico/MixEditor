@@ -1,10 +1,6 @@
+import { NavigateDirection } from "../common/navigate";
 import { MixEditor } from "../MixEditor";
 import { SelectedData } from "../selection";
-
-export enum CaretNavigateDirection {
-  Next = 1,
-  Prev = -1,
-}
 
 export enum CaretNavigateFrom {
   Parent = "parent",
@@ -45,13 +41,13 @@ export type CaretNavigateEnterDecision =
 export async function execute_caret_navigate_from_selected_data(
   editor: MixEditor,
   selected_data: SelectedData,
-  direction: CaretNavigateDirection,
+  direction: NavigateDirection,
   from?: CaretNavigateFrom
 ): Promise<SelectedData | undefined> {
   const node_manager = editor.node_manager;
 
   const result = await node_manager.execute_handler(
-    "caret_navigate_enter",
+    "handle_caret_navigate",
     selected_data.node,
     selected_data.child_path,
     direction,
@@ -105,7 +101,7 @@ export async function execute_caret_navigate_from_selected_data(
       {
         node: child!,
         child_path:
-          direction === CaretNavigateDirection.Next
+          direction === NavigateDirection.Next
             ? 0
             : Number.MAX_SAFE_INTEGER,
       },

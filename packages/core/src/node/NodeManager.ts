@@ -5,10 +5,13 @@ import { TransferDataObject } from "../saver/TransferDataObject";
 import { Node } from "./Node";
 import { NodeContext } from "./NodeContext";
 import { TagManager } from "./TagManager";
+import { CaretNavigateEnterDecision } from "../resp_chain/caret_navigate";
+import { NavigateDirection } from "../common/navigate";
 import {
-  CaretNavigateDirection,
-  CaretNavigateEnterDecision,
-} from "../resp_chain/caret_navigate";
+  DeleteFromPointDecision,
+  DeleteRangeDecision,
+} from "../resp_chain/delete";
+import { ParametersExceptFirst } from "../common/type";
 
 /** 节点处理器类型表。 */
 export interface NodeHandlerMap<TNode extends Node = Node>
@@ -36,17 +39,45 @@ export interface NodeHandlerMap<TNode extends Node = Node>
     from: number,
     to: number
   ): MaybePromise<TNode>;
+  /** 插入子节点 */
+  insert_children(
+    editor: MixEditor,
+    node: TNode,
+    index: number,
+    children: TNode[]
+  ): MaybePromise<void>;
+  /** 删除子节点 */
+  delete_children(
+    editor: MixEditor,
+    node: TNode,
+    from: number,
+    to: number
+  ): MaybePromise<TNode[]>;
   /** 移动节点 */
-  caret_navigate_enter(
+  handle_caret_navigate(
     editor: MixEditor,
     node: TNode,
     /** 移动目标索引 */
     to: number,
     /** 移动方向 */
-    direction: CaretNavigateDirection,
+    direction: NavigateDirection,
     /** 移动来源 */
     from?: "child" | "parent"
   ): MaybePromise<CaretNavigateEnterDecision>;
+  /** 从点删除 */
+  handle_delete_from_point(
+    editor: MixEditor,
+    node: TNode,
+    from: number,
+    direction: NavigateDirection
+  ): MaybePromise<DeleteFromPointDecision>;
+  /** 删除范围 */
+  handle_delete_range(
+    editor: MixEditor,
+    node: TNode,
+    from: number,
+    to: number
+  ): MaybePromise<DeleteRangeDecision>;
 }
 
 type NodeManagerHandlerManager<
@@ -75,6 +106,8 @@ export class NodeManager<
 > {
   /** 节点 ID 管理器 */
   private idgen = new UlidIdGenerator();
+  /** 节点 ID 映射 */
+  private id_node_map = new Map<string, Node>();
   /** 处理器管理器 */
   private handler_manager: NodeManagerHandlerManager<TNodeHandler, TNode>;
   /** 标签管理器 */
@@ -99,6 +132,27 @@ export class NodeManager<
   /** 获取节点 ID */
   generate_id() {
     return this.idgen.next();
+  }
+
+  /** 创建节点 */
+  create_node<TNodeFactory extends (id: string, ...args: any[]) => TNode>(
+    node_factory: TNodeFactory,
+    ...args: ParametersExceptFirst<TNodeFactory>
+  ) {
+    const node_id = this.idgen.next();
+    const node = node_factory(node_id, ...args);
+    this.id_node_map.set(node_id, node);
+    return node;
+  }
+
+  /** 移除节点 */
+  remove_node(node: Node) {
+    this.id_node_map.delete(node.id);
+  }
+
+  /** 获取节点 ID */
+  get_node_by_id(node_id: string) {
+    return this.id_node_map.get(node_id);
   }
 
   /** 设置节点父节点 */

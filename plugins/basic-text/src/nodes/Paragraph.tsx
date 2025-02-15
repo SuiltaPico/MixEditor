@@ -21,7 +21,7 @@ import {
   TransferDataObject,
 } from "@mixeditor/core";
 import { onMount } from "solid-js";
-import { CaretNavigateDirection } from "@mixeditor/core";
+import { NavigateDirection } from "@mixeditor/core";
 
 declare module "@mixeditor/core" {
   interface AllNodes {
@@ -121,9 +121,9 @@ export function paragraph() {
           return node.children.get().indexOf(child);
         },
 
-        caret_navigate_enter: (_, node, to, direction, from) => {
+        handle_caret_navigate: (_, node, to, direction, from) => {
           const children_count = node.children.get().length;
-          const to_prev = direction === CaretNavigateDirection.Prev;
+          const to_prev = direction === NavigateDirection.Prev;
 
           if ((to_prev && to > children_count) || (!to_prev && to < 0)) {
             // 进入时超出该方向的首边界，跳转至首边界
@@ -133,7 +133,7 @@ export function paragraph() {
           } else if (from === CaretNavigateFrom.Child) {
             // 从子区域跳入，跳转至指定索引
             return CaretNavigateEnterDecision.enter(
-              to + (direction === CaretNavigateDirection.Prev ? 0 : 1)
+              to + (direction === NavigateDirection.Prev ? 0 : 1)
             );
           } else if (from === CaretNavigateFrom.Parent) {
             // 从父区域跳入
@@ -143,7 +143,7 @@ export function paragraph() {
             }
             return CaretNavigateEnterDecision.enter(to);
           } else {
-            to += direction === CaretNavigateDirection.Prev ? -1 : 0;
+            to += direction === NavigateDirection.Prev ? -1 : 0;
             // 从自身索引移动，跳入子区域
             if ((to_prev && to < 0) || (!to_prev && to >= children_count)) {
               // 超出该方向的尾边界，则跳过

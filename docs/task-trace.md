@@ -120,8 +120,40 @@ mixeditor/
 如果在持久化处理中出现错误，会按照参数的容错选项决定是忽略错误，跳过当前对象的转换，还是直接抛出错误。
 
 ### 整体流程
-1. 事件、操作和节点的关系：事件触发事件处理器，事件处理器通常是一个责任链处理函数，它会逐个节点调用节点处理器以查找待处理的节点，而节点处理器产生和执行操作。
-	例如：用户触发了输入文本事件，输入文本事件的监听器包含寻找处理输入文本事件节点的责任链，查找成功后，节点的责任链处理器将输入文本操作在 `HistoryManager` 上推送并执行。
+#### 删除流程
+```mermaid
+graph LR
+  emit_delete_selected[触发 delete_selected 事件] --> trigger_core_delete_selected[触发 core 注册的 delete_selected 处理器]
+
+  trigger_core_delete_selected --> if_selected_is_collapsed[如果是折叠选区]
+  if_selected_is_collapsed --> execute_delete_from_point[执行 delete_from_point 责任链]
+
+  trigger_core_delete_selected --> if_selected_is_extended[如果是扩展选区]
+  if_selected_is_extended --> execute_delete_range[执行 delete_range 处理流程]
+```
+
+`delete_from_point` 责任链的执行流程：
+1. 设置当前节点为选区节点。
+2. 执行当前节点的 `delete_from_point` 行为处理器。如果出错或者未返回内容，则视为返回了 `DeleteFromPointDecision.Skip`。
+  1. 如果当前节点返回 `DeleteFromPointDecision.Done(operation?)`，视为节点自己完成了删除流程，则结束责任链。
+  2. 如果当前节点返回 `DeleteFromPointDecision.DeleteSelf`，则从父节点中尝试选中自身，并进入 `delete_range` 流程。
+3. 如果有返回的 `operation`，则推入 `HistoryManager` 中。
+
+`delete_range` 处理流程：
+1. 查找起始节点和结束节点的最邻近的公共祖先节点。
+2. 从起始节点开始，直到公共祖先节点的子节点，对每个节点执行 `delete_range` 责任链，以删除起始节点以右的所有节点。
+3. 从结束节点开始，直到公共祖先节点的子节点，对每个节点执行 `delete_range` 责任链，以删除结束节点以左的所有节点。
+4. 从起始节点在公共节点祖先节点的子节点 + 1 开始，直到结束节点在公共节点祖先节点的子节点 - 1，对公共祖先节点执行 `delete_range` 责任链，以删除起始节点和结束节点之间的所有节点。
+5. 对所有返回的 `operation`，组装成一个 `BatchOperation` 后，推入 `HistoryManager` 中。删除操作不追求全部成功，因此选用了 `BatchOperation` 而非 `Transaction`。
+
+`delete_range` 责任链：如果出错或者未返回内容，则视为返回了 `DeleteRangeDecision.Done(undefined)`。
+1. 如果当前节点返回 `DeleteRangeDecision.Done(operation?)`，视为节点自己完成了删除流程，则结束责任链。
+2. 如果当前节点返回 `DeleteRangeDecision.DeleteSelf`，则请求责任链尝试从父节点中删除自己。
+
+#### 事件、操作和节点的关系
+事件触发事件处理器，事件处理器通常是一个责任链处理函数，它会逐个节点调用节点处理器以查找待处理的节点，而节点处理器产生和执行操作。
+
+例如：用户触发了输入文本事件，输入文本事件的监听器包含寻找处理输入文本事件节点的责任链，查找成功后，节点的责任链处理器将输入文本操作在 `HistoryManager` 上推送并执行。
 
 
 ## 2. 设计浏览器视图架构

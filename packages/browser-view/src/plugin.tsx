@@ -1,5 +1,5 @@
 import {
-  CaretNavigateDirection,
+  NavigateDirection,
   DefaultItemType,
   EventHandler,
   MixEditorPluginContext,
@@ -84,9 +84,9 @@ export function browser_view(props: { element: HTMLElement }) {
         const event = params.event.raw;
         if (!event.ctrlKey) {
           if (event.key === "ArrowLeft") {
-            await editor.selection.navigate(CaretNavigateDirection.Prev);
+            await editor.selection.navigate(NavigateDirection.Prev);
           } else if (event.key === "ArrowRight") {
-            await editor.selection.navigate(CaretNavigateDirection.Next);
+            await editor.selection.navigate(NavigateDirection.Next);
           }
         } else if (event.ctrlKey) {
           if (event.key === "z") {

@@ -8,13 +8,15 @@ import {
 } from "@mixeditor/browser-view";
 import { createSignal, WrappedSignal } from "@mixeditor/common";
 import {
-  CaretNavigateDirection,
+  NavigateDirection,
   CaretNavigateEnterDecision,
   get_node_path,
   MixEditorPluginContext,
   Node,
   path_compare,
   TransferDataObject,
+  DeleteFromPointDecision,
+  DeleteRangeDecision,
 } from "@mixeditor/core";
 import { onMount } from "solid-js";
 
@@ -29,12 +31,17 @@ export interface TextNodeTDO extends TransferDataObject {
   content: string;
 }
 
-export class TextNode implements Node {
-  type = "text" as const;
+export interface TextNode extends Node {
+  type: "text";
   text: WrappedSignal<string>;
-  constructor(public id: string, text: string) {
-    this.text = createSignal(text);
-  }
+}
+
+export function create_TextNode(id: string, text: string) {
+  return {
+    id,
+    type: "text",
+    text: createSignal(text),
+  } satisfies TextNode;
 }
 
 export const TextRenderer: NodeRenderer<TextNode> = (props) => {
@@ -69,7 +76,7 @@ export function text() {
       const { renderer_manager, bv_selection } = browser_view_plugin;
 
       saver.register_loader<TextNodeTDO>("text", (tdo) => {
-        return new TextNode(tdo.id, tdo.content);
+        return node_manager.create_node(create_TextNode, tdo.content);
       });
 
       node_manager.register_handlers("text", {
@@ -86,19 +93,25 @@ export function text() {
         },
 
         slice: (_, node, start, end) => {
-          return new TextNode(
-            node_manager.generate_id(),
+          return node_manager.create_node(
+            create_TextNode,
             node.text.get().slice(start, end)
           );
         },
 
-        caret_navigate_enter: (_, node, to, direction) => {
+        delete_range: (_, node, from, to) => {
+          const text = node.text.get();
+          const new_value = text.slice(0, from) + text.slice(to);
+          node.text.set(new_value);
+        },
+
+        handle_caret_navigate: (_, node, to, direction) => {
           const text = node.text.get();
           to += direction;
           if (to > text.length) {
             to = text.length;
           }
-          const to_prev = direction === CaretNavigateDirection.Prev;
+          const to_prev = direction === NavigateDirection.Prev;
 
           if ((to_prev && to >= text.length) || (!to_prev && to <= 0)) {
             // 顺方向前边界进入
@@ -111,6 +124,42 @@ export function text() {
           } else {
             return CaretNavigateEnterDecision.enter(to);
           }
+        },
+
+        handle_delete_from_point: (_, node, from, direction) => {
+          const text = node.text.get();
+          const to_prev = direction === NavigateDirection.Prev;
+          if (to_prev) {
+            if (from <= 0) {
+              return DeleteFromPointDecision.Skip;
+            }
+            const new_value = text.slice(0, from - 1) + text.slice(from);
+
+            if (new_value.length === 0) {
+              return DeleteFromPointDecision.DeleteSelf;
+            }
+            return DeleteFromPointDecision.Done();
+          } else {
+            if (from >= text.length) {
+              return DeleteFromPointDecision.Skip;
+            }
+            const new_value = text.slice(0, from) + text.slice(from + 1);
+
+            if (new_value.length === 0) {
+              return DeleteFromPointDecision.DeleteSelf;
+            }
+            return DeleteFromPointDecision.Done();
+          }
+        },
+
+        handle_delete_range: (_, node, from, to) => {
+          const text = node.text.get();
+          const new_value = text.slice(0, from) + text.slice(to);
+
+          if (new_value.length === 0) {
+            return DeleteRangeDecision.DeleteSelf;
+          }
+          return DeleteRangeDecision.Done();
         },
 
         "bv:handle_delegated_pointer_down": (_, node, event, caret_pos) => {
