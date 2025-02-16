@@ -25,6 +25,7 @@ import {
   create_DeleteRangeOperation,
   paragraph_delete_children,
   paragraph_handle_delete_range,
+  MergeNodeDecision,
 } from "@mixeditor/core";
 import { onMount } from "solid-js";
 import { NavigateDirection } from "@mixeditor/core";
@@ -194,6 +195,23 @@ export function paragraph() {
         },
 
         handle_delete_range: paragraph_handle_delete_range,
+
+        handle_merge_node: async (_, node, target) => {
+          if (target.type !== "paragraph") {
+            return MergeNodeDecision.Skip;
+          }
+
+          const target_children = target.children.get();
+          const new_children = [...node.children.get(), ...target_children];
+          node.children.set(new_children);
+
+          // 更新子节点的父节点
+          for (const child of target_children) {
+            node_manager.set_parent(child, node);
+          }
+
+          return MergeNodeDecision.Done;
+        },
 
         "bv:handle_pointer_down": async (_, node, element, event) => {
           if (event.context.bv_handled) return PointerEventDecision.none;

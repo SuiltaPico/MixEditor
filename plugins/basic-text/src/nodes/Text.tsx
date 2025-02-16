@@ -18,6 +18,7 @@ import {
   DeleteFromPointDecision,
   create_DeleteRangeOperation,
   DeleteRangeDecision,
+  MergeNodeDecision,
 } from "@mixeditor/core";
 import { onMount } from "solid-js";
 
@@ -203,6 +204,17 @@ export function text() {
               ),
             });
           }
+        },
+
+        handle_merge_node: (_, node, target) => {
+          if (target.type !== "text") {
+            return MergeNodeDecision.Skip;
+          }
+
+          const new_text = node.text.get() + target.text.get();
+          node.text.set(new_text);
+
+          return MergeNodeDecision.Done;
         },
 
         "bv:handle_delegated_pointer_down": (_, node, event, caret_pos) => {

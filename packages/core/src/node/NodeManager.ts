@@ -10,6 +10,7 @@ import { NavigateDirection } from "../common/navigate";
 import { DeleteFromPointDecision } from "../resp_chain/delete_from_point";
 import { DeleteRangeDecision } from "../resp_chain/delete_range";
 import { ParametersExceptFirst } from "../common/type";
+import { MergeNodeDecision } from "../resp_chain/merge_node";
 
 /** 节点处理器类型表。 */
 export interface NodeHandlerMap<TNode extends Node = Node>
@@ -59,6 +60,8 @@ export interface NodeHandlerMap<TNode extends Node = Node>
     to: number
   ): MaybePromise<TransferDataObject[]>;
 
+  // handle 开头的方法用于责任链决策
+
   /** 移动节点 */
   handle_caret_navigate(
     editor: MixEditor,
@@ -86,6 +89,14 @@ export interface NodeHandlerMap<TNode extends Node = Node>
     from: number,
     to: number
   ): MaybePromise<DeleteRangeDecision>;
+
+  /** 合并节点 */
+  handle_merge_node(
+    editor: MixEditor,
+    node: TNode,
+    /** 要合并的目标节点 */
+    target: TNode,
+  ): MaybePromise<MergeNodeDecision>;
 }
 
 type NodeManagerHandlerManager<
