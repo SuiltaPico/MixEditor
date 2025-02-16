@@ -1,3 +1,4 @@
+import { MixEditor } from "../../MixEditor";
 import { Operation } from "../Operation";
 
 /** 批量操作。
@@ -23,4 +24,39 @@ export function create_BatchOperation(
     type: "batch",
     data: { operations, done: operations.map(() => false) },
   };
+}
+
+export async function execute_BatchOperation(
+  editor: MixEditor,
+  operation: BatchOperation
+) {
+  const { operations, done } = operation.data;
+  for (let i = 0; i < operations.length; i++) {
+    const operation = operations[i];
+    const result = await editor.operation_manager.execute_handler(
+      "execute",
+      operation
+    );
+    done[i] = result !== undefined;
+  }
+}
+
+export async function undo_BatchOperation(
+  editor: MixEditor,
+  operation: BatchOperation
+) {
+  const { operations, done } = operation.data;
+  for (let i = operations.length - 1; i >= 0; i--) {
+    const operation = operations[i];
+    if (!done[i]) continue;
+    await editor.operation_manager.execute_handler("undo", operation);
+  }
+}
+
+export function init_BatchOperation(editor: MixEditor) {
+  const { operation_manager } = editor;
+  operation_manager.register_handlers("batch", {
+    execute: execute_BatchOperation,
+    undo: undo_BatchOperation,
+  });
 }

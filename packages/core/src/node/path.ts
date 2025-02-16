@@ -65,18 +65,26 @@ export async function get_common_ancestor_from_node(
   let current: Node | undefined = node_manager.get_parent(node2);
   // 后-先的遍历
   while (current) {
-    ancestor_index_of_node1 = ancestors1.indexOf(current!);
-    if (ancestor_index_of_node1 !== -1) {
-      common_ancestor = current;
-      break;
-    }
-    ancestors2.push(current);
     const index = await node_manager.execute_handler(
       "get_index_of_child",
       current,
       current_child
     );
+    console.log(
+      "get_common_ancestor_from_node get_index_of_child",
+      current,
+      current_child,
+      index
+    );
     path2.push(index ?? 0);
+
+    ancestor_index_of_node1 = ancestors1.indexOf(current!);
+    if (ancestor_index_of_node1 !== -1) {
+      common_ancestor = current;
+      break;
+    }
+
+    ancestors2.push(current);
     current_child = current;
     current = node_manager.get_parent(current);
   }
@@ -84,13 +92,15 @@ export async function get_common_ancestor_from_node(
   if (!common_ancestor) return;
 
   // 后-先 -> 先-后
-  path2 = path2.reverse();
-  ancestors2 = ancestors2.reverse();
+  path2 = path2.toReversed();
+  ancestors2 = ancestors2.toReversed();
+
+  console.log("get_common_ancestor_from_node", path2);
 
   return {
     common_ancestor,
     path1,
-    path2: path1.slice(0, ancestor_index_of_node1 + 1).concat(path2),
+    path2: path1.slice(0, ancestor_index_of_node1).concat(path2),
     ancestors1,
     ancestors2: ancestors1
       .slice(0, ancestor_index_of_node1 + 1)

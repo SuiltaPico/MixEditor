@@ -1,4 +1,3 @@
-import { MaybePromise } from "@mixeditor/common";
 import { NavigateDirection } from "../common/navigate";
 import { MixEditor } from "../MixEditor";
 import { Operation } from "../operation/Operation";

@@ -1,8 +1,6 @@
 import { NavigateDirection } from "../common/navigate";
 import { Operation } from "../operation/Operation";
-import {
-  execute_delete_from_point,
-} from "../resp_chain/delete_from_point";
+import { execute_delete_from_point } from "../resp_chain/delete_from_point";
 import { execute_delete_range } from "../resp_chain/delete_range";
 import { Selected } from "../selection";
 import { EventHandler, MixEditorEventManagerContext } from "./event";
@@ -61,5 +59,7 @@ export async function handle_delete_selected(
 
   if (new_selected) {
     selection.set_selected(new_selected);
+  } else {
+    selection.collapsed_select(selected.start);
   }
 }

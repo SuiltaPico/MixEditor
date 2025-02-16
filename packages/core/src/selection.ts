@@ -40,6 +40,11 @@ export class Selection {
     this.selected.set(selected);
   }
 
+  /** 清除选区。 */
+  clear() {
+    this.selected.set(undefined);
+  }
+
   /** 折叠选择。 */
   collapsed_select(selected: SelectedData) {
     this.selected.set({

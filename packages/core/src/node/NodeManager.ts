@@ -7,9 +7,7 @@ import { NodeContext } from "./NodeContext";
 import { TagManager } from "./TagManager";
 import { CaretNavigateEnterDecision } from "../resp_chain/caret_navigate";
 import { NavigateDirection } from "../common/navigate";
-import {
-  DeleteFromPointDecision,
-} from "../resp_chain/delete_from_point";
+import { DeleteFromPointDecision } from "../resp_chain/delete_from_point";
 import { DeleteRangeDecision } from "../resp_chain/delete_range";
 import { ParametersExceptFirst } from "../common/type";
 
@@ -21,10 +19,11 @@ export interface NodeHandlerMap<TNode extends Node = Node>
     editor: MixEditor,
     node: TNode,
     index: number
-  ): MaybePromise<TNode | undefined>;
-
+  ): MaybePromise<Node | undefined>;
   /** 获取子节点数量 */
   get_children_count(editor: MixEditor, node: TNode): MaybePromise<number>;
+  /** 获取子节点 */
+  get_children(editor: MixEditor, node: TNode): MaybePromise<Node[]>;
 
   /** 获取子节点索引 */
   get_index_of_child(
@@ -58,7 +57,7 @@ export interface NodeHandlerMap<TNode extends Node = Node>
     node: TNode,
     from: number,
     to: number
-  ): MaybePromise<TNode[]>;
+  ): MaybePromise<TransferDataObject[]>;
 
   /** 移动节点 */
   handle_caret_navigate(

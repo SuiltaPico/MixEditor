@@ -117,14 +117,14 @@ export function text() {
         },
 
         delete_children: async (_, node, from, to) => {
+          // console.log("text:delete_children", node, from, to);
+
           const text = node.text.get();
           const new_value = text.slice(0, from) + text.slice(to + 1);
           const slice_text = text.slice(from, to + 1);
           node.text.set(new_value);
 
-          return [
-            create_TextTDO(node_manager.generate_id(), slice_text) as any,
-          ];
+          return [create_TextTDO(node_manager.generate_id(), slice_text)];
         },
 
         handle_caret_navigate: (_, node, to, direction) => {
@@ -189,16 +189,20 @@ export function text() {
 
         handle_delete_range: (_, node, from, to) => {
           const text = node.text.get();
-          if (text.length === 0) return DeleteRangeDecision.DeleteSelf;
+          // console.log(node, "handle_delete_range", from, to);
 
-          return DeleteRangeDecision.Done({
-            operation: operation_manager.create_operation(
-              create_DeleteRangeOperation,
-              node.id,
-              from,
-              from + 1
-            ),
-          });
+          if (from <= 0 && to >= text.length) {
+            return DeleteRangeDecision.DeleteSelf;
+          } else {
+            return DeleteRangeDecision.Done({
+              operation: operation_manager.create_operation(
+                create_DeleteRangeOperation,
+                node.id,
+                from,
+                to - 1
+              ),
+            });
+          }
         },
 
         "bv:handle_delegated_pointer_down": (_, node, event, caret_pos) => {

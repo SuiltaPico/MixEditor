@@ -3,6 +3,7 @@ export * from "./common/navigate";
 export * from "./event";
 export * from "./MixEditor";
 export * from "./node/document";
+export * from "./node/handlers";
 export * from "./node/Node";
 export * from "./node/NodeContext";
 export * from "./node/NodeManager";
@@ -15,3 +16,4 @@ export * from "./resp_chain";
 export * from "./saver/saver";
 export * from "./saver/TransferDataObject";
 export * from "./selection";
+

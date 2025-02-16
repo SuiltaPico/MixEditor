@@ -29,13 +29,13 @@ export function create_DeleteRangeOperation(
   } satisfies DeleteRangeOperation;
 }
 
-export async function execute(
+export async function execute_DeleteRangeOperation(
   editor: MixEditor,
   operation: DeleteRangeOperation
 ) {
   const { node_id, start, end } = operation.data;
   const node = editor.node_manager.get_node_by_id(node_id);
-  console.log("execute delete_range", node, start, end);
+  console.log("execute DeleteRangeOperation", node, start, end);
 
   if (!node) return;
 
@@ -50,7 +50,10 @@ export async function execute(
   operation.data.deleted_children = result as any[];
 }
 
-export async function undo(editor: MixEditor, operation: DeleteRangeOperation) {
+export async function undo_DeleteRangeOperation(
+  editor: MixEditor,
+  operation: DeleteRangeOperation
+) {
   const { node_id, start } = operation.data;
   const node = editor.node_manager.get_node_by_id(node_id);
   if (!node) return;
@@ -67,7 +70,7 @@ export async function undo(editor: MixEditor, operation: DeleteRangeOperation) {
 export function init_DeleteRangeOperation(editor: MixEditor) {
   const { operation_manager } = editor;
   operation_manager.register_handlers("delete_range", {
-    execute: execute,
-    undo: undo,
+    execute: execute_DeleteRangeOperation,
+    undo: undo_DeleteRangeOperation,
   });
 }

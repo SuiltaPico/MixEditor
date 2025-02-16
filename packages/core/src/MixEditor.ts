@@ -1,13 +1,21 @@
 import { PluginManager } from "@mauchise/plugin-manager";
 import { createSignal } from "@mixeditor/common";
 import { NavigateDirection } from "./common/navigate";
-import { handle_delete_selected, DeleteSelectedEvent } from "./event/delete_select";
+import {
+  handle_delete_selected,
+  DeleteSelectedEvent,
+} from "./event/delete_select";
 import {
   EventHandler,
   EventManager,
   MixEditorEventManagerContext,
 } from "./event/event";
-import { DocumentNode, DocumentTDO, init_document } from "./node/document";
+import {
+  create_DocumentNode,
+  DocumentNode,
+  DocumentTDO,
+  init_document,
+} from "./node/document";
 import { AllNodeTypes } from "./node/Node";
 import { NodeHandlerMap, NodeManager } from "./node/NodeManager";
 import { HistoryManager } from "./operation/HistoryManager";
@@ -17,6 +25,7 @@ import { MixEditorPlugin, MixEditorPluginContext } from "./plugin";
 import { execute_caret_navigate_from_selected_data } from "./resp_chain/caret_navigate";
 import { Saver } from "./saver/saver";
 import { SelectedData, Selection } from "./selection";
+import { paragraph_handle_delete_range } from "./node/handlers";
 
 export interface Events {
   /** 编辑器核心初始化。 */
@@ -66,7 +75,11 @@ export class MixEditor {
   node_manager: NodeManager<NodeHandlerMap<AllNodeTypes>, AllNodeTypes> =
     new NodeManager<NodeHandlerMap<AllNodeTypes>, AllNodeTypes>(this);
   /** 文档。 */
-  document = createSignal(new DocumentNode(this.node_manager.generate_id()));
+  document = createSignal(
+    this.node_manager.create_node(create_DocumentNode, {
+      children: [],
+    })
+  );
 
   /** 事件管理器。 */
   event_manager: EventManager<
@@ -157,6 +170,12 @@ export class MixEditor {
       },
       get_index_of_child: (_, node, child) => {
         return -1;
+      },
+      get_children: (_, node) => {
+        return [];
+      },
+      delete_children: async (_, node, from, to) => {
+        return [];
       },
     });
 

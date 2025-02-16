@@ -14,6 +14,21 @@ export type ParametersExceptFirst2<F> = F extends (
 ) => any
   ? R
   : never;
-export type WithEditor<T> = T & {
-  editor: MixEditor;
-};
+
+export type ReplaceParameter<
+  TFunction extends (...args: any) => any,
+  TIndex extends number,
+  TNewType
+> = TFunction extends (...args: infer R) => infer Return
+  ? (...args: ReplaceParameterHelper<R, TIndex, TNewType>) => Return
+  : never;
+
+type ReplaceParameterHelper<
+  TParameters extends any[],
+  TIndex extends number,
+  TNewType
+> = TIndex extends TParameters["length"]
+  ? TParameters
+  : TIndex extends 0
+  ? [TNewType, ...TParameters]
+  : [...TParameters[0 & TIndex], TNewType, ...TParameters[TIndex & 0]];

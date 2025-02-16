@@ -19,6 +19,12 @@ import {
   MixEditorPluginContext,
   Node,
   TransferDataObject,
+  DeleteFromPointDecision,
+  DeleteRangeDecision,
+  Operation,
+  create_DeleteRangeOperation,
+  paragraph_delete_children,
+  paragraph_handle_delete_range,
 } from "@mixeditor/core";
 import { onMount } from "solid-js";
 import { NavigateDirection } from "@mixeditor/core";
@@ -34,12 +40,27 @@ export interface ParagraphNodeTDO extends TransferDataObject {
   children: AnyTDO[];
 }
 
-export class ParagraphNode implements Node {
-  type = "paragraph" as const;
+export function create_ParagraphNodeTDO(id: string, children: AnyTDO[]) {
+  return {
+    id,
+    type: "paragraph",
+    children,
+  } satisfies ParagraphNodeTDO;
+}
+
+export interface ParagraphNode extends Node {
+  type: "paragraph";
   children: WrappedSignal<Node[]>;
-  constructor(public id: string, children: Node[]) {
-    this.children = createSignal(children);
-  }
+}
+
+export function create_ParagraphNode(id: string, children: Node[]) {
+  return {
+    id,
+    type: "paragraph",
+    children: createSignal(children, {
+      equals: false,
+    }),
+  } satisfies ParagraphNode;
 }
 
 export const ParagraphRenderer: NodeRenderer<ParagraphNode> = (props) => {
@@ -68,18 +89,21 @@ export function paragraph() {
     id: "paragraph",
     init: async (ctx: MixEditorPluginContext) => {
       const editor = ctx.editor;
-      const { node_manager, event_manager } = editor;
+      const { node_manager, operation_manager, saver } = editor;
       const browser_view_plugin =
         await editor.plugin_manager.wait_plugin_inited<BrowserViewPluginResult>(
           "browser-view"
         );
 
-      editor.saver.register_loader("paragraph", async (_tdo) => {
+      saver.register_loader("paragraph", async (_tdo) => {
         const tdo = _tdo as ParagraphNodeTDO;
         const children = await Promise.all(
-          tdo.children.map((child) => editor.saver.load_node_from_tdo(child))
+          tdo.children.map((child) => saver.load_node_from_tdo(child))
         );
-        const paragraph_node = new ParagraphNode(tdo.id, children);
+        const paragraph_node = node_manager.create_node(
+          create_ParagraphNode,
+          children
+        );
         children.forEach((child) => {
           node_manager.set_parent(child, paragraph_node);
         });
@@ -103,8 +127,8 @@ export function paragraph() {
         },
 
         slice: (_, node, start, end) => {
-          return new ParagraphNode(
-            node_manager.generate_id(),
+          return node_manager.create_node(
+            create_ParagraphNode,
             node.children.get().slice(start, end)
           );
         },
@@ -120,6 +144,8 @@ export function paragraph() {
         get_index_of_child: (_, node, child) => {
           return node.children.get().indexOf(child);
         },
+
+        delete_children: paragraph_delete_children,
 
         handle_caret_navigate: (_, node, to, direction, from) => {
           const children_count = node.children.get().length;
@@ -154,6 +180,20 @@ export function paragraph() {
             return CaretNavigateEnterDecision.EnterChild(to);
           }
         },
+
+        handle_delete_from_point: (_, node, from, direction) => {
+          const children = node.children.get();
+          const to_prev = direction === NavigateDirection.Prev;
+          if (to_prev) {
+            if (from <= 0) return DeleteFromPointDecision.Skip;
+            return DeleteFromPointDecision.EnterChild(from - 1);
+          } else {
+            if (from >= children.length) return DeleteFromPointDecision.Skip;
+            return DeleteFromPointDecision.EnterChild(from);
+          }
+        },
+
+        handle_delete_range: paragraph_handle_delete_range,
 
         "bv:handle_pointer_down": async (_, node, element, event) => {
           if (event.context.bv_handled) return PointerEventDecision.none;

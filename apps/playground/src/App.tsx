@@ -25,8 +25,7 @@ function App() {
     await editor.init();
     const { node_manager, saver } = editor;
 
-    const doc = create_DocumentTDO({
-      id: node_manager.generate_id(),
+    const doc = create_DocumentTDO(node_manager.generate_id(), {
       children: array_repeat(
         () => [
           {
@@ -105,7 +104,7 @@ function App() {
         100
       ),
     });
-    
+
     await saver.load(doc);
     console.log(editor.document.get());
   });

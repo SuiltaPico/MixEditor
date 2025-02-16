@@ -1,4 +1,4 @@
-import { createSignal } from "@mixeditor/common";
+import { createSignal, WrappedSignal } from "@mixeditor/common";
 import { MixEditor } from "../MixEditor";
 import type { Node } from "./Node";
 import { AnyTDO } from "../saver/saver";
@@ -8,23 +8,36 @@ import {
   CaretNavigateEnterDecision,
   CaretNavigateFrom,
 } from "../resp_chain/caret_navigate";
+import {
+  paragraph_delete_children,
+  paragraph_handle_delete_range,
+} from "./handlers";
 
 /** 文档。 */
-export class DocumentNode implements Node {
-  type = "document" as const;
-  
-  /** 更新最后修改时间 */
-  update() {
-    this.modified_at = new Date();
-  }
+export interface DocumentNode extends Node {
+  type: "document";
+  children: WrappedSignal<Node[]>;
+  schema_version: number;
+  created_at: Date;
+  modified_at: Date;
+}
 
-  constructor(
-    public id: string,
-    public children = createSignal<Node[]>([]),
-    public schema_version = 1,
-    public created_at = new Date(),
-    public modified_at = new Date()
-  ) {}
+export function create_DocumentNode(
+  id: string,
+  params: Partial<Omit<DocumentNode, "type" | "id" | "children">> & {
+    children: Node[];
+  }
+) {
+  return {
+    id,
+    type: "document",
+    children: createSignal(params.children ?? [], {
+      equals: false,
+    }),
+    schema_version: params.schema_version ?? 1,
+    created_at: params.created_at ?? new Date(),
+    modified_at: params.modified_at ?? new Date(),
+  } satisfies DocumentNode;
 }
 
 export interface DocumentTDO extends TransferDataObject {
@@ -36,10 +49,11 @@ export interface DocumentTDO extends TransferDataObject {
 }
 
 export function create_DocumentTDO(
-  params: Partial<Omit<DocumentTDO, "type" | "id">> & { id: string }
+  id: string,
+  params: Partial<Omit<DocumentTDO, "type" | "id">>
 ): DocumentTDO {
   return {
-    id: params.id,
+    id,
     type: "document",
     schema_version: params.schema_version ?? 1,
     created_at: params.created_at ?? new Date(),
@@ -80,6 +94,10 @@ export async function init_document(editor: MixEditor) {
     get_index_of_child: (_, node, child) => {
       return node.children.get().indexOf(child);
     },
+    get_children: (_, node) => {
+      return node.children.get();
+    },
+    delete_children: paragraph_delete_children,
     handle_caret_navigate: (_, node, to, direction, from) => {
       const children_count = node.children.get().length;
       const to_prev = direction === NavigateDirection.Prev;
@@ -104,6 +122,7 @@ export async function init_document(editor: MixEditor) {
         throw new Error("根区域不应该有自身索引移动的情况");
       }
     },
+    handle_delete_range: paragraph_handle_delete_range,
   });
 
   // 注册文档节点加载行为
@@ -112,13 +131,12 @@ export async function init_document(editor: MixEditor) {
     const nodes = await Promise.all(
       dtdo.children.map((child) => saver.load_node_from_tdo(child))
     );
-    const document = new DocumentNode(
-      node_manager.generate_id(),
-      createSignal(nodes),
-      dtdo.schema_version,
-      dtdo.created_at,
-      dtdo.modified_at
-    );
+    const document = node_manager.create_node(create_DocumentNode, {
+      children: nodes,
+      schema_version: dtdo.schema_version,
+      created_at: dtdo.created_at,
+      modified_at: dtdo.modified_at,
+    });
     for (const node of nodes) {
       node_manager.set_parent(node, document);
     }
