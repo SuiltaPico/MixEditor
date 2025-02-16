@@ -9,8 +9,8 @@ import { CaretNavigateEnterDecision } from "../resp_chain/caret_navigate";
 import { NavigateDirection } from "../common/navigate";
 import {
   DeleteFromPointDecision,
-  DeleteRangeDecision,
-} from "../resp_chain/delete";
+} from "../resp_chain/delete_from_point";
+import { DeleteRangeDecision } from "../resp_chain/delete_range";
 import { ParametersExceptFirst } from "../common/type";
 
 /** 节点处理器类型表。 */
@@ -22,16 +22,20 @@ export interface NodeHandlerMap<TNode extends Node = Node>
     node: TNode,
     index: number
   ): MaybePromise<TNode | undefined>;
+
   /** 获取子节点数量 */
   get_children_count(editor: MixEditor, node: TNode): MaybePromise<number>;
+
   /** 获取子节点索引 */
   get_index_of_child(
     editor: MixEditor,
     node: TNode,
     child: TNode
   ): MaybePromise<number>;
+
   /** 保存节点 */
   save(editor: MixEditor, node: TNode): MaybePromise<TransferDataObject>;
+
   /** 节点切片 */
   slice(
     editor: MixEditor,
@@ -39,6 +43,7 @@ export interface NodeHandlerMap<TNode extends Node = Node>
     from: number,
     to: number
   ): MaybePromise<TNode>;
+
   /** 插入子节点 */
   insert_children(
     editor: MixEditor,
@@ -46,6 +51,7 @@ export interface NodeHandlerMap<TNode extends Node = Node>
     index: number,
     children: TNode[]
   ): MaybePromise<void>;
+
   /** 删除子节点 */
   delete_children(
     editor: MixEditor,
@@ -53,6 +59,7 @@ export interface NodeHandlerMap<TNode extends Node = Node>
     from: number,
     to: number
   ): MaybePromise<TNode[]>;
+
   /** 移动节点 */
   handle_caret_navigate(
     editor: MixEditor,
@@ -64,6 +71,7 @@ export interface NodeHandlerMap<TNode extends Node = Node>
     /** 移动来源 */
     from?: "child" | "parent"
   ): MaybePromise<CaretNavigateEnterDecision>;
+
   /** 从点删除 */
   handle_delete_from_point(
     editor: MixEditor,
@@ -71,6 +79,7 @@ export interface NodeHandlerMap<TNode extends Node = Node>
     from: number,
     direction: NavigateDirection
   ): MaybePromise<DeleteFromPointDecision>;
+
   /** 删除范围 */
   handle_delete_range(
     editor: MixEditor,
@@ -143,6 +152,11 @@ export class NodeManager<
     const node = node_factory(node_id, ...args);
     this.id_node_map.set(node_id, node);
     return node;
+  }
+
+  /** 记录节点 */
+  record_node(node: Node) {
+    this.id_node_map.set(node.id, node);
   }
 
   /** 移除节点 */

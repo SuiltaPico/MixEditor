@@ -1,5 +1,10 @@
-import { Graph } from "./common/Graph";
+import { Graph } from "../common/Graph";
 import { MaybePromise } from "@mixeditor/common";
+import { MixEditor } from "../MixEditor";
+
+export type MixEditorEventManagerContext = {
+  editor: MixEditor;
+};
 
 /** 事件。 */
 export interface Event {
@@ -23,19 +28,24 @@ export interface EventForEmit {
   };
 }
 
-export type EventToEventForEmit<TEvent extends Event> = Omit<
-  TEvent,
-  "context"
-> & {
+export type EventToEventForEmit<
+  TEvent extends Event,
+  TManagerContext extends Record<string, any>
+> = Omit<TEvent, "context"> & {
   context: Exclude<TEvent["context"], undefined>;
+  manager_context: TManagerContext;
 };
 
 /** 事件监听器。*/
-export type EventHandler<TEvent extends Event = any> = (props: {
+export type EventHandler<
+  TEvent extends Event,
+  TManagerContext extends Record<string, any>
+> = (props: {
   /** 事件。*/
-  event: EventToEventForEmit<TEvent>;
+  event: EventToEventForEmit<TEvent, TManagerContext>;
   /** 等待依赖的处理器完成。*/
   wait_dependencies: () => Promise<any>;
+  manager_context: TManagerContext;
 }) => MaybePromise<void>;
 
 /** 事件管理器。
@@ -43,15 +53,21 @@ export type EventHandler<TEvent extends Event = any> = (props: {
  * ## 监听器
  * 监听器之间的依赖关系构成一个有向无环图。
  */
-export class EventManager<TEvent extends Event> {
+export class EventManager<
+  TEvent extends Event,
+  TContext extends Record<string, any>
+> {
   /** 监听器到监听器节点的映射。*/
-  private handler_relation_map = new Map<string, Graph<EventHandler<TEvent>>>();
+  private handler_relation_map = new Map<
+    string,
+    Graph<EventHandler<TEvent, TContext>>
+  >();
 
   /** 检查 `ancestor_handler` 是否是 `child_handler` 的祖先。*/
   private has_ancestor_handler(
     event_type: string,
-    ancestor_handler: EventHandler<TEvent>,
-    child_handler: EventHandler<TEvent>
+    ancestor_handler: EventHandler<TEvent, TContext>,
+    child_handler: EventHandler<TEvent, TContext>
   ) {
     const relation_graph = this.handler_relation_map.get(event_type);
     if (!relation_graph) return false;
@@ -69,11 +85,12 @@ export class EventManager<TEvent extends Event> {
     handler: EventHandler<
       TEvent & {
         type: TEventType;
-      }
+      },
+      TContext
     >,
-    dependencies?: Iterable<EventHandler<TEvent>>
+    dependencies?: Iterable<EventHandler<TEvent, TContext>>
   ) {
-    const _handler = handler as EventHandler<TEvent>;
+    const _handler = handler as EventHandler<TEvent, TContext>;
 
     // 获取或创建关系映射表
     if (!this.handler_relation_map.has(type)) {
@@ -106,10 +123,11 @@ export class EventManager<TEvent extends Event> {
     handler: EventHandler<
       TEvent & {
         event_type: TEventType;
-      }
+      },
+      TContext
     >
   ) {
-    const _handler = handler as EventHandler<TEvent>;
+    const _handler = handler as EventHandler<TEvent, TContext>;
     const relation_map = this.handler_relation_map.get(event_type);
     if (relation_map) {
       relation_map.delete_item(_handler);
@@ -141,7 +159,7 @@ export class EventManager<TEvent extends Event> {
     const handlers = relation_graph.get_items();
 
     const promise_map = new Map<
-      EventHandler<TEvent>,
+      EventHandler<TEvent, TContext>,
       PromiseWithResolvers<void>
     >();
     for (const handler of handlers) {
@@ -157,7 +175,7 @@ export class EventManager<TEvent extends Event> {
     const promises = handlers.map(async (handler) => {
       try {
         await handler({
-          event: event as any as EventToEventForEmit<TEvent>,
+          event: event as any as EventToEventForEmit<TEvent, TContext>,
           wait_dependencies: () => {
             const parents = relation_graph.get_parents(handler);
             if (!parents) return Promise.resolve();
@@ -165,6 +183,7 @@ export class EventManager<TEvent extends Event> {
               parents.map((parent) => promise_map.get(parent)!.promise)
             );
           },
+          manager_context: this.context,
         });
         promise_map.get(handler)!.resolve();
       } catch (error) {
@@ -180,5 +199,5 @@ export class EventManager<TEvent extends Event> {
     return { context: event.context };
   }
 
-  constructor() {}
+  constructor(public context: TContext) {}
 }

@@ -21,12 +21,12 @@ export type CaretNavigateEnterDecisionSkip = {
 
 export const CaretNavigateEnterDecision = {
   /** 不接受进入，跳过当前节点。 */
-  skip: { type: "skip" } satisfies CaretNavigateEnterDecisionSkip,
+  Skip: { type: "skip" } satisfies CaretNavigateEnterDecisionSkip,
   /** 接受进入，并把光标移动到指定位置。 */
-  enter: (to: number = 0) =>
+  Enter: (to: number = 0) =>
     ({ type: "enter_self", to } satisfies CaretNavigateEnterDecisionEnterSelf),
   /** 接受进入，交给此节点内部的指定节点处理。 */
-  enter_child: (to: number = 0) =>
+  EnterChild: (to: number = 0) =>
     ({
       type: "enter_child",
       to,

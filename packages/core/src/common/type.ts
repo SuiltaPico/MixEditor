@@ -1,4 +1,9 @@
-export type ParametersExceptFirst<F> = F extends (arg0: any, ...rest: infer R) => any
+import { MixEditor } from "../MixEditor";
+
+export type ParametersExceptFirst<F> = F extends (
+  arg0: any,
+  ...rest: infer R
+) => any
   ? R
   : never;
 
@@ -9,3 +14,6 @@ export type ParametersExceptFirst2<F> = F extends (
 ) => any
   ? R
   : never;
+export type WithEditor<T> = T & {
+  editor: MixEditor;
+};

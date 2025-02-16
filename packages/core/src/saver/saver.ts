@@ -26,6 +26,9 @@ export class Saver {
     const emit_result = await this.editor.event_manager.emit(
       {
         type: "save",
+        context: {
+          save_result: null,
+        },
       },
       {
         fast_fail: true,

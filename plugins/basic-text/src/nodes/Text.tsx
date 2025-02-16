@@ -16,6 +16,7 @@ import {
   path_compare,
   TransferDataObject,
   DeleteFromPointDecision,
+  create_DeleteRangeOperation,
   DeleteRangeDecision,
 } from "@mixeditor/core";
 import { onMount } from "solid-js";
@@ -29,6 +30,14 @@ declare module "@mixeditor/core" {
 export interface TextNodeTDO extends TransferDataObject {
   type: "text";
   content: string;
+}
+
+export function create_TextTDO(id: string, content: string) {
+  return {
+    id,
+    type: "text",
+    content,
+  } satisfies TextNodeTDO;
 }
 
 export interface TextNode extends Node {
@@ -68,15 +77,23 @@ export function text() {
     id: "text",
     async init(ctx: MixEditorPluginContext) {
       const { editor } = ctx;
-      const { node_manager, plugin_manager, saver, selection } = editor;
+      const {
+        node_manager,
+        plugin_manager,
+        saver,
+        selection,
+        operation_manager,
+      } = editor;
       const browser_view_plugin =
         await plugin_manager.wait_plugin_inited<BrowserViewPluginResult>(
           "browser-view"
         );
-      const { renderer_manager, bv_selection } = browser_view_plugin;
+      const { renderer_manager } = browser_view_plugin;
 
       saver.register_loader<TextNodeTDO>("text", (tdo) => {
-        return node_manager.create_node(create_TextNode, tdo.content);
+        const node = create_TextNode(tdo.id, tdo.content);
+        node_manager.record_node(node);
+        return node;
       });
 
       node_manager.register_handlers("text", {
@@ -99,10 +116,15 @@ export function text() {
           );
         },
 
-        delete_range: (_, node, from, to) => {
+        delete_children: async (_, node, from, to) => {
           const text = node.text.get();
-          const new_value = text.slice(0, from) + text.slice(to);
+          const new_value = text.slice(0, from) + text.slice(to + 1);
+          const slice_text = text.slice(from, to + 1);
           node.text.set(new_value);
+
+          return [
+            create_TextTDO(node_manager.generate_id(), slice_text) as any,
+          ];
         },
 
         handle_caret_navigate: (_, node, to, direction) => {
@@ -115,14 +137,14 @@ export function text() {
 
           if ((to_prev && to >= text.length) || (!to_prev && to <= 0)) {
             // 顺方向前边界进入
-            return CaretNavigateEnterDecision.enter(
+            return CaretNavigateEnterDecision.Enter(
               to_prev ? text.length - 1 : 1
             );
           } else if ((to_prev && to <= 0) || (!to_prev && to >= text.length)) {
             // 顺方向后边界跳过
-            return CaretNavigateEnterDecision.skip;
+            return CaretNavigateEnterDecision.Skip;
           } else {
-            return CaretNavigateEnterDecision.enter(to);
+            return CaretNavigateEnterDecision.Enter(to);
           }
         },
 
@@ -130,36 +152,53 @@ export function text() {
           const text = node.text.get();
           const to_prev = direction === NavigateDirection.Prev;
           if (to_prev) {
-            if (from <= 0) {
-              return DeleteFromPointDecision.Skip;
-            }
-            const new_value = text.slice(0, from - 1) + text.slice(from);
+            if (from <= 0) return DeleteFromPointDecision.Skip;
+            // 直接通过原文本长度判断是否需要删除自身
+            if (text.length === 1) return DeleteFromPointDecision.DeleteSelf;
 
-            if (new_value.length === 0) {
-              return DeleteFromPointDecision.DeleteSelf;
-            }
-            return DeleteFromPointDecision.Done();
+            return DeleteFromPointDecision.Done({
+              operation: operation_manager.create_operation(
+                create_DeleteRangeOperation,
+                node.id,
+                from - 1,
+                from
+              ),
+              selected: {
+                type: "collapsed",
+                start: {
+                  node,
+                  child_path: from - 1,
+                },
+              },
+            });
           } else {
-            if (from >= text.length) {
-              return DeleteFromPointDecision.Skip;
-            }
-            const new_value = text.slice(0, from) + text.slice(from + 1);
+            if (from >= text.length) return DeleteFromPointDecision.Skip;
+            // 直接通过原文本长度判断是否需要删除自身
+            if (text.length === 1) return DeleteFromPointDecision.DeleteSelf;
 
-            if (new_value.length === 0) {
-              return DeleteFromPointDecision.DeleteSelf;
-            }
-            return DeleteFromPointDecision.Done();
+            return DeleteFromPointDecision.Done({
+              operation: operation_manager.create_operation(
+                create_DeleteRangeOperation,
+                node.id,
+                from,
+                from + 1
+              ),
+            });
           }
         },
 
         handle_delete_range: (_, node, from, to) => {
           const text = node.text.get();
-          const new_value = text.slice(0, from) + text.slice(to);
+          if (text.length === 0) return DeleteRangeDecision.DeleteSelf;
 
-          if (new_value.length === 0) {
-            return DeleteRangeDecision.DeleteSelf;
-          }
-          return DeleteRangeDecision.Done();
+          return DeleteRangeDecision.Done({
+            operation: operation_manager.create_operation(
+              create_DeleteRangeOperation,
+              node.id,
+              from,
+              from + 1
+            ),
+          });
         },
 
         "bv:handle_delegated_pointer_down": (_, node, event, caret_pos) => {

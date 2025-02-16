@@ -3,6 +3,8 @@ import {
   DefaultItemType,
   EventHandler,
   MixEditorPluginContext,
+  MixEditorEventManagerContext,
+  create_DeleteSelectedEvent,
 } from "@mixeditor/core";
 import { render } from "solid-js/web";
 import {
@@ -41,7 +43,11 @@ export function browser_view(props: { element: HTMLElement }) {
       function generate_handler<TEvent extends BvPointerEvent>(
         handler_name: BvPointerEventHandlerName
       ) {
-        return async (params: Parameters<EventHandler<TEvent>>[0]) => {
+        return async (
+          params: Parameters<
+            EventHandler<TEvent, MixEditorEventManagerContext>
+          >[0]
+        ) => {
           const target = (params.event as any).raw
             .target as WithMixEditorNode<HTMLElement>;
           let current = target;
@@ -79,7 +85,9 @@ export function browser_view(props: { element: HTMLElement }) {
       const handle_pointer_move = generate_handler("bv:handle_pointer_move");
 
       async function handle_key_down(
-        params: Parameters<EventHandler<BvKeyDownEvent>>[0]
+        params: Parameters<
+          EventHandler<BvKeyDownEvent, MixEditorEventManagerContext>
+        >[0]
       ) {
         const event = params.event.raw;
         if (!event.ctrlKey) {
@@ -94,6 +102,16 @@ export function browser_view(props: { element: HTMLElement }) {
           } else if (event.key === "y") {
             await editor.history_manager.redo();
           }
+        }
+
+        if (event.key === "Backspace") {
+          await editor.event_manager.emit(
+            create_DeleteSelectedEvent(NavigateDirection.Prev)
+          );
+        } else if (event.key === "Delete") {
+          await editor.event_manager.emit(
+            create_DeleteSelectedEvent(NavigateDirection.Next)
+          );
         }
       }
 

@@ -6,6 +6,7 @@ export interface DeleteRangeOperation extends Operation {
     node_id: string;
     start: number;
     end: number;
+    /** 被删除的子节点 */
     deleted_children: Node[];
   };
 }
@@ -28,13 +29,16 @@ export function create_DeleteRangeOperation(
   } satisfies DeleteRangeOperation;
 }
 
-export async function execute_DeleteRangeOperation(
+export async function execute(
   editor: MixEditor,
   operation: DeleteRangeOperation
 ) {
   const { node_id, start, end } = operation.data;
   const node = editor.node_manager.get_node_by_id(node_id);
+  console.log("execute delete_range", node, start, end);
+
   if (!node) return;
+
   const result = await editor.node_manager.execute_handler(
     "delete_children",
     node,
@@ -42,14 +46,28 @@ export async function execute_DeleteRangeOperation(
     end
   );
   if (!result) return;
+
+  operation.data.deleted_children = result as any[];
 }
 
-export async function undo_DeleteRangeOperation(
-  editor: MixEditor,
-  operation: DeleteRangeOperation
-) {
-  const { node_id, start, end } = operation.data;
+export async function undo(editor: MixEditor, operation: DeleteRangeOperation) {
+  const { node_id, start } = operation.data;
   const node = editor.node_manager.get_node_by_id(node_id);
+  if (!node) return;
 
-  // TODO
+  const result = await editor.node_manager.execute_handler(
+    "insert_children",
+    node,
+    start,
+    operation.data.deleted_children as any[]
+  );
+  if (!result) return;
+}
+
+export function init_DeleteRangeOperation(editor: MixEditor) {
+  const { operation_manager } = editor;
+  operation_manager.register_handlers("delete_range", {
+    execute: execute,
+    undo: undo,
+  });
 }

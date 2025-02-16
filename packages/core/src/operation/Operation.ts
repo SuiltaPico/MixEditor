@@ -1,6 +1,7 @@
 import { UlidIdGenerator } from "@mixeditor/common";
 import { HandlerManager, ItemHandlerMap } from "../common/HandlerManager";
 import { MixEditor } from "../MixEditor";
+import { ParametersExceptFirst } from "../common/type";
 
 /** 操作。 */
 export interface Operation<TData = any> {
@@ -80,6 +81,18 @@ export class OperationManager<
   /** 生成操作 ID */
   generate_id() {
     return this.idgen.next();
+  }
+
+  /** 创建操作 */
+  create_operation<
+    TOperationFactory extends (id: string, ...args: any[]) => Operation
+  >(
+    operation_factory: TOperationFactory,
+    ...args: ParametersExceptFirst<TOperationFactory>
+  ) {
+    const id = this.generate_id();
+    const operation = operation_factory(id, ...args);
+    return operation;
   }
 
   constructor(public editor: MixEditor) {

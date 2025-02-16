@@ -127,31 +127,31 @@ export function paragraph() {
 
           if ((to_prev && to > children_count) || (!to_prev && to < 0)) {
             // 进入时超出该方向的首边界，跳转至首边界
-            return CaretNavigateEnterDecision.enter(
+            return CaretNavigateEnterDecision.Enter(
               to_prev ? children_count : 0
             );
           } else if (from === CaretNavigateFrom.Child) {
             // 从子区域跳入，跳转至指定索引
-            return CaretNavigateEnterDecision.enter(
+            return CaretNavigateEnterDecision.Enter(
               to + (direction === NavigateDirection.Prev ? 0 : 1)
             );
           } else if (from === CaretNavigateFrom.Parent) {
             // 从父区域跳入
             if ((to_prev && to < 0) || (!to_prev && to >= children_count)) {
               // 超出该方向的尾边界，则跳过
-              return CaretNavigateEnterDecision.skip;
+              return CaretNavigateEnterDecision.Skip;
             }
-            return CaretNavigateEnterDecision.enter(to);
+            return CaretNavigateEnterDecision.Enter(to);
           } else {
             to += direction === NavigateDirection.Prev ? -1 : 0;
             // 从自身索引移动，跳入子区域
             if ((to_prev && to < 0) || (!to_prev && to >= children_count)) {
               // 超出该方向的尾边界，则跳过
-              return CaretNavigateEnterDecision.skip;
+              return CaretNavigateEnterDecision.Skip;
             }
 
             // 跳入子区域
-            return CaretNavigateEnterDecision.enter_child(to);
+            return CaretNavigateEnterDecision.EnterChild(to);
           }
         },
 
