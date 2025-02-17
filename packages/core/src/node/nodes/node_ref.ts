@@ -1,5 +1,5 @@
 import { MixEditor } from "../../MixEditor";
-import { TransferDataObject } from "../../saver/TransferDataObject";
+import { TransferDataObject } from "../tdo";
 
 export interface NodeRefTDO extends TransferDataObject {
   type: "node_ref";

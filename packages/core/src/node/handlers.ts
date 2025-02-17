@@ -1,11 +1,9 @@
-import { MaybePromise, WrappedSignal } from "@mixeditor/common";
-import { ReplaceParameter } from "../common/type";
+import { WrappedSignal } from "@mixeditor/common";
 import { MixEditor } from "../MixEditor";
 import { create_DeleteRangeOperation } from "../operation/operations";
 import { DeleteRangeDecision } from "../resp_chain";
+import { Node } from "./node";
 import { NodeHandlerMap } from "./node_manager";
-import { TransferDataObject } from "../saver/TransferDataObject";
-import { Node } from "./Node";
 
 export const paragraph_handle_delete_range: NodeHandlerMap["handle_delete_range"] =
   (editor, node, start, end) => {

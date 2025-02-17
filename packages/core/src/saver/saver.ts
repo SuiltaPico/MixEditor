@@ -1,8 +1,8 @@
 import { MixEditor } from "../MixEditor.ts";
-import { Node } from "../node/Node.ts";
+import { Node } from "../node/node.ts";
 import { DocumentTDO } from "../node/nodes/document.ts";
 import { MaybePromise } from "@mixeditor/common";
-import { TransferDataObject } from "./TransferDataObject.ts";
+import { TransferDataObject } from "../node/tdo.ts";
 
 export type AnyTDO = TransferDataObject & {
   [key: string]: any;

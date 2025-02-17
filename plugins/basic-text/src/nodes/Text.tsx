@@ -120,8 +120,6 @@ export function text() {
         },
 
         delete_children: async (_, node, from, to) => {
-          // console.log("text:delete_children", node, from, to);
-
           const text = node.text.get();
           const new_value = text.slice(0, from) + text.slice(to + 1);
           const slice_text = text.slice(from, to + 1);

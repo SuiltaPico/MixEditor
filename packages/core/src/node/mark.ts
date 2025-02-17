@@ -1,4 +1,4 @@
-import { Node } from "./Node";
+import { Node } from "./node";
 
 /** 节点标记 */
 export interface Mark {

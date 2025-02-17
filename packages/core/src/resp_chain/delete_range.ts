@@ -1,5 +1,5 @@
 import { MixEditor } from "../MixEditor";
-import { Node } from "../node/Node";
+import { Node } from "../node/node";
 import {
   get_common_ancestor_from_node,
   is_ancestor,

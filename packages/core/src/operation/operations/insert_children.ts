@@ -1,5 +1,5 @@
 import { MixEditor } from "../../MixEditor";
-import { TransferDataObject } from "../../saver/TransferDataObject";
+import { TransferDataObject } from "../../node/tdo";
 import { Operation } from "../Operation";
 
 export interface InsertChildrenOperation extends Operation {

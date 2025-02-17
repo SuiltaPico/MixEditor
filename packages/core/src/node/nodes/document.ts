@@ -1,8 +1,8 @@
 import { createSignal, WrappedSignal } from "@mixeditor/common";
 import { MixEditor } from "../../MixEditor";
-import type { Node } from "../Node";
+import type { Node } from "../node";
 import { AnyTDO } from "../../saver/saver";
-import { TransferDataObject } from "../../saver/TransferDataObject";
+import { TransferDataObject } from "../tdo";
 import { NavigateDirection } from "../../common/navigate";
 import {
   CaretNavigateEnterDecision,

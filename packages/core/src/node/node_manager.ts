@@ -1,10 +1,9 @@
 import { MaybePromise, UlidIdGenerator } from "@mixeditor/common";
 import { HandlerManager, ItemHandlerMap } from "../common/HandlerManager";
 import { MixEditor } from "../MixEditor";
-import { TransferDataObject } from "../saver/TransferDataObject";
-import { Node } from "./Node";
+import { TransferDataObject } from "./tdo";
+import { Node } from "./node";
 import { NodeContext } from "./node_context";
-import { TagManager } from "./TagManager";
 import { CaretNavigateEnterDecision } from "../resp_chain/caret_navigate";
 import { NavigateDirection } from "../common/navigate";
 import { DeleteFromPointDecision } from "../resp_chain/delete_from_point";
@@ -35,7 +34,6 @@ export interface NodeHandlerMap<TNode extends Node = Node>
 
   /** 获取节点标记 */
   get_marks(editor: MixEditor, node: TNode): MaybePromise<Mark[]>;
-
   /** 设置节点标记 */
   set_marks(editor: MixEditor, node: TNode, marks: Mark[]): MaybePromise<void>;
 
@@ -110,20 +108,6 @@ type NodeManagerHandlerManager<
   TNode extends Node = Node
 > = HandlerManager<TNodeHandler, TNode, Node, MixEditor>;
 
-/** 获取节点祖先（不包含自身） */
-export async function get_node_ancestors(
-  node_manager: NodeManager<NodeHandlerMap<any>, any>,
-  node: Node
-) {
-  let result: Node[] = [];
-  let current: Node | undefined = node_manager.get_context(node)?.parent;
-  while (current) {
-    result.push(current);
-    current = node_manager.get_context(current)?.parent;
-  }
-  return result.reverse();
-}
-
 /** 节点管理器 */
 export class NodeManager<
   TNodeHandler extends NodeHandlerMap<any> = any,
@@ -135,8 +119,6 @@ export class NodeManager<
   private id_node_map = new Map<string, Node>();
   /** 处理器管理器 */
   private handler_manager: NodeManagerHandlerManager<TNodeHandler, TNode>;
-  /** 标签管理器 */
-  private tag_manager = new TagManager<string>();
   /** 节点上下文 */
   private node_contexts = new WeakMap<Node, NodeContext>();
 

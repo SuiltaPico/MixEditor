@@ -1,4 +1,4 @@
-import { Node } from "./Node";
+import { Node } from "./node";
 import { NodeHandlerMap, NodeManager } from "./node_manager";
 
 /** 获取节点路径 */

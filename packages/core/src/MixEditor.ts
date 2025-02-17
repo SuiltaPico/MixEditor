@@ -2,22 +2,22 @@ import { PluginManager } from "@mauchise/plugin-manager";
 import { createSignal } from "@mixeditor/common";
 import { NavigateDirection } from "./common/navigate";
 import {
-  handle_delete_selected,
   DeleteSelectedEvent,
+  handle_delete_selected,
 } from "./event/delete_select";
 import {
   EventHandler,
   EventManager,
   MixEditorEventManagerContext,
 } from "./event/event";
+import { MarkManager } from "./node/mark_manager";
+import { AllNodeTypes } from "./node/node";
+import { NodeHandlerMap, NodeManager } from "./node/node_manager";
 import {
   create_DocumentNode,
-  DocumentNode,
   DocumentTDO,
-  init_document,
+  init_document
 } from "./node/nodes/document";
-import { AllNodeTypes } from "./node/Node";
-import { NodeHandlerMap, NodeManager } from "./node/node_manager";
 import { HistoryManager } from "./operation/HistoryManager";
 import { OperationManager } from "./operation/Operation";
 import { init_operations } from "./operation/operations";
@@ -25,7 +25,6 @@ import { MixEditorPlugin, MixEditorPluginContext } from "./plugin";
 import { execute_caret_navigate_from_selected_data } from "./resp_chain/caret_navigate";
 import { Saver } from "./saver/saver";
 import { SelectedData, Selection } from "./selection";
-import { paragraph_handle_delete_range } from "./node/handlers";
 
 export interface Events {
   /** 编辑器核心初始化。 */
@@ -94,6 +93,8 @@ export class MixEditor {
   selection = new Selection(this);
   /** 文档保存器。 */
   saver = new Saver(this);
+  /** 文档标记管理器。 */
+  mark_manager = new MarkManager(this);
 
   /** 事件处理器。 */
   handlers = {
