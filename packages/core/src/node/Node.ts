@@ -1,4 +1,4 @@
-import { DocumentNode } from "./document";
+import { DocumentNode } from "./nodes/document";
 
 export type MaybeNode = Node | undefined;
 

@@ -33,11 +33,27 @@ export async function execute_BatchOperation(
   const { operations, done } = operation.data;
   for (let i = 0; i < operations.length; i++) {
     const operation = operations[i];
-    const result = await editor.operation_manager.execute_handler(
-      "execute",
-      operation
-    );
-    done[i] = result !== undefined;
+    try {
+      const result = await editor.operation_manager.execute_handler(
+        "execute",
+        operation
+      );
+      if (result) {
+        if (result.dont_record) {
+          operations.splice(i, 1);
+          done.splice(i, 1);
+          i--;
+        }
+        if (result.children) {
+          operations.splice(i + 1, 0, ...result.children);
+          done.splice(i + 1, 0, ...result.children.map(() => false));
+        }
+      }
+      done[i] = true;
+    } catch (error) {
+      done[i] = false;
+      throw error;
+    }
   }
 }
 

@@ -1,4 +1,4 @@
-import { UlidIdGenerator } from "@mixeditor/common";
+import { MaybePromise, UlidIdGenerator } from "@mixeditor/common";
 import { HandlerManager, ItemHandlerMap } from "../common/HandlerManager";
 import { MixEditor } from "../MixEditor";
 import { ParametersExceptFirst } from "../common/type";
@@ -20,36 +20,44 @@ export interface Operation<TData = any> {
 /** 操作的正在执行的行为。*/
 export type OperationRunningBehavior = "execute" | "undo";
 
+/** 操作执行结果。*/
+export type OperationExecuteResult = {
+  /** 是否不被记录。*/
+  dont_record: boolean;
+  /** 附加执行的操作。*/
+  children: Operation[];
+};
+
 /** 操作处理器接口。 */
 export interface OperationHandlerMap<TData = any>
   extends ItemHandlerMap<MixEditor, Operation<TData>> {
   /** 执行操作。*/
-  execute(editor: MixEditor, operation: Operation<TData>): void | Promise<void>;
+  execute(
+    editor: MixEditor,
+    operation: Operation<TData>
+  ): MaybePromise<OperationExecuteResult | void>;
   /** 撤销操作。*/
-  undo(editor: MixEditor, operation: Operation<TData>): void | Promise<void>;
+  undo(editor: MixEditor, operation: Operation<TData>): MaybePromise<void>;
   /** 取消操作。*/
   cancel(
     editor: MixEditor,
     operation: Operation<TData>,
     /** 正在执行的操作行为。如果为空，则表示没有正在执行的行为。*/
     running_behavior?: OperationRunningBehavior
-  ): void | Promise<void>;
+  ): MaybePromise<void>;
   /** 合并操作。*/
-  merge(
-    editor: MixEditor,
-    operation: Operation<TData>
-  ): boolean | Promise<boolean>;
+  merge(editor: MixEditor, operation: Operation<TData>): MaybePromise<boolean>;
   /** 处理错误。处理 `execute` 或者 `undo` 产生的错误，恢复文档至正确的状态。 */
   handle_error(
     editor: MixEditor,
     operation: Operation<TData>,
     error: Error
-  ): void | Promise<void>;
+  ): MaybePromise<void>;
   /** 序列化操作。 */
   serialize(
     editor: MixEditor,
     operation: Operation<TData>
-  ): string | Promise<string>;
+  ): MaybePromise<string>;
 }
 
 type OperationManagerHandlerManager<

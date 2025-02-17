@@ -3,7 +3,7 @@ import { HandlerManager, ItemHandlerMap } from "../common/HandlerManager";
 import { MixEditor } from "../MixEditor";
 import { TransferDataObject } from "../saver/TransferDataObject";
 import { Node } from "./Node";
-import { NodeContext } from "./NodeContext";
+import { NodeContext } from "./node_context";
 import { TagManager } from "./TagManager";
 import { CaretNavigateEnterDecision } from "../resp_chain/caret_navigate";
 import { NavigateDirection } from "../common/navigate";
@@ -11,6 +11,7 @@ import { DeleteFromPointDecision } from "../resp_chain/delete_from_point";
 import { DeleteRangeDecision } from "../resp_chain/delete_range";
 import { ParametersExceptFirst } from "../common/type";
 import { MergeNodeDecision } from "../resp_chain/merge_node";
+import { Mark } from "./mark";
 
 /** 节点处理器类型表。 */
 export interface NodeHandlerMap<TNode extends Node = Node>
@@ -25,13 +26,18 @@ export interface NodeHandlerMap<TNode extends Node = Node>
   get_children_count(editor: MixEditor, node: TNode): MaybePromise<number>;
   /** 获取子节点 */
   get_children(editor: MixEditor, node: TNode): MaybePromise<Node[]>;
-
   /** 获取子节点索引 */
   get_index_of_child(
     editor: MixEditor,
     node: TNode,
     child: TNode
   ): MaybePromise<number>;
+
+  /** 获取节点标记 */
+  get_marks(editor: MixEditor, node: TNode): MaybePromise<Mark[]>;
+
+  /** 设置节点标记 */
+  set_marks(editor: MixEditor, node: TNode, marks: Mark[]): MaybePromise<void>;
 
   /** 保存节点 */
   save(editor: MixEditor, node: TNode): MaybePromise<TransferDataObject>;
@@ -49,7 +55,7 @@ export interface NodeHandlerMap<TNode extends Node = Node>
     editor: MixEditor,
     node: TNode,
     index: number,
-    children: TNode[]
+    children: TransferDataObject[]
   ): MaybePromise<void>;
 
   /** 删除子节点 */
@@ -95,7 +101,7 @@ export interface NodeHandlerMap<TNode extends Node = Node>
     editor: MixEditor,
     node: TNode,
     /** 要合并的目标节点 */
-    target: TNode,
+    target: TNode
   ): MaybePromise<MergeNodeDecision>;
 }
 

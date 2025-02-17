@@ -1,17 +1,17 @@
 import { createSignal, WrappedSignal } from "@mixeditor/common";
-import { MixEditor } from "../MixEditor";
-import type { Node } from "./Node";
-import { AnyTDO } from "../saver/saver";
-import { TransferDataObject } from "../saver/TransferDataObject";
-import { NavigateDirection } from "../common/navigate";
+import { MixEditor } from "../../MixEditor";
+import type { Node } from "../Node";
+import { AnyTDO } from "../../saver/saver";
+import { TransferDataObject } from "../../saver/TransferDataObject";
+import { NavigateDirection } from "../../common/navigate";
 import {
   CaretNavigateEnterDecision,
   CaretNavigateFrom,
-} from "../resp_chain/caret_navigate";
+} from "../../resp_chain/caret_navigate";
 import {
   paragraph_delete_children,
   paragraph_handle_delete_range,
-} from "./handlers";
+} from "../handlers";
 
 /** 文档。 */
 export interface DocumentNode extends Node {

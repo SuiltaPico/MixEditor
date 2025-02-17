@@ -3,7 +3,7 @@ import { ReplaceParameter } from "../common/type";
 import { MixEditor } from "../MixEditor";
 import { create_DeleteRangeOperation } from "../operation/operations";
 import { DeleteRangeDecision } from "../resp_chain";
-import { NodeHandlerMap } from "./NodeManager";
+import { NodeHandlerMap } from "./node_manager";
 import { TransferDataObject } from "../saver/TransferDataObject";
 import { Node } from "./Node";
 

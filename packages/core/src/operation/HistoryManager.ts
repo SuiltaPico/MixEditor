@@ -221,13 +221,14 @@ export class HistoryManager {
 
       // 执行操作
       try {
+        let result;
         if (execution.type === "undo") {
           await this.operation_manager.execute_handler(
             "undo",
             execution.operation
           );
         } else {
-          await this.operation_manager.execute_handler(
+          result = await this.operation_manager.execute_handler(
             "execute",
             execution.operation
           );
@@ -241,6 +242,34 @@ export class HistoryManager {
               this.history_buffer.remove(execution.operation);
               // 合并操作
               await this.operation_manager.execute_handler("merge", target_op);
+            }
+          }
+        }
+
+        console.log(
+          "core:HistoryManager:scheduleOperations",
+          execution,
+          result
+        );
+
+        // 处理执行结果
+        if (result) {
+          // 如果操作不需要记录，从历史缓冲区中移除
+          if (result.dont_record) {
+            this.history_buffer.remove(execution.operation);
+          }
+
+          // 如果有子操作，添加到待执行队列的开头
+          if (result.children && result.children.length > 0) {
+            this.pending_operations.unshift(
+              ...result.children.map((op) => ({
+                operation: op,
+                type: "execute" as const,
+              }))
+            );
+            // 将子操作添加到历史缓冲区
+            for (const child of result.children) {
+              this.history_buffer.push(child);
             }
           }
         }

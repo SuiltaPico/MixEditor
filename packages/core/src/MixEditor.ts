@@ -15,9 +15,9 @@ import {
   DocumentNode,
   DocumentTDO,
   init_document,
-} from "./node/document";
+} from "./node/nodes/document";
 import { AllNodeTypes } from "./node/Node";
-import { NodeHandlerMap, NodeManager } from "./node/NodeManager";
+import { NodeHandlerMap, NodeManager } from "./node/node_manager";
 import { HistoryManager } from "./operation/HistoryManager";
 import { OperationManager } from "./operation/Operation";
 import { init_operations } from "./operation/operations";

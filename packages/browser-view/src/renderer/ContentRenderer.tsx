@@ -1,5 +1,12 @@
 import { MixEditor, Node } from "@mixeditor/core";
-import { Component, createContext, JSX, onMount, useContext } from "solid-js";
+import {
+  Component,
+  createContext,
+  createRoot,
+  JSX,
+  onMount,
+  useContext,
+} from "solid-js";
 import { NodeRenderer } from "./NodeRenderer";
 import { NodeRendererManager } from "./NodeRendererManager";
 
@@ -8,14 +15,21 @@ export class ContentRendererState {
   /** 节点渲染器的缓存映射表。每次 NodeRendererWrapper 被调用，都会查询该表以确定是否使用缓存。 */
   node_renderer_map = new WeakMap<
     Node,
-    { renderer: NodeRenderer; rendered: JSX.Element }
+    { renderer: NodeRenderer; rendered: JSX.Element; disposer: () => void }
   >();
 
   get(node: Node) {
     return this.node_renderer_map.get(node);
   }
 
-  set(node: Node, value: { renderer: NodeRenderer; rendered: JSX.Element }) {
+  set(
+    node: Node,
+    value: {
+      renderer: NodeRenderer;
+      rendered: JSX.Element;
+      disposer: () => void;
+    }
+  ) {
     this.node_renderer_map.set(node, value);
   }
 }
@@ -46,10 +60,20 @@ export const NodeRendererWrapper: Component<{
   }
 
   // 使用节点渲染器渲染节点
-  const rendered = renderer(props);
+  let rendered: JSX.Element;
+  let disposer: () => void;
+
+  createRoot((dispose) => {
+    rendered = renderer(props);
+    disposer = dispose;
+  });
 
   // 将节点写入缓存
-  doc_renderer_state.set(props.node, { renderer, rendered });
+  doc_renderer_state.set(props.node, {
+    renderer,
+    rendered,
+    disposer: disposer!,
+  });
 
   return rendered;
 };

@@ -19,6 +19,8 @@ import {
   create_DeleteRangeOperation,
   DeleteRangeDecision,
   MergeNodeDecision,
+  create_DeferredOperation,
+  create_InsertChildrenOperation,
 } from "@mixeditor/core";
 import { onMount } from "solid-js";
 
@@ -128,6 +130,20 @@ export function text() {
           return [create_TextTDO(node_manager.generate_id(), slice_text)];
         },
 
+        insert_children: (_, node, to, children) => {
+          console.log("text:insert_children", node, to, children);
+
+          const text = node.text.get();
+          const new_value =
+            text.slice(0, to) +
+            children
+              .filter((child) => child.type === "text")
+              .map((it) => (it as TextNodeTDO).content)
+              .join("") +
+            text.slice(to);
+          node.text.set(new_value);
+        },
+
         handle_caret_navigate: (_, node, to, direction) => {
           const text = node.text.get();
           to += direction;
@@ -207,14 +223,32 @@ export function text() {
         },
 
         handle_merge_node: (_, node, target) => {
+          console.log("text:handle_merge_node", node, target);
+
           if (target.type !== "text") {
-            return MergeNodeDecision.Skip;
+            return MergeNodeDecision.Reject;
           }
 
-          const new_text = node.text.get() + target.text.get();
-          node.text.set(new_text);
-
-          return MergeNodeDecision.Done;
+          return MergeNodeDecision.Done({
+            operations: [
+              operation_manager.create_operation(
+                create_DeferredOperation,
+                () => [
+                  operation_manager.create_operation(
+                    create_InsertChildrenOperation,
+                    node.id,
+                    node.text.get().length,
+                    [
+                      create_TextTDO(
+                        node_manager.generate_id(),
+                        target.text.get()
+                      ),
+                    ]
+                  ),
+                ]
+              ),
+            ],
+          });
         },
 
         "bv:handle_delegated_pointer_down": (_, node, event, caret_pos) => {

@@ -26,8 +26,12 @@ import {
   paragraph_delete_children,
   paragraph_handle_delete_range,
   MergeNodeDecision,
+  create_DeferredOperation,
+  create_InsertChildrenOperation,
+  create_NodeRefTDO,
+  NodeRefTDO,
 } from "@mixeditor/core";
-import { onMount } from "solid-js";
+import { createEffect, onMount } from "solid-js";
 import { NavigateDirection } from "@mixeditor/core";
 
 declare module "@mixeditor/core" {
@@ -70,6 +74,10 @@ export const ParagraphRenderer: NodeRenderer<ParagraphNode> = (props) => {
   let container!: WithMixEditorNode<HTMLParagraphElement>;
   onMount(() => {
     container.mixed_node = node;
+  });
+
+  createEffect(() => {
+    console.log("paragraph:children", node.children.get());
   });
 
   return (
@@ -146,6 +154,38 @@ export function paragraph() {
           return node.children.get().indexOf(child);
         },
 
+        insert_children: (_, node, index, children) => {
+          console.log("paragraph:insert_children", node, index, children);
+
+          const children_count = node.children.get().length;
+          if (index > children_count) {
+            index = children_count;
+          }
+          const new_children: Node[] = [];
+          for (const child of children) {
+            if (child.type === "node_ref") {
+              const node_ref = child as NodeRefTDO;
+              new_children.push(
+                ...node_ref.node_ids.map(
+                  (node_id) => node_manager.get_node_by_id(node_id)!
+                )
+              );
+            } else {
+              new_children.push(child);
+            }
+          }
+
+          for (const child of new_children) {
+            node_manager.set_parent(child, node);
+          }
+
+          const self_children = node.children.get();
+          self_children.splice(index, 0, ...new_children);
+
+          console.log("paragraph:insert_children", self_children);
+          node.children.set(self_children);
+        },
+
         delete_children: paragraph_delete_children,
 
         handle_caret_navigate: (_, node, to, direction, from) => {
@@ -198,19 +238,29 @@ export function paragraph() {
 
         handle_merge_node: async (_, node, target) => {
           if (target.type !== "paragraph") {
-            return MergeNodeDecision.Skip;
+            return MergeNodeDecision.Reject;
           }
 
-          const target_children = target.children.get();
-          const new_children = [...node.children.get(), ...target_children];
-          node.children.set(new_children);
-
-          // 更新子节点的父节点
-          for (const child of target_children) {
-            node_manager.set_parent(child, node);
-          }
-
-          return MergeNodeDecision.Done;
+          return MergeNodeDecision.Done({
+            operations: [
+              operation_manager.create_operation(
+                create_DeferredOperation,
+                () => [
+                  operation_manager.create_operation(
+                    create_InsertChildrenOperation,
+                    node.id,
+                    node.children.get().length,
+                    [
+                      create_NodeRefTDO(
+                        node_manager.generate_id(),
+                        target.children.get().map((child) => child.id)
+                      ),
+                    ]
+                  ),
+                ]
+              ),
+            ],
+          });
         },
 
         "bv:handle_pointer_down": async (_, node, element, event) => {

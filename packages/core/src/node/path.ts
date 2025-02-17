@@ -1,5 +1,5 @@
 import { Node } from "./Node";
-import { NodeHandlerMap, NodeManager } from "./NodeManager";
+import { NodeHandlerMap, NodeManager } from "./node_manager";
 
 /** 获取节点路径 */
 export async function get_node_path(
@@ -70,12 +70,6 @@ export async function get_common_ancestor_from_node(
       current,
       current_child
     );
-    console.log(
-      "get_common_ancestor_from_node get_index_of_child",
-      current,
-      current_child,
-      index
-    );
     path2.push(index ?? 0);
 
     ancestor_index_of_node1 = ancestors1.indexOf(current!);
@@ -94,8 +88,6 @@ export async function get_common_ancestor_from_node(
   // 后-先 -> 先-后
   path2 = path2.toReversed();
   ancestors2 = ancestors2.toReversed();
-
-  console.log("get_common_ancestor_from_node", path2);
 
   return {
     common_ancestor,
@@ -137,4 +129,30 @@ export function path_compare(path1: number[], path2: number[]) {
 
   // 完全相同的路径
   return 0;
+}
+
+/** 判断 maybe_parent 是否是 node 的父节点 */
+export function is_parent(
+  node_manager: NodeManager<NodeHandlerMap<any>, any>,
+  node: Node,
+  maybe_parent: Node
+) {
+  const parent = node_manager.get_parent(node);
+  return parent === maybe_parent;
+}
+
+/** 判断 maybe_ancestor 是否是 node 的祖先节点 */
+export function is_ancestor(
+  node_manager: NodeManager<NodeHandlerMap<any>, any>,
+  node: Node,
+  maybe_ancestor: Node
+) {
+  let current: Node | undefined = node_manager.get_parent(node);
+  while (current) {
+    if (current === maybe_ancestor) {
+      return true;
+    }
+    current = node_manager.get_parent(current);
+  }
+  return false;
 }

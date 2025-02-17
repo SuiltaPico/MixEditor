@@ -1,9 +1,14 @@
 import { MixEditor } from "../MixEditor";
 import { Node } from "../node/Node";
-import { get_common_ancestor_from_node } from "../node/path";
+import {
+  get_common_ancestor_from_node,
+  is_ancestor,
+  is_parent,
+} from "../node/path";
 import { Operation } from "../operation/Operation";
 import { create_BatchOperation } from "../operation/operations";
 import { Selected, SelectedData } from "../selection";
+import { execute_merge_node, execute_simple_merge_node } from "./merge_node";
 
 /** 节点对删除范围的决策。 */
 export const DeleteRangeDecision = {
@@ -210,7 +215,69 @@ export async function execute_delete_range(
     }
   }
 
-  console.log("execute_delete_range", "operations", operations);
+  // 判断合并逻辑
+  if (start.node !== end.node) {
+    if (is_parent(node_manager, start.node, end.node)) {
+      console.log(
+        "execute_delete_range",
+        "end.node 是 start.node 的父节点",
+        start.node,
+        end.node
+      );
+      // 如果 end.node 是 start.node 的父节点，
+      // 尝试将 end.node[end.child_path + 1] 合并到 start.node 中
+      const parent = end.node;
+      const end_index = end.child_path;
+      const next_node = await node_manager.execute_handler(
+        "get_child",
+        parent,
+        end_index + 1
+      );
+      if (next_node) {
+        const merge_ops = await execute_simple_merge_node(
+          editor,
+          start.node,
+          next_node
+        );
+        operations.push(...merge_ops);
+      }
+    } else if (is_parent(node_manager, end.node, start.node)) {
+      console.log(
+        "execute_delete_range",
+        "start.node 是 end.node 的父节点",
+        start.node,
+        end.node
+      );
+      // 如果 start.node 是 end.node 的父节点，
+      // 尝试将 end.node 合并到 start.node[start.child_path - 1] 中
+      const parent = start.node;
+      const start_index = start.child_path;
+      const prev_node = await node_manager.execute_handler(
+        "get_child",
+        parent,
+        start_index - 1
+      );
+      if (prev_node) {
+        const merge_ops = await execute_simple_merge_node(
+          editor,
+          prev_node,
+          end.node
+        );
+        operations.push(...merge_ops);
+      }
+    } else {
+      console.log(
+        "execute_delete_range",
+        "没有祖先关系，执行复杂合并",
+        start.node,
+        end.node
+      );
+      // 如果 start.node 和 end.node 没有祖先关系，就要查找公共祖先，
+      // 然后从公共祖先的子节点开始，尝试逐层合并，直到有一层不接受合并为止。
+      const merge_ops = await execute_merge_node(editor, start.node, end.node);
+      operations.push(...merge_ops);
+    }
+  }
 
   return create_BatchOperation(
     editor.operation_manager.generate_id(),

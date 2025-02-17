@@ -1,6 +1,6 @@
 import { MixEditor } from "../MixEditor.ts";
 import { Node } from "../node/Node.ts";
-import { DocumentTDO } from "../node/document.ts";
+import { DocumentTDO } from "../node/nodes/document.ts";
 import { MaybePromise } from "@mixeditor/common";
 import { TransferDataObject } from "./TransferDataObject.ts";
 
