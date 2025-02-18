@@ -1,4 +1,4 @@
-import { MixEditor } from "../../MixEditor";
+import { MixEditor } from "../../mixeditor";
 import { BatchOperation, init_BatchOperation } from "./batch";
 import { DeferredOperation, init_DeferredOperation } from "./deferred";
 import { DeleteRangeOperation, init_DeleteRangeOperation } from "./delete_range";

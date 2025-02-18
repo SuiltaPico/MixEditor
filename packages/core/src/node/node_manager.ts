@@ -1,6 +1,6 @@
 import { MaybePromise, UlidIdGenerator } from "@mixeditor/common";
 import { HandlerManager, ItemHandlerMap } from "../common/HandlerManager";
-import { MixEditor } from "../MixEditor";
+import { MixEditor } from "../mixeditor";
 import { TransferDataObject } from "./tdo";
 import { Node } from "./node";
 import { NodeContext } from "./node_context";
@@ -10,97 +10,91 @@ import { DeleteFromPointDecision } from "../resp_chain/delete_from_point";
 import { DeleteRangeDecision } from "../resp_chain/delete_range";
 import { ParametersExceptFirst } from "../common/type";
 import { MergeNodeDecision } from "../resp_chain/merge_node";
-import { Mark } from "./mark";
+import { Mark, MarkMap } from "./mark";
+import {
+  InsertNodeFrom,
+  InsertNodesDecision,
+} from "../resp_chain/insert_nodes";
+
+export type NodeHandler<TParams extends any[] = any[], TResult = void> = (
+  editor: MixEditor,
+  node: Node,
+  ...params: TParams
+) => MaybePromise<TResult>;
 
 /** 节点处理器类型表。 */
 export interface NodeHandlerMap<TNode extends Node = Node>
   extends ItemHandlerMap<MixEditor, TNode> {
+  // --- 树结构访问 ---
   /** 获取子节点 */
-  get_child(
-    editor: MixEditor,
-    node: TNode,
-    index: number
-  ): MaybePromise<Node | undefined>;
+  get_child: NodeHandler<[index: number], Node | undefined>;
   /** 获取子节点数量 */
-  get_children_count(editor: MixEditor, node: TNode): MaybePromise<number>;
+  get_children_count: NodeHandler<[], number>;
   /** 获取子节点 */
-  get_children(editor: MixEditor, node: TNode): MaybePromise<Node[]>;
+  get_children: NodeHandler<[], Node[]>;
   /** 获取子节点索引 */
-  get_index_of_child(
-    editor: MixEditor,
-    node: TNode,
-    child: TNode
-  ): MaybePromise<number>;
+  get_index_of_child: NodeHandler<[child: Node], number>;
 
+  // --- 标记管理 ---
   /** 获取节点标记 */
-  get_marks(editor: MixEditor, node: TNode): MaybePromise<Mark[]>;
+  get_marks: NodeHandler<[], MarkMap>;
   /** 设置节点标记 */
-  set_marks(editor: MixEditor, node: TNode, marks: Mark[]): MaybePromise<void>;
+  set_marks: NodeHandler<[marks: MarkMap], void>;
 
-  /** 保存节点 */
-  save(editor: MixEditor, node: TNode): MaybePromise<TransferDataObject>;
-
-  /** 节点切片 */
-  slice(
-    editor: MixEditor,
-    node: TNode,
-    from: number,
-    to: number
-  ): MaybePromise<TNode>;
-
+  // --- 结构操作 ---
+  /** 分离节点。
+   *
+   * 本节点应当是被分割的第一个节点。应该返回 [本节点, ...其余分割节点]。
+   */
+  split: NodeHandler<[indexes: number[]], Node[]>;
   /** 插入子节点 */
-  insert_children(
-    editor: MixEditor,
-    node: TNode,
-    index: number,
-    children: TransferDataObject[]
-  ): MaybePromise<void>;
-
+  insert_children: NodeHandler<
+    [index: number, children: TransferDataObject[]],
+    void
+  >;
   /** 删除子节点 */
-  delete_children(
-    editor: MixEditor,
-    node: TNode,
-    from: number,
-    to: number
-  ): MaybePromise<TransferDataObject[]>;
+  delete_children: NodeHandler<
+    [from: number, to: number],
+    TransferDataObject[]
+  >;
+  /** 保存节点 */
+  save: NodeHandler<[], TransferDataObject>;
 
-  // handle 开头的方法用于责任链决策
-
+  // --- 责任链决策 ---
   /** 移动节点 */
-  handle_caret_navigate(
-    editor: MixEditor,
-    node: TNode,
-    /** 移动目标索引 */
-    to: number,
-    /** 移动方向 */
-    direction: NavigateDirection,
-    /** 移动来源 */
-    from?: "child" | "parent"
-  ): MaybePromise<CaretNavigateEnterDecision>;
+  handle_caret_navigate: NodeHandler<
+    [to: number, direction: NavigateDirection, from?: "child" | "parent"],
+    CaretNavigateEnterDecision
+  >;
+
+  /** 插入节点。
+   *
+   * 处理器应当决定是否接受插入。然后产生操作以插入自己接受的节点，
+   * 并返回自己不接受的节点。和自己插入流程完成后的索引，用于父节点分割自己。
+   */
+  handle_insert_nodes: NodeHandler<
+    [
+      insert_index: number,
+      nodes_to_insert: TransferDataObject[],
+      from?: InsertNodeFrom
+    ],
+    InsertNodesDecision
+  >;
 
   /** 从点删除 */
-  handle_delete_from_point(
-    editor: MixEditor,
-    node: TNode,
-    from: number,
-    direction: NavigateDirection
-  ): MaybePromise<DeleteFromPointDecision>;
+  handle_delete_from_point: NodeHandler<
+    [from: number, direction: NavigateDirection],
+    DeleteFromPointDecision
+  >;
 
   /** 删除范围 */
-  handle_delete_range(
-    editor: MixEditor,
-    node: TNode,
-    from: number,
-    to: number
-  ): MaybePromise<DeleteRangeDecision>;
+  handle_delete_range: NodeHandler<
+    [from: number, to: number],
+    DeleteRangeDecision
+  >;
 
   /** 合并节点 */
-  handle_merge_node(
-    editor: MixEditor,
-    node: TNode,
-    /** 要合并的目标节点 */
-    target: TNode
-  ): MaybePromise<MergeNodeDecision>;
+  handle_merge_node: NodeHandler<[target: Node], MergeNodeDecision>;
 }
 
 type NodeManagerHandlerManager<
@@ -196,17 +190,18 @@ export class NodeManager<
       Node,
       MixEditor
     >(this.editor);
-    this.register_handlers = this.handler_manager.register_handlers.bind(
-      this.handler_manager
-    );
-    this.register_handler = this.handler_manager.register_handler.bind(
-      this.handler_manager
-    );
-    this.get_handler = this.handler_manager.get_handler.bind(
-      this.handler_manager
-    );
-    this.execute_handler = this.handler_manager.execute_handler.bind(
-      this.handler_manager
-    );
+
+    const proxy_methods_list = [
+      "register_handlers",
+      "register_handler",
+      "get_handler",
+      "execute_handler",
+    ] as const;
+
+    for (const method_name of proxy_methods_list) {
+      this[method_name] = this.handler_manager[method_name].bind(
+        this.handler_manager
+      ) as any;
+    }
   }
 }

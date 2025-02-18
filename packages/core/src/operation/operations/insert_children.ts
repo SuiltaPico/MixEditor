@@ -1,4 +1,4 @@
-import { MixEditor } from "../../MixEditor";
+import { MixEditor } from "../../mixeditor";
 import { TransferDataObject } from "../../node/tdo";
 import { Operation } from "../Operation";
 

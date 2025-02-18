@@ -8,19 +8,25 @@ import {
 } from "@mixeditor/browser-view";
 import { createSignal, WrappedSignal } from "@mixeditor/common";
 import {
-  NavigateDirection,
   CaretNavigateEnterDecision,
+  create_DeferredOperation,
+  create_DeleteRangeOperation,
+  create_InsertChildrenOperation,
+  DeleteFromPointDecision,
+  DeleteRangeDecision,
   get_node_path,
+  has_same_marks,
+  InsertNodesDecision,
+  load_mark_map,
+  MarkMap,
+  MarkTDOMap,
+  MergeNodeDecision,
   MixEditorPluginContext,
+  NavigateDirection,
   Node,
   path_compare,
+  save_mark_map,
   TransferDataObject,
-  DeleteFromPointDecision,
-  create_DeleteRangeOperation,
-  DeleteRangeDecision,
-  MergeNodeDecision,
-  create_DeferredOperation,
-  create_InsertChildrenOperation,
 } from "@mixeditor/core";
 import { onMount } from "solid-js";
 
@@ -33,26 +39,34 @@ declare module "@mixeditor/core" {
 export interface TextNodeTDO extends TransferDataObject {
   type: "text";
   content: string;
+  marks: MarkTDOMap;
 }
 
-export function create_TextTDO(id: string, content: string) {
+export function create_TextTDO(
+  id: string,
+  content: string,
+  marks?: MarkTDOMap
+) {
   return {
     id,
     type: "text",
     content,
+    marks: marks ?? {},
   } satisfies TextNodeTDO;
 }
 
 export interface TextNode extends Node {
   type: "text";
   text: WrappedSignal<string>;
+  marks: WrappedSignal<MarkMap>;
 }
 
-export function create_TextNode(id: string, text: string) {
+export function create_TextNode(id: string, text: string, marks?: MarkMap) {
   return {
     id,
     type: "text",
     text: createSignal(text),
+    marks: createSignal<MarkMap>(marks ?? {}),
   } satisfies TextNode;
 }
 
@@ -82,10 +96,11 @@ export function text() {
       const { editor } = ctx;
       const {
         node_manager,
+        mark_manager,
         plugin_manager,
-        saver,
         selection,
         operation_manager,
+        tdo_manager,
       } = editor;
       const browser_view_plugin =
         await plugin_manager.wait_plugin_inited<BrowserViewPluginResult>(
@@ -93,18 +108,27 @@ export function text() {
         );
       const { renderer_manager } = browser_view_plugin;
 
-      saver.register_loader<TextNodeTDO>("text", (tdo) => {
-        const node = create_TextNode(tdo.id, tdo.content);
-        node_manager.record_node(node);
-        return node;
-      });
+      tdo_manager.register_handler(
+        "text",
+        "load",
+        async (_, data: TextNodeTDO) => {
+          const node = create_TextNode(
+            data.id,
+            data.content,
+            await load_mark_map(tdo_manager, data.marks)
+          );
+          node_manager.record_node(node);
+          return node;
+        }
+      );
 
       node_manager.register_handlers("text", {
-        save: (_, node) => {
+        save: async (_, node) => {
           return {
             id: node.id,
             type: "text",
             content: node.text.get(),
+            marks: await save_mark_map(mark_manager, node.marks.get()),
           } satisfies TextNodeTDO;
         },
 
@@ -112,20 +136,15 @@ export function text() {
           return node.text.get().length;
         },
 
-        slice: (_, node, start, end) => {
-          return node_manager.create_node(
-            create_TextNode,
-            node.text.get().slice(start, end)
-          );
-        },
-
-        delete_children: async (_, node, from, to) => {
+        split(_, node, indexes) {
           const text = node.text.get();
-          const new_value = text.slice(0, from) + text.slice(to + 1);
-          const slice_text = text.slice(from, to + 1);
-          node.text.set(new_value);
-
-          return [create_TextTDO(node_manager.generate_id(), slice_text)];
+          const result = [];
+          for (const index of indexes) {
+            result.push(
+              create_TextTDO(node_manager.generate_id(), text.slice(index))
+            );
+          }
+          return result;
         },
 
         insert_children: (_, node, to, children) => {
@@ -140,6 +159,15 @@ export function text() {
               .join("") +
             text.slice(to);
           node.text.set(new_value);
+        },
+
+        delete_children: async (_, node, from, to) => {
+          const text = node.text.get();
+          const new_value = text.slice(0, from) + text.slice(to + 1);
+          const slice_text = text.slice(from, to + 1);
+          node.text.set(new_value);
+
+          return [create_TextTDO(node_manager.generate_id(), slice_text)];
         },
 
         handle_caret_navigate: (_, node, to, direction) => {
@@ -161,6 +189,75 @@ export function text() {
           } else {
             return CaretNavigateEnterDecision.Enter(to);
           }
+        },
+
+        handle_insert_nodes: async (_, node, insert_index, nodes_to_insert) => {
+          const text = node.text.get();
+
+          // 边界修复
+          if (insert_index < 0) insert_index = 0;
+          if (insert_index > text.length) insert_index = text.length;
+
+          const self_marks = await node_manager.execute_handler(
+            "get_marks",
+            node
+          )!;
+
+          async function is_mergeable(node: Node) {
+            if (node.type !== "text") return false;
+            const text_node = node as TextNodeTDO;
+            const node_marks = await load_mark_map(
+              tdo_manager,
+              text_node.marks
+            );
+            return has_same_marks(self_marks, node_marks);
+          }
+
+          // 从头开始合并，直到遇到不能合并的节点
+          const head_nodes = [];
+          let head_content_length = 0;
+          let head_text_content = "";
+          for (const node of nodes_to_insert) {
+            if (!(await is_mergeable(node))) break;
+            head_nodes.push(node);
+            head_content_length += (node as TextNodeTDO).content.length;
+            head_text_content += (node as TextNodeTDO).content;
+          }
+
+          // 如果还有剩余节点，则从尾部开始合并，直到遇到非文本节点
+          const tail_nodes = [];
+          let tail_text_content = "";
+          for (let i = nodes_to_insert.length - 1; i >= 0; i--) {
+            const node = nodes_to_insert[i];
+            if (!(await is_mergeable(node))) break;
+            tail_nodes.push(node);
+            tail_text_content += (node as TextNodeTDO).content;
+          }
+
+          return InsertNodesDecision.Accept({
+            operations: [
+              // 先插入尾部节点，因为尾部节点插入后，插入位置会发生变化
+              operation_manager.create_operation(
+                create_InsertChildrenOperation,
+                node.id,
+                insert_index,
+                [node_manager.create_node(create_TextNode, tail_text_content)]
+              ),
+              // 插入头部节点
+              operation_manager.create_operation(
+                create_InsertChildrenOperation,
+                node.id,
+                insert_index,
+                [node_manager.create_node(create_TextNode, head_text_content)]
+              ),
+            ],
+            // 拒绝剩余的节点
+            rejected_nodes: nodes_to_insert.slice(
+              head_nodes.length,
+              nodes_to_insert.length - tail_nodes.length
+            ),
+            split_index: insert_index + head_content_length,
+          });
         },
 
         handle_delete_from_point: (_, node, from, direction) => {
@@ -227,23 +324,25 @@ export function text() {
             return MergeNodeDecision.Reject;
           }
 
+          const generate_insert_children_operation = () => [
+            operation_manager.create_operation(
+              create_InsertChildrenOperation,
+              node.id,
+              node.text.get().length,
+              [
+                create_TextTDO(
+                  node_manager.generate_id(),
+                  (target as TextNode).text.get()
+                ),
+              ]
+            ),
+          ];
+
           return MergeNodeDecision.Done({
             operations: [
               operation_manager.create_operation(
                 create_DeferredOperation,
-                () => [
-                  operation_manager.create_operation(
-                    create_InsertChildrenOperation,
-                    node.id,
-                    node.text.get().length,
-                    [
-                      create_TextTDO(
-                        node_manager.generate_id(),
-                        target.text.get()
-                      ),
-                    ]
-                  ),
-                ]
+                generate_insert_children_operation
               ),
             ],
           });

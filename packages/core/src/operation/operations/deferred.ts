@@ -1,5 +1,5 @@
 import { MaybePromise } from "@mixeditor/common";
-import { MixEditor } from "../../MixEditor";
+import { MixEditor } from "../../mixeditor";
 import { Operation } from "../Operation";
 
 /** 懒操作。只有在执行时才会产生具体的确定操作。

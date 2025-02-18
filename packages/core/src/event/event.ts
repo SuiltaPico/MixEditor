@@ -1,6 +1,6 @@
 import { Graph } from "../common/Graph";
 import { MaybePromise } from "@mixeditor/common";
-import { MixEditor } from "../MixEditor";
+import { MixEditor } from "../mixeditor";
 
 export type MixEditorEventManagerContext = {
   editor: MixEditor;

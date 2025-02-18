@@ -1,5 +1,5 @@
 import { createSignal } from "@mixeditor/common";
-import { MixEditor } from "./MixEditor";
+import { MixEditor } from "./mixeditor";
 import { Node } from "./node/node";
 import { NavigateDirection } from "./common/navigate";
 

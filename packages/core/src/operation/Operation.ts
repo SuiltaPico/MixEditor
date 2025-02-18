@@ -1,6 +1,6 @@
 import { MaybePromise, UlidIdGenerator } from "@mixeditor/common";
 import { HandlerManager, ItemHandlerMap } from "../common/HandlerManager";
-import { MixEditor } from "../MixEditor";
+import { MixEditor } from "../mixeditor";
 import { ParametersExceptFirst } from "../common/type";
 
 /** 操作。 */

@@ -1,5 +1,5 @@
 import { WrappedSignal } from "@mixeditor/common";
-import { MixEditor } from "../MixEditor";
+import { MixEditor } from "../mixeditor";
 import { create_DeleteRangeOperation } from "../operation/operations";
 import { DeleteRangeDecision } from "../resp_chain";
 import { Node } from "./node";

@@ -16,7 +16,7 @@ import { NodeHandlerMap, NodeManager } from "./node/node_manager";
 import {
   create_DocumentNode,
   DocumentTDO,
-  init_document
+  init_document,
 } from "./node/nodes/document";
 import { HistoryManager } from "./operation/HistoryManager";
 import { OperationManager } from "./operation/Operation";
@@ -25,6 +25,7 @@ import { MixEditorPlugin, MixEditorPluginContext } from "./plugin";
 import { execute_caret_navigate_from_selected_data } from "./resp_chain/caret_navigate";
 import { Saver } from "./saver/saver";
 import { SelectedData, Selection } from "./selection";
+import { TDOHandlerMap, TDOManager } from "./node/tdo_manager";
 
 export interface Events {
   /** 编辑器核心初始化。 */
@@ -73,6 +74,11 @@ export class MixEditor {
   /** 文档节点管理器。 */
   node_manager: NodeManager<NodeHandlerMap<AllNodeTypes>, AllNodeTypes> =
     new NodeManager<NodeHandlerMap<AllNodeTypes>, AllNodeTypes>(this);
+  /** 文档标记管理器。 */
+  mark_manager = new MarkManager(this);
+  /** 节点传输数据对象管理器。 */
+  tdo_manager = new TDOManager<TDOHandlerMap<any>, any>(this);
+
   /** 文档。 */
   document = createSignal(
     this.node_manager.create_node(create_DocumentNode, {
@@ -93,9 +99,6 @@ export class MixEditor {
   selection = new Selection(this);
   /** 文档保存器。 */
   saver = new Saver(this);
-  /** 文档标记管理器。 */
-  mark_manager = new MarkManager(this);
-
   /** 事件处理器。 */
   handlers = {
     save: async ({

@@ -1,12 +1,24 @@
 import { UlidIdGenerator } from "@mixeditor/common";
 import { HandlerManager, ItemHandlerMap } from "../common/HandlerManager";
-import { MixEditor } from "../MixEditor";
+import { MixEditor } from "../mixeditor";
 import { Mark } from "./mark";
 import { ParametersExceptFirst } from "../common/type";
+import { TransferDataObject } from "./tdo";
+
+export type MarkHandler<TArgs extends any[], TResult> = (
+  editor: MixEditor,
+  mark: Mark,
+  ...args: TArgs
+) => TResult;
 
 /** 节点处理器类型表。 */
 export interface MarkHandlerMap<TMark extends Mark = Mark>
-  extends ItemHandlerMap<MixEditor, TMark> {}
+  extends ItemHandlerMap<MixEditor, TMark> {
+  /** 表达当前标记是否与另一个标记相等。 */
+  equal: MarkHandler<[other: TMark], boolean>;
+  /** 保存节点 */
+  save: MarkHandler<[], TransferDataObject>;
+}
 
 type MarkManagerHandlerManager<
   TMarkHandler extends MarkHandlerMap<any> = any,

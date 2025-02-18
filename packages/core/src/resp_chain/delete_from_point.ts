@@ -1,5 +1,5 @@
 import { NavigateDirection } from "../common/navigate";
-import { MixEditor } from "../MixEditor";
+import { MixEditor } from "../mixeditor";
 import { Operation } from "../operation/Operation";
 import { Selected, SelectedData } from "../selection";
 import { execute_delete_range } from "./delete_range";

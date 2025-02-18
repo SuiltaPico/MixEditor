@@ -1,19 +1,23 @@
 export { HandlerManagerDefaultItemType as DefaultItemType } from "./common/HandlerManager";
 export * from "./common/navigate";
+export * from "./common/node";
+export * from "./common/mark";
 export * from "./event";
-export * from "./MixEditor";
+export * from "./mixeditor";
 export * from "./node/handlers";
+export * from "./node/mark";
+export * from "./node/mark_manager";
 export * from "./node/node";
 export * from "./node/node_context";
 export * from "./node/node_manager";
 export * from "./node/nodes";
 export * from "./node/path";
+export * from "./node/tdo";
+export * from "./node/tdo_manager";
 export * from "./operation/HistoryManager";
 export * from "./operation/Operation";
 export * from "./operation/operations";
 export * from "./plugin";
 export * from "./resp_chain";
 export * from "./saver/saver";
-export * from "./node/tdo";
 export * from "./selection";
-

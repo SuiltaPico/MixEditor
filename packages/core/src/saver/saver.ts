@@ -1,22 +1,17 @@
-import { MixEditor } from "../MixEditor.ts";
+import { MixEditor } from "../mixeditor.ts";
 import { Node } from "../node/node.ts";
 import { DocumentTDO } from "../node/nodes/document.ts";
 import { MaybePromise } from "@mixeditor/common";
 import { TransferDataObject } from "../node/tdo.ts";
+import { TDOHandlerMap } from "../node/tdo_manager.ts";
 
 export type AnyTDO = TransferDataObject & {
   [key: string]: any;
 };
 
-export type Loader<T extends TransferDataObject = AnyTDO> = (
-  tdo: T
-) => MaybePromise<Node>;
-
 export class Saver {
   serializer_map: Record<string, (tdo: TransferDataObject) => any> = {};
   deserializer_map: Record<string, (data: any) => TransferDataObject> = {};
-
-  loader_map: Record<string, Loader> = {};
 
   /** 保存编辑器的文档为文档传输数据对象。 */
   async save() {
@@ -62,18 +57,6 @@ export class Saver {
     });
   }
 
-  /** 保存节点为传输数据对象。 */
-  async save_node_to_tdo(node: Node) {
-    const tdo = await this.editor.node_manager.execute_handler("save", node);
-    return tdo;
-  }
-
-  /** 从传输数据对象加载节点。 */
-  async load_node_from_tdo(tdo: TransferDataObject) {
-    const node = await this.loader_map[tdo.type](tdo);
-    return node;
-  }
-
   /** 注册传输数据对象的序列化器。 */
   async register_serializer(
     type: string,
@@ -88,14 +71,6 @@ export class Saver {
     deserializer: (data: any) => TransferDataObject
   ) {
     this.deserializer_map[type] = deserializer;
-  }
-
-  /** 注册节点加载器。 */
-  async register_loader<T extends TransferDataObject = AnyTDO>(
-    type: string,
-    loader: Loader<T>
-  ) {
-    this.loader_map[type] = loader as Loader<AnyTDO>;
   }
 
   /** 序列化传输数据对象。 */

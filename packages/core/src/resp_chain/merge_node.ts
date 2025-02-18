@@ -1,4 +1,4 @@
-import { MixEditor } from "../MixEditor";
+import { MixEditor } from "../mixeditor";
 import { Node } from "../node/node";
 import { get_common_ancestor_from_node } from "../node/path";
 import { Operation } from "../operation/Operation";

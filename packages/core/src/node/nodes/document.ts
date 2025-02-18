@@ -1,5 +1,5 @@
 import { createSignal, WrappedSignal } from "@mixeditor/common";
-import { MixEditor } from "../../MixEditor";
+import { MixEditor } from "../../mixeditor";
 import type { Node } from "../node";
 import { AnyTDO } from "../../saver/saver";
 import { TransferDataObject } from "../tdo";
@@ -80,7 +80,7 @@ export async function save_document(editor: MixEditor, document: DocumentNode) {
 }
 
 export async function init_document(editor: MixEditor) {
-  const { node_manager, saver, event_manager, document } = editor;
+  const { node_manager, document, tdo_manager, event_manager } = editor;
 
   // 注册文档节点保存行为
   node_manager.register_handlers("document", {
@@ -126,11 +126,14 @@ export async function init_document(editor: MixEditor) {
   });
 
   // 注册文档节点加载行为
-  saver.register_loader("document", async (tdo) => {
+  tdo_manager.register_handler("document", "load", async (_, tdo) => {
     const dtdo = tdo as DocumentTDO;
-    const nodes = await Promise.all(
-      dtdo.children.map((child) => saver.load_node_from_tdo(child))
-    );
+    const nodes = (
+      await Promise.all(
+        // TODO：缺失对没有注册或加载失败的节点的处理
+        dtdo.children.map((child) => tdo_manager.load(child))
+      )
+    ).filter((node) => node !== undefined) as Node[];
     const document = node_manager.create_node(create_DocumentNode, {
       children: nodes,
       schema_version: dtdo.schema_version,
@@ -145,7 +148,7 @@ export async function init_document(editor: MixEditor) {
 
   // 注册加载流程
   event_manager.add_handler("load", async (props) => {
-    const new_document = (await saver.load_node_from_tdo(
+    const new_document = (await tdo_manager.load(
       props.event.tdo
     )) as DocumentNode;
     document.set(new_document);

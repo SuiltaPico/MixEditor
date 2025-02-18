@@ -121,34 +121,85 @@ mixeditor/
 
 ### 整体流程
 #### 删除流程
-```mermaid
-graph LR
-  emit_delete_selected[触发 delete_selected 事件] --> trigger_core_delete_selected[触发 core 注册的 delete_selected 处理器]
-
-  trigger_core_delete_selected --> if_selected_is_collapsed[如果是折叠选区]
-  if_selected_is_collapsed --> execute_delete_from_point[执行 delete_from_point 责任链]
-
-  trigger_core_delete_selected --> if_selected_is_extended[如果是扩展选区]
-  if_selected_is_extended --> execute_delete_range[执行 delete_range 处理流程]
 ```
-
-`delete_from_point` 责任链的执行流程：
-1. 设置当前节点为选区节点。
-2. 执行当前节点的 `delete_from_point` 行为处理器。如果出错或者未返回内容，则视为返回了 `DeleteFromPointDecision.Skip`。
-  1. 如果当前节点返回 `DeleteFromPointDecision.Done(operation?)`，视为节点自己完成了删除流程，则结束责任链。
-  2. 如果当前节点返回 `DeleteFromPointDecision.DeleteSelf`，则从父节点中尝试选中自身，并进入 `delete_range` 流程。
-3. 如果有返回的 `operation`，则推入 `HistoryManager` 中。
-
-`delete_range` 处理流程：
-1. 查找起始节点和结束节点的最邻近的公共祖先节点。
-2. 从起始节点开始，直到公共祖先节点的子节点，对每个节点执行 `delete_range` 责任链，以删除起始节点以右的所有节点。
-3. 从结束节点开始，直到公共祖先节点的子节点，对每个节点执行 `delete_range` 责任链，以删除结束节点以左的所有节点。
-4. 从起始节点在公共节点祖先节点的子节点 + 1 开始，直到结束节点在公共节点祖先节点的子节点 - 1，对公共祖先节点执行 `delete_range` 责任链，以删除起始节点和结束节点之间的所有节点。
-5. 对所有返回的 `operation`，组装成一个 `BatchOperation` 后，推入 `HistoryManager` 中。删除操作不追求全部成功，因此选用了 `BatchOperation` 而非 `Transaction`。
-
-`delete_range` 责任链：如果出错或者未返回内容，则视为返回了 `DeleteRangeDecision.Done(undefined)`。
-1. 如果当前节点返回 `DeleteRangeDecision.Done(operation?)`，视为节点自己完成了删除流程，则结束责任链。
-2. 如果当前节点返回 `DeleteRangeDecision.DeleteSelf`，则请求责任链尝试从父节点中删除自己。
+删除操作触发（Backspace/Delete 键）
+├─ [浏览器视图层] 捕获键盘事件
+│   └─ handle_key_down 处理器
+│       ├─ 监听 keydown 事件
+│       ├─ 判断 Backspace/Delete 键
+│       └─ 创建对应方向的 DeleteSelectedEvent
+│           └─ 通过 editor.event_manager.emit() 发送事件
+├─ [核心事件层] 判断选区类型
+│   ├─ 折叠选区（单个光标点）
+│   │   └─ 执行 execute_delete_from_point 责任链
+│   │       ├─ 当前节点处理 handle_delete_from_point
+│   │       │   ├─ Text 节点处理
+│   │       │   │   ├─ 前向删除（Backspace）
+│   │       │   │   │   ├─ 位置 <=0 → Skip（转父节点处理）
+│   │       │   │   │   ├─ 文本长度=1 → DeleteSelf（删除自身）
+│   │       │   │   │   └─ 正常 → 创建删除操作并调整光标
+│   │       │   │   └─ 后向删除（Delete）
+│   │       │   │       ├─ 位置 >=长度 → Skip
+│   │       │   │       ├─ 文本长度=1 → DeleteSelf
+│   │       │   │       └─ 正常 → 创建删除操作
+│   │       │   └─ Paragraph 节点处理
+│   │       │       ├─ 前向删除 → 进入前一个子节点（EnterChild）
+│   │       │       │   └─ 递归处理子节点的删除逻辑
+│   │       │       └─ 后向删除 → 进入后一个子节点（EnterChild）
+│   │       │           └─ 递归处理子节点的删除逻辑
+│   │       ├─ 处理决策结果
+│   │       │   ├─ DeleteSelf → 通知父节点删除自己
+│   │       │   │   └─ 创建父节点的 DeleteChildrenOperation
+│   │       │   ├─ Skip → 转父节点处理
+│   │       │   │   └─ 递归处理父节点的删除逻辑
+│   │       │   └─ EnterChild → 进入子节点处理
+│   │       │       └─ 递归到子节点的最大/最小位置处理
+│   │       └─ 递归处理直到完成
+│   └─ 扩展选区（范围选择）
+│       └─ 执行 execute_delete_range 责任链
+│           ├─ 处理相同节点范围
+│           │   └─ 调用节点 handle_delete_range
+│           │       ├─ Text 节点
+│           │       │   ├─ 全选（from<=0 && to>=长度）→ DeleteSelf
+│           │       │   └─ 部分删除 → 创建 DeleteRangeOperation
+│           │       └─ Paragraph 节点
+│           │           ├─ 全选子节点 → DeleteSelf
+│           │           └─ 部分删除 → 创建 DeleteChildrenOperation
+│           ├─ 处理跨节点范围
+│           │   ├─ 查找公共祖先（get_common_ancestor_from_node）
+│           │   ├─ 分解为三个处理段
+│           │   │   ├─ 起始节点到祖先路径
+│           │   │   │   └─ 从起始节点向上处理到公共祖先
+│           │   │   ├─ 结束节点到祖先路径
+│           │   │   │   └─ 从结束节点向上处理到公共祖先 
+│           │   │   └─ 公共祖先内部范围
+│           │   │       └─ 处理祖先节点内的剩余范围
+│           │   └─ 各段分别执行 handle_delete_range
+│           │       └─ 递归处理直到公共祖先
+│           └─ 合并相邻节点（execute_merge_node）
+│               ├─ 父子关系合并
+│               │   ├─ 前节点合并到父节点
+│               │   │   └─ 通过 insert_children 合并内容
+│               │   └─ 后节点合并到父节点
+│               │       └─ 通过 insert_children 合并内容
+│               └─ 非父子关系合并
+│                   └─ 查找公共祖先逐层合并
+│                       ├─ 通过 get_common_ancestor_from_node 查找
+│                       └─ 从底层向上尝试合并直到拒绝
+├─ 生成操作记录
+│   ├─ 创建批量操作（BatchOperation）
+│   │   └─ 收集所有子操作：
+│   │       ├─ DeleteRangeOperation
+│   │       ├─ DeleteChildrenOperation
+│   │       └─ InsertChildrenOperation（合并时产生）
+│   └─ 记录到历史管理器（history_manager.execute）
+└─ 更新选区状态
+    ├─ 折叠选区 → 调整光标位置
+    │   ├─ 根据操作结果设置 new_selected
+    │   └─ 无新位置时保持原选区起点
+    └─ 扩展选区 → 清除选区
+        └─ 执行 collapsed_select 重置为起点
+```
 
 #### 事件、操作和节点的关系
 事件触发事件处理器，事件处理器通常是一个责任链处理函数，它会逐个节点调用节点处理器以查找待处理的节点，而节点处理器产生和执行操作。

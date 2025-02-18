@@ -7,32 +7,30 @@ import {
   SelectedMaskDecision,
   WithMixEditorNode,
 } from "@mixeditor/browser-view";
-import {
-  createSignal,
-  get_closest_rect,
-  WrappedSignal,
-} from "@mixeditor/common";
+import { createSignal, WrappedSignal } from "@mixeditor/common";
 import {
   AnyTDO,
   CaretNavigateEnterDecision,
   CaretNavigateFrom,
-  MixEditorPluginContext,
-  Node,
-  TransferDataObject,
-  DeleteFromPointDecision,
-  DeleteRangeDecision,
-  Operation,
-  create_DeleteRangeOperation,
-  paragraph_delete_children,
-  paragraph_handle_delete_range,
-  MergeNodeDecision,
   create_DeferredOperation,
   create_InsertChildrenOperation,
   create_NodeRefTDO,
+  DeleteFromPointDecision,
+  InsertNodesDecision,
+  load_mark_map,
+  MarkMap,
+  MarkTDOMap,
+  MergeNodeDecision,
+  MixEditorPluginContext,
+  NavigateDirection,
+  Node,
   NodeRefTDO,
+  paragraph_delete_children,
+  paragraph_handle_delete_range,
+  save_mark_map,
+  TransferDataObject,
 } from "@mixeditor/core";
 import { createEffect, onMount } from "solid-js";
-import { NavigateDirection } from "@mixeditor/core";
 
 declare module "@mixeditor/core" {
   interface AllNodes {
@@ -43,28 +41,40 @@ declare module "@mixeditor/core" {
 export interface ParagraphNodeTDO extends TransferDataObject {
   type: "paragraph";
   children: AnyTDO[];
+  marks: MarkTDOMap;
 }
 
-export function create_ParagraphNodeTDO(id: string, children: AnyTDO[]) {
+export function create_ParagraphNodeTDO(
+  id: string,
+  children: AnyTDO[],
+  marks?: MarkTDOMap
+) {
   return {
     id,
     type: "paragraph",
     children,
+    marks: marks ?? {},
   } satisfies ParagraphNodeTDO;
 }
 
 export interface ParagraphNode extends Node {
   type: "paragraph";
   children: WrappedSignal<Node[]>;
+  marks: WrappedSignal<MarkMap>;
 }
 
-export function create_ParagraphNode(id: string, children: Node[]) {
+export function create_ParagraphNode(
+  id: string,
+  children: Node[],
+  marks?: MarkMap
+) {
   return {
     id,
     type: "paragraph",
     children: createSignal(children, {
       equals: false,
     }),
+    marks: createSignal<MarkMap>(marks ?? {}),
   } satisfies ParagraphNode;
 }
 
@@ -98,20 +108,25 @@ export function paragraph() {
     id: "paragraph",
     init: async (ctx: MixEditorPluginContext) => {
       const editor = ctx.editor;
-      const { node_manager, operation_manager, saver } = editor;
+      const { node_manager, mark_manager, operation_manager, tdo_manager } =
+        editor;
       const browser_view_plugin =
         await editor.plugin_manager.wait_plugin_inited<BrowserViewPluginResult>(
           "browser-view"
         );
 
-      saver.register_loader("paragraph", async (_tdo) => {
-        const tdo = _tdo as ParagraphNodeTDO;
-        const children = await Promise.all(
-          tdo.children.map((child) => saver.load_node_from_tdo(child))
-        );
+      tdo_manager.register_handler("paragraph", "load", async (_, tdo) => {
+        const dtdo = tdo as ParagraphNodeTDO;
+        // TODO：缺失对没有注册或加载失败的节点的处理
+        const children = (
+          await Promise.all(
+            dtdo.children.map((child) => tdo_manager.load(child))
+          )
+        ).filter((child) => child !== undefined) as Node[];
         const paragraph_node = node_manager.create_node(
           create_ParagraphNode,
-          children
+          children,
+          await load_mark_map(tdo_manager, tdo.marks)
         );
         children.forEach((child) => {
           node_manager.set_parent(child, paragraph_node);
@@ -132,6 +147,10 @@ export function paragraph() {
                   .map((child) => node_manager.execute_handler("save", child))
               )
             ).filter((child) => child !== undefined),
+            marks: await save_mark_map(
+              mark_manager,
+              paragraph_node.marks.get()
+            ),
           } satisfies ParagraphNodeTDO;
         },
 
@@ -222,6 +241,10 @@ export function paragraph() {
           }
         },
 
+        handle_insert_nodes: (_, node, insert_index, nodes_to_insert, from) => {
+          return InsertNodesDecision.Reject;
+        },
+
         handle_delete_from_point: (_, node, from, direction) => {
           const children = node.children.get();
           const to_prev = direction === NavigateDirection.Prev;
@@ -241,23 +264,25 @@ export function paragraph() {
             return MergeNodeDecision.Reject;
           }
 
+          const generate_insert_children_operation = () => [
+            operation_manager.create_operation(
+              create_InsertChildrenOperation,
+              node.id,
+              node.children.get().length,
+              [
+                create_NodeRefTDO(
+                  node_manager.generate_id(),
+                  target.children.get().map((child) => child.id)
+                ),
+              ]
+            ),
+          ];
+
           return MergeNodeDecision.Done({
             operations: [
               operation_manager.create_operation(
                 create_DeferredOperation,
-                () => [
-                  operation_manager.create_operation(
-                    create_InsertChildrenOperation,
-                    node.id,
-                    node.children.get().length,
-                    [
-                      create_NodeRefTDO(
-                        node_manager.generate_id(),
-                        target.children.get().map((child) => child.id)
-                      ),
-                    ]
-                  ),
-                ]
+                generate_insert_children_operation
               ),
             ],
           });

@@ -28,7 +28,7 @@ export async function handle_delete_selected(
   await wait_dependencies();
 
   const { editor } = manager_context;
-  const { selection, history_manager, node_manager } = editor;
+  const { selection, history_manager                                                     } = editor;
 
   const selected = selection.get_selected();
   if (!selected) return;

@@ -1,4 +1,4 @@
-import { MixEditor } from "../../MixEditor";
+import { MixEditor } from "../../mixeditor";
 import { Operation } from "../Operation";
 
 // 添加插入文本操作

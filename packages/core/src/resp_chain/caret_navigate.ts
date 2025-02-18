@@ -1,5 +1,5 @@
 import { NavigateDirection } from "../common/navigate";
-import { MixEditor } from "../MixEditor";
+import { MixEditor } from "../mixeditor";
 import { SelectedData } from "../selection";
 
 export enum CaretNavigateFrom {

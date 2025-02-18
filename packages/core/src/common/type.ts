@@ -1,4 +1,4 @@
-import { MixEditor } from "../MixEditor";
+import { MixEditor } from "../mixeditor";
 
 export type ParametersExceptFirst<F> = F extends (
   arg0: any,

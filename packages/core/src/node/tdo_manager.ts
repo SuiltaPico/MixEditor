@@ -1,7 +1,8 @@
 import { MaybePromise, UlidIdGenerator } from "@mixeditor/common";
 import { HandlerManager, ItemHandlerMap } from "../common/HandlerManager";
-import { MixEditor } from "../MixEditor";
+import { MixEditor } from "../mixeditor";
 import { TransferDataObject } from "./tdo";
+import { Node } from "./node";
 
 /** 节点处理器类型表。 */
 export interface TDOHandlerMap<
@@ -33,6 +34,15 @@ export class TDOManager<
   /** 获取节点 ID */
   generate_id() {
     return this.idgen.next();
+  }
+
+  load(tdo: TTDO) {
+    return (
+      this.execute_handler as TDOManager<
+        TDOHandlerMap<any>,
+        TTDO
+      >["execute_handler"]
+    )("load", tdo);
   }
 
   constructor(public editor: MixEditor) {
