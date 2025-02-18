@@ -135,7 +135,7 @@ export function paragraph() {
       });
 
       node_manager.register_handlers("paragraph", {
-        save: async (_, node) => {
+        save_to_tdo: async (_, node) => {
           const paragraph_node = node as ParagraphNode;
           return {
             id: paragraph_node.id,
@@ -272,7 +272,9 @@ export function paragraph() {
               [
                 create_NodeRefTDO(
                   node_manager.generate_id(),
-                  target.children.get().map((child) => child.id)
+                  (target as ParagraphNode).children
+                    .get()
+                    .map((child) => child.id)
                 ),
               ]
             ),

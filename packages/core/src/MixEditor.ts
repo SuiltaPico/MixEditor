@@ -26,6 +26,7 @@ import { execute_caret_navigate_from_selected_data } from "./resp_chain/caret_na
 import { Saver } from "./saver/saver";
 import { SelectedData, Selection } from "./selection";
 import { TDOHandlerMap, TDOManager } from "./node/tdo_manager";
+import { TagManager } from "./node/tag_manager";
 
 export interface Events {
   /** 编辑器核心初始化。 */
@@ -78,6 +79,9 @@ export class MixEditor {
   mark_manager = new MarkManager(this);
   /** 节点传输数据对象管理器。 */
   tdo_manager = new TDOManager<TDOHandlerMap<any>, any>(this);
+
+  /** 节点标签管理器。 */
+  tag_manager = new TagManager<string>();
 
   /** 文档。 */
   document = createSignal(

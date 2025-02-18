@@ -1,26 +1,19 @@
-export class TwoLevelTypeMap<TMasterRecord extends object> {
-  private map: Map<
-    keyof TMasterRecord,
-    Map<string, TMasterRecord[keyof TMasterRecord]>
-  > = new Map();
-  get<T extends keyof TMasterRecord>(master_type: T, segment_type: string) {
+export class TwoLevelTypeMap<
+  TMasterKey extends any,
+  TSegmentKey extends any,
+  TValue
+> {
+  private map: Map<TMasterKey, Map<TSegmentKey, TValue>> = new Map();
+  get(master_type: TMasterKey, segment_type: TSegmentKey) {
     return this.map.get(master_type)?.get(segment_type);
   }
-  set<T extends keyof TMasterRecord>(
-    master_type: T,
-    segment_type: string,
-    value: TMasterRecord[T]
-  ) {
+  set(master_type: TMasterKey, segment_type: TSegmentKey, value: TValue) {
     if (!this.map.has(master_type)) {
       this.map.set(master_type, new Map());
     }
     this.map.get(master_type)?.set(segment_type, value);
   }
-  remove<T extends keyof TMasterRecord>(
-    master_type: T,
-    segment_type: string
-  ) {
+  remove(master_type: TMasterKey, segment_type: TSegmentKey) {
     this.map.get(master_type)?.delete(segment_type);
   }
-  constructor() {}
 }

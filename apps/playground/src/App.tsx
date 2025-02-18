@@ -22,6 +22,7 @@ function App() {
         paragraph(),
       ],
     });
+    console.log(editor);
     await editor.init();
     const { node_manager, saver } = editor;
 

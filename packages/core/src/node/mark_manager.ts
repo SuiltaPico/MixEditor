@@ -17,7 +17,7 @@ export interface MarkHandlerMap<TMark extends Mark = Mark>
   /** 表达当前标记是否与另一个标记相等。 */
   equal: MarkHandler<[other: TMark], boolean>;
   /** 保存节点 */
-  save: MarkHandler<[], TransferDataObject>;
+  save_to_tdo: MarkHandler<[], TransferDataObject>;
 }
 
 type MarkManagerHandlerManager<

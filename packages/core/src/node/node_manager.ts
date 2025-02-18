@@ -15,6 +15,7 @@ import {
   InsertNodeFrom,
   InsertNodesDecision,
 } from "../resp_chain/insert_nodes";
+import { TwoLevelTypeMap } from "../common/TwoLevelTypeMap";
 
 export type NodeHandler<TParams extends any[] = any[], TResult = void> = (
   editor: MixEditor,
@@ -58,7 +59,9 @@ export interface NodeHandlerMap<TNode extends Node = Node>
     TransferDataObject[]
   >;
   /** 保存节点 */
-  save: NodeHandler<[], TransferDataObject>;
+  save_to_tdo: NodeHandler<[], TransferDataObject>;
+  /** 保存节点为纯文本 */
+  save_to_plain_text: NodeHandler<[], string>;
 
   // --- 责任链决策 ---
   /** 移动节点 */
@@ -115,6 +118,10 @@ export class NodeManager<
   private handler_manager: NodeManagerHandlerManager<TNodeHandler, TNode>;
   /** 节点上下文 */
   private node_contexts = new WeakMap<Node, NodeContext>();
+  /** 被合并的节点。键为合并者，值为愿意被合并者的集合。 */
+  private node_allowed_to_merge = new Map<string, Set<string>>();
+  /** 愿意被合并的节点。键为被合并者，值为愿意合并的标签。 */
+  private tag_allowed_to_be_merged = new Map<string, Set<string>>();
 
   register_handler!: NodeManagerHandlerManager<
     TNodeHandler,

@@ -73,7 +73,7 @@ export async function save_document(editor: MixEditor, document: DocumentNode) {
       await Promise.all(
         document.children
           .get()
-          .map((child) => editor.node_manager.execute_handler("save", child))
+          .map((child) => editor.node_manager.execute_handler("save_to_tdo", child))
       )
     ).filter((child) => child !== undefined),
   } satisfies DocumentTDO;
@@ -84,7 +84,7 @@ export async function init_document(editor: MixEditor) {
 
   // 注册文档节点保存行为
   node_manager.register_handlers("document", {
-    save: save_document,
+    save_to_tdo: save_document,
     get_children_count: (_, node) => {
       return node.children.get().length;
     },

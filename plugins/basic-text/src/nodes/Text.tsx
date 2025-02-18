@@ -123,7 +123,7 @@ export function text() {
       );
 
       node_manager.register_handlers("text", {
-        save: async (_, node) => {
+        save_to_tdo: async (_, node) => {
           return {
             id: node.id,
             type: "text",

@@ -29,15 +29,19 @@ export class HandlerManager<
   TContext
 > {
   /** 项目处理器 */
-  private handler_map = new TwoLevelTypeMap<THandlerMap>();
+  private handler_map = new TwoLevelTypeMap<
+    THandlerMap,
+    string,
+    THandlerMap[keyof THandlerMap]
+  >();
 
   /** 设置项目处理器。如果项目类型为默认类型，则设置为默认处理器。 */
-  register_handler<THandler extends keyof THandlerMap>(
+  register_handler<THandlerName extends keyof THandlerMap>(
     item_type: string,
-    handler_name: THandler,
-    handler: THandlerMap[THandler]
+    handler_name: THandlerName,
+    handler: THandlerMap[THandlerName]
   ) {
-    this.handler_map.set(handler_name, item_type, handler);
+    this.handler_map.set(handler_name as any, item_type, handler);
   }
 
   /** 为所有项目注册处理器。如果项目类型为默认类型，则设置为默认处理器。 */
@@ -67,12 +71,12 @@ export class HandlerManager<
     item_type: string,
     handler_name: THandler
   ): THandlerMap[THandler] | undefined {
-    let handler = this.handler_map.get(handler_name, item_type) as
+    let handler = this.handler_map.get(handler_name as any, item_type) as
       | THandlerMap[THandler]
       | undefined;
     if (handler === undefined) {
       handler = this.handler_map.get(
-        handler_name,
+        handler_name as any,
         HandlerManagerDefaultItemType
       ) as THandlerMap[THandler] | undefined;
     }
