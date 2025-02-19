@@ -1,9 +1,9 @@
 import { WrappedSignal } from "@mixeditor/common";
-import { MixEditor } from "../mixeditor";
-import { create_DeleteRangeOperation } from "../operation/operations";
-import { DeleteRangeDecision } from "../resp_chain";
+import { MixEditor } from "../../mixeditor";
+import { create_DeleteRangeOperation } from "../../operation/operations";
+import { DeleteRangeDecision } from "../../resp_chain";
 import { Node } from "./node";
-import { NodeHandlerMap } from "./node_manager";
+import { NodeHandlerMap } from "./manager";
 
 export const paragraph_handle_delete_range: NodeHandlerMap["handle_delete_range"] =
   (editor, node, start, end) => {

@@ -1,4 +1,4 @@
-import { BiRelationMap } from "../common/BiRelationMap";
+import { BiRelationMap } from "./data_struct/BiRelationMap";
 
 /** 标签管理器。
  * 标签管理器用于管理标签的继承关系，以及 `TKey` 和其标签集合之间的映射关系。

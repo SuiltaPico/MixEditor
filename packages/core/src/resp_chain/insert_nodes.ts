@@ -1,8 +1,9 @@
 import { MixEditor } from "../mixeditor";
-import { Node } from "../node/node";
-import { TransferDataObject } from "../node/tdo";
+import { Node } from "../entity/node/node";
+import { TransferDataObject } from "../entity/tdo/tdo";
 import { Operation } from "../operation/Operation";
 import { create_BatchOperation } from "../operation/operations";
+import { NodeTDO } from "../entity/node/node_tdo";
 
 /** 插入来源。 */
 export type InsertNodeFrom = {
@@ -37,7 +38,7 @@ export type InsertNodesDecisionAccept = {
   /** 插入的操作。 */
   operations: Operation[];
   /** 不接受的节点。 */
-  rejected_nodes: Node[];
+  rejected_nodes: NodeTDO[];
   /** 如果父节点要分割自己时，应该分割的索引。 */
   split_index: number;
 };
@@ -51,7 +52,7 @@ export async function execute_insert_nodes(
   editor: MixEditor,
   node: Node,
   insert_index: number,
-  nodes_to_insert: TransferDataObject[],
+  nodes_to_insert: NodeTDO[],
   from?: InsertNodeFrom
 ) {
   const node_manager = editor.node_manager;

@@ -1,4 +1,4 @@
-import { RingBuffer } from "../../src/common/ringbuffer";
+import { RingBuffer } from "../../src/common/data_struct/ring_buffer";
 import { describe, it, expect } from "@jest/globals";
 
 describe("RingBuffer", () => {

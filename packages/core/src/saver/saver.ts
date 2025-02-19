@@ -1,9 +1,6 @@
+import { DocumentTDO } from "../entity/node/nodes/document.ts";
+import { TransferDataObject } from "../entity/tdo/tdo.ts";
 import { MixEditor } from "../mixeditor.ts";
-import { Node } from "../node/node.ts";
-import { DocumentTDO } from "../node/nodes/document.ts";
-import { MaybePromise } from "@mixeditor/common";
-import { TransferDataObject } from "../node/tdo.ts";
-import { TDOHandlerMap } from "../node/tdo_manager.ts";
 
 export type AnyTDO = TransferDataObject & {
   [key: string]: any;

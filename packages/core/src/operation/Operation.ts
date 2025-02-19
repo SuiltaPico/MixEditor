@@ -87,7 +87,7 @@ export class OperationManager<
   execute_handler!: OperationManagerHandlerManager<TOperationHandler>["execute_handler"];
 
   /** 生成操作 ID */
-  generate_id() {
+  gen_id() {
     return this.idgen.next();
   }
 
@@ -98,7 +98,7 @@ export class OperationManager<
     operation_factory: TOperationFactory,
     ...args: ParametersExceptFirst<TOperationFactory>
   ) {
-    const id = this.generate_id();
+    const id = this.gen_id();
     const operation = operation_factory(id, ...args);
     return operation;
   }

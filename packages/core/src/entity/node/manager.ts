@@ -1,21 +1,21 @@
 import { MaybePromise, UlidIdGenerator } from "@mixeditor/common";
-import { HandlerManager, ItemHandlerMap } from "../common/HandlerManager";
-import { NavigateDirection } from "../common/navigate";
-import { ParametersExceptFirst } from "../common/type";
-import { MixEditor } from "../mixeditor";
-import { CaretNavigateEnterDecision } from "../resp_chain/caret_navigate";
-import { DeleteFromPointDecision } from "../resp_chain/delete_from_point";
-import { DeleteRangeDecision } from "../resp_chain/delete_range";
+import { ConvertHandlerMap } from "../../common/handler";
+import { HandlerManager, ItemHandlerMap } from "../../common/HandlerManager";
+import { NavigateDirection } from "../../common/navigate";
+import { ParametersExceptFirst } from "../../common/type";
+import { MixEditor } from "../../mixeditor";
+import { CaretNavigateEnterDecision } from "../../resp_chain/caret_navigate";
+import { DeleteFromPointDecision } from "../../resp_chain/delete_from_point";
+import { DeleteRangeDecision } from "../../resp_chain/delete_range";
 import {
   InsertNodeFrom,
   InsertNodesDecision,
-} from "../resp_chain/insert_nodes";
-import { MergeNodeDecision } from "../resp_chain/merge_node";
-import { MarkMap } from "./mark";
+} from "../../resp_chain/insert_nodes";
+import { MergeNodeDecision } from "../../resp_chain/merge_node";
+import { MarkMap } from "../mark/mark";
+import { NodeContext } from "./context";
 import { Node } from "./node";
-import { NodeContext } from "./node_context";
-import { TransferDataObject } from "./tdo";
-import { ConvertHandlerMap } from "../common/handler";
+import { NodeTDO } from "./node_tdo";
 
 /**
  * 节点处理器函数类型定义
@@ -36,7 +36,7 @@ export interface NodeConvertFormatMap {
   /** 转换为纯文本格式 */
   plain_text: string;
   /** 转换为传输数据对象格式 */
-  tdo: TransferDataObject;
+  tdo: NodeTDO;
 }
 
 /**
@@ -81,15 +81,9 @@ export interface NodeHandlerMap<TNode extends Node = Node>
    */
   split: NodeHandler<[indexes: number[]], Node[]>;
   /** 插入子节点 */
-  insert_children: NodeHandler<
-    [index: number, children: TransferDataObject[]],
-    void
-  >;
+  insert_children: NodeHandler<[index: number, children: NodeTDO[]], void>;
   /** 删除子节点 */
-  delete_children: NodeHandler<
-    [from: number, to: number],
-    TransferDataObject[]
-  >;
+  delete_children: NodeHandler<[from: number, to: number], NodeTDO[]>;
 
   // --- 责任链决策 ---
   /** 移动节点 */
@@ -104,11 +98,7 @@ export interface NodeHandlerMap<TNode extends Node = Node>
    * 并返回自己不接受的节点。和自己插入流程完成后的索引，用于父节点分割自己。
    */
   handle_insert_nodes: NodeHandler<
-    [
-      insert_index: number,
-      nodes_to_insert: TransferDataObject[],
-      from?: InsertNodeFrom
-    ],
+    [insert_index: number, nodes_to_insert: NodeTDO[], from?: InsertNodeFrom],
     InsertNodesDecision
   >;
 
@@ -149,6 +139,8 @@ export class NodeManager<
   private node_contexts = new WeakMap<Node, NodeContext>();
   /** 愿意被合并的节点。键为合并目标的标签，值为接受该标签合并的节点类型集合。 */
   private tag_allowed_to_be_merged = new Map<string, Set<string>>();
+  /** 节点->允许接受的节点类型缓存。键为节点类型，值为节点类型集合。 */
+  private node_to_merge_tags_cache = new Map<string, Set<string>>();
 
   register_handler!: NodeManagerHandlerManager<
     TNodeHandler,
@@ -175,6 +167,10 @@ export class NodeManager<
     /** 要移除的允许合并标签（可选） */
     remove_tags?: Iterable<string>
   ) {
+    // 更改允许合并的标签会导致涉及的节点类型缓存失效。
+    // 因为计算涉及的节点类型成本高，所以直接清空缓存。
+    this.node_to_merge_tags_cache.clear();
+
     // 添加允许合并的标签
     for (const tag of add_tags) {
       let allowed_types = this.tag_allowed_to_be_merged.get(tag);
@@ -203,6 +199,9 @@ export class NodeManager<
     /** 要移除的标签（可选） */
     remove_tags?: Iterable<string>
   ) {
+    // 更改自己的标签会导致自己允许合并的节点类型的缓存失效
+    this.node_to_merge_tags_cache.delete(node_type);
+
     this.editor.tag_manager.set_tags_of_key(node_type, new Set(add_tags));
     if (remove_tags) {
       for (const tag of remove_tags) {
@@ -211,8 +210,37 @@ export class NodeManager<
     }
   }
 
+  /** 生成合并比较器。 */
+  is_allow_to_merge(
+    /** 要比较的节点类型 */
+    host_node_type: string,
+    /** 要被合并的节点类型 */
+    be_merged_node_type: string
+  ) {
+    let host_allowed_types = this.node_to_merge_tags_cache.get(host_node_type);
+    // 计算节点允许合并的节点类型，并缓存结果
+    if (!host_allowed_types) {
+      const host_tags = this.editor.tag_manager.get_tags_of_key(host_node_type);
+      if (!host_tags) return false;
+
+      host_allowed_types = new Set<string>();
+      for (const host_tag of host_tags) {
+        const host_tag_allowed_types =
+          this.tag_allowed_to_be_merged.get(host_tag);
+        if (host_tag_allowed_types) {
+          host_tag_allowed_types.forEach((type) =>
+            host_tag_allowed_types.add(type)
+          );
+        }
+      }
+      this.node_to_merge_tags_cache.set(host_node_type, host_allowed_types);
+    }
+
+    return host_allowed_types.has(be_merged_node_type);
+  }
+
   /** 获取节点 ID */
-  generate_id() {
+  gen_id() {
     return this.idgen.next();
   }
 

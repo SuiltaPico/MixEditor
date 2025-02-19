@@ -10,14 +10,14 @@ import {
   EventManager,
   MixEditorEventManagerContext,
 } from "./event/event";
-import { MarkManager } from "./node/mark_manager";
-import { AllNodeTypes } from "./node/node";
-import { NodeHandlerMap, NodeManager } from "./node/node_manager";
+import { MarkManager } from "./entity/mark/manager";
+import { AllNodeTypes } from "./entity/node/node";
+import { NodeHandlerMap, NodeManager } from "./entity/node/manager";
 import {
   create_DocumentNode,
   DocumentTDO,
   init_document,
-} from "./node/nodes/document";
+} from "./entity/node/nodes/document";
 import { HistoryManager } from "./operation/HistoryManager";
 import { OperationManager } from "./operation/Operation";
 import { init_operations } from "./operation/operations";
@@ -25,46 +25,18 @@ import { MixEditorPlugin, MixEditorPluginContext } from "./plugin";
 import { execute_caret_navigate_from_selected_data } from "./resp_chain/caret_navigate";
 import { Saver } from "./saver/saver";
 import { SelectedData, Selection } from "./selection";
-import { TDOHandlerMap, TDOManager } from "./node/tdo_manager";
-import { TagManager } from "./node/tag_manager";
-
-export interface Events {
-  /** 编辑器核心初始化。 */
-  init: {
-    type: "init";
-  };
-  before_save: {
-    type: "before_save";
-  };
-  save: {
-    type: "save";
-    context: {
-      save_result: any;
-    };
-  };
-  after_save: {
-    type: "after_save";
-    save_result: any;
-  };
-  before_load: {
-    type: "before_load";
-    tdo: DocumentTDO;
-  };
-  load: {
-    type: "load";
-    tdo: DocumentTDO;
-  };
-  after_load: {
-    type: "after_load";
-  };
-  /** 光标导航。 */
-  caret_navigate: {
-    type: "caret_navigate";
-    direction: NavigateDirection;
-  };
-  /** 删除选区。 */
-  delete_selected: DeleteSelectedEvent;
-}
+import { TagManager } from "./common/tag_manager";
+import {
+  NodeTDO,
+  NodeTDOHandlerManager,
+  NodeTDOHandlerMap,
+} from "./entity/node/node_tdo";
+import {
+  MarkTDO,
+  MarkTDOHandlerManager,
+  MarkTDOHandlerMap,
+} from "./entity/mark/mark_tdo";
+import { AllEvents } from "./event";
 
 export class MixEditor {
   /** 操作管理器。 */
@@ -75,10 +47,15 @@ export class MixEditor {
   /** 文档节点管理器。 */
   node_manager: NodeManager<NodeHandlerMap<AllNodeTypes>, AllNodeTypes> =
     new NodeManager<NodeHandlerMap<AllNodeTypes>, AllNodeTypes>(this);
+  /** 文档节点传输数据对象管理器。 */
+  node_tdo_manager: NodeTDOHandlerManager<NodeTDOHandlerMap<any>, NodeTDO> =
+    new NodeTDOHandlerManager<NodeTDOHandlerMap<any>, NodeTDO>(this);
+
   /** 文档标记管理器。 */
   mark_manager = new MarkManager(this);
-  /** 节点传输数据对象管理器。 */
-  tdo_manager = new TDOManager<TDOHandlerMap<any>, any>(this);
+  /** 文档标记传输数据对象管理器。 */
+  mark_tdo_manager: MarkTDOHandlerManager<MarkTDOHandlerMap, MarkTDO> =
+    new MarkTDOHandlerManager<MarkTDOHandlerMap, MarkTDO>(this);
 
   /** 节点标签管理器。 */
   tag_manager = new TagManager<string>();
@@ -92,9 +69,9 @@ export class MixEditor {
 
   /** 事件管理器。 */
   event_manager: EventManager<
-    Events[keyof Events],
+    AllEvents[keyof AllEvents],
     MixEditorEventManagerContext
-  > = new EventManager<Events[keyof Events], MixEditorEventManagerContext>({
+  > = new EventManager<AllEvents[keyof AllEvents], MixEditorEventManagerContext>({
     editor: this,
   });
   /** 插件管理器。 */
@@ -109,11 +86,11 @@ export class MixEditor {
       event,
       wait_dependencies,
     }: Parameters<
-      EventHandler<Events["save"], MixEditorEventManagerContext>
+      EventHandler<AllEvents["save"], MixEditorEventManagerContext>
     >[0]) => {
       await wait_dependencies();
       const tdo = await this.node_manager.execute_handler(
-        "convert_to_tdo",
+        "to_tdo",
         this.document.get()
       );
       event.context.save_result = tdo;
@@ -123,7 +100,7 @@ export class MixEditor {
       event,
       wait_dependencies,
     }: Parameters<
-      EventHandler<Events["caret_navigate"], MixEditorEventManagerContext>
+      EventHandler<AllEvents["caret_navigate"], MixEditorEventManagerContext>
     >[0]) => {
       await wait_dependencies();
       const direction = event.direction;

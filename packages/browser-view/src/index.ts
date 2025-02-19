@@ -21,7 +21,7 @@ export * from "./common/dom";
 // 扩展主模块
 declare module "@mixeditor/core" {
   // 添加浏览器视图新增的事件
-  interface Events {
+  interface AllEvents {
     "bv:pointer_down": BvPointerDownEvent;
     "bv:pointer_up": BvPointerUpEvent;
     "bv:pointer_move": BvPointerMoveEvent;

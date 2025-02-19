@@ -1,6 +1,6 @@
 import { createSignal } from "@mixeditor/common";
 import { MixEditor } from "./mixeditor";
-import { Node } from "./node/node";
+import { Node } from "./entity/node/node";
 import { NavigateDirection } from "./common/navigate";
 
 /** 选择节点信息。 */

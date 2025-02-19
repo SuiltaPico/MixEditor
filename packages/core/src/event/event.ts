@@ -1,4 +1,4 @@
-import { Graph } from "../common/Graph";
+import { Graph } from "../common/data_struct/Graph";
 import { MaybePromise } from "@mixeditor/common";
 import { MixEditor } from "../mixeditor";
 
@@ -6,7 +6,9 @@ export type MixEditorEventManagerContext = {
   editor: MixEditor;
 };
 
-/** 事件。 */
+/** 事件。
+ *
+ * 可以被视作为流水线上下文。 */
 export interface Event {
   /** 事件类型。 */
   type: string;
@@ -17,16 +19,9 @@ export interface Event {
   };
 }
 
-/** 事件。 */
-export interface EventForEmit {
-  /** 事件类型。 */
-  type: string;
-  /** 事件附带的上下文，可以用于传递数据。 */
-  context: Record<string, any> & {
-    /** 事件处理的返回结果。 */
-    result?: any;
-  };
-}
+export type EventForEmit = Omit<Event, "context"> & {
+  context: Exclude<Event["context"], undefined>;
+};
 
 export type EventToEventForEmit<
   TEvent extends Event,
@@ -49,6 +44,8 @@ export type EventHandler<
 }) => MaybePromise<void>;
 
 /** 事件管理器。
+ *
+ * 事件处理流程是一个完整的流水线。可以通过编排监听器之间的依赖关系来实现复杂的流程。
  *
  * ## 监听器
  * 监听器之间的依赖关系构成一个有向无环图。
@@ -88,7 +85,10 @@ export class EventManager<
       },
       TContext
     >,
-    dependencies?: Iterable<EventHandler<TEvent, TContext>>
+    meta?: {
+      dependencies?: Iterable<EventHandler<TEvent, TContext>>;
+      tags: string[];
+    }
   ) {
     const _handler = handler as EventHandler<TEvent, TContext>;
 
@@ -98,9 +98,9 @@ export class EventManager<
     }
     const relation_graph = this.handler_relation_map.get(type)!;
 
-    if (dependencies) {
+    if (meta?.dependencies) {
       // 检查依赖关系是否会导致循环依赖
-      for (const dependency of dependencies) {
+      for (const dependency of meta.dependencies) {
         if (this.has_ancestor_handler(type, _handler, dependency)) {
           throw new Error(
             `已存在依赖关系: ${dependency.name} -> ${_handler.name}，无法添加依赖关系 ${handler.name} -> ${dependency.name}。`
@@ -109,7 +109,7 @@ export class EventManager<
       }
 
       // 添加依赖关系
-      for (const dependency of dependencies) {
+      for (const dependency of meta.dependencies) {
         relation_graph.add_relation(dependency, _handler);
       }
     }

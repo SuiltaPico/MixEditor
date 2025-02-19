@@ -1,4 +1,4 @@
-import { TwoLevelTypeMap } from "./TwoLevelTypeMap";
+import { TwoLevelTypeMap } from "./data_struct/two_level_type_map";
 import { ParametersExceptFirst2 } from "./type";
 
 export const handler_manager_method_list = [

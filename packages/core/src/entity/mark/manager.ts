@@ -3,12 +3,13 @@ import {
   handler_manager_method_list,
   HandlerManager,
   ItemHandlerMap,
-} from "../common/HandlerManager";
-import { MixEditor } from "../mixeditor";
+} from "../../common/HandlerManager";
+import { MixEditor } from "../../mixeditor";
 import { Mark } from "./mark";
-import { ParametersExceptFirst } from "../common/type";
-import { TransferDataObject } from "./tdo";
-import { ConvertHandlerMap } from "../common/handler";
+import { ParametersExceptFirst } from "../../common/type";
+import { TransferDataObject } from "../tdo/tdo";
+import { ConvertHandlerMap } from "../../common/handler";
+import { MarkTDO } from "./mark_tdo";
 
 export type MarkHandler<TArgs extends any[], TResult> = (
   editor: MixEditor,
@@ -35,8 +36,13 @@ type MarkConvertHandlerMap = ConvertHandlerMap<
 export interface MarkHandlerMap<TMark extends Mark = Mark>
   extends ItemHandlerMap<MixEditor, TMark>,
     MarkConvertHandlerMap {
-  /** 表达当前标记是否与另一个标记相等。 */
-  equal: MarkHandler<[other: TMark], boolean>;
+  /** 判断两个传输数据对象是否相等。 */
+  is_equal: (
+    editor: MixEditor,
+    self: Mark | MarkTDO,
+    target: Mark | MarkTDO,
+    is_tdo?: boolean
+  ) => boolean;
 }
 
 /** 标记管理器的处理器管理器类型 */
@@ -72,7 +78,7 @@ export class MarkManager<
   >["execute_handler"];
 
   /** 获取标记 ID */
-  generate_id() {
+  gen_id() {
     return this.idgen.next();
   }
 

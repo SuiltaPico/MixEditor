@@ -1,14 +1,14 @@
 import { MaybePromise } from "@mixeditor/common";
 
 type ConvertToKey<TConvertFormat extends Record<string, any>> =
-  `convert_to_${keyof TConvertFormat extends string
+  `to_${keyof TConvertFormat extends string
     ? keyof TConvertFormat
     : never}`;
 // 工具类型：从 convert_to_xxx 键中提取格式类型
 type ExtractConvertFormat<
   T,
   TConvertFormat extends Record<string, any>
-> = T extends `convert_to_${infer F}`
+> = T extends `to_${infer F}`
   ? F extends keyof TConvertFormat
     ? F
     : never

@@ -1,4 +1,4 @@
-import { RingBuffer } from "../common/ringbuffer";
+import { RingBuffer } from "../common/data_struct/ring_buffer";
 import {
   Operation,
   OperationManager,

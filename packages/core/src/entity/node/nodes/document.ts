@@ -1,13 +1,13 @@
 import { createSignal, WrappedSignal } from "@mixeditor/common";
-import { MixEditor } from "../../mixeditor";
-import type { Node } from "../node";
-import { AnyTDO } from "../../saver/saver";
-import { TransferDataObject } from "../tdo";
-import { NavigateDirection } from "../../common/navigate";
+import { MixEditor } from "../../../mixeditor";
+import { create_Node, type Node } from "../node";
+import { AnyTDO } from "../../../saver/saver";
+import { TransferDataObject } from "../../tdo/tdo";
+import { NavigateDirection } from "../../../common/navigate";
 import {
   CaretNavigateEnterDecision,
   CaretNavigateFrom,
-} from "../../resp_chain/caret_navigate";
+} from "../../../resp_chain/caret_navigate";
 import {
   paragraph_delete_children,
   paragraph_handle_delete_range,
@@ -28,7 +28,7 @@ export function create_DocumentNode(
     children: Node[];
   }
 ) {
-  return {
+  return create_Node({
     id,
     type: "document",
     children: createSignal(params.children ?? [], {
@@ -37,7 +37,7 @@ export function create_DocumentNode(
     schema_version: params.schema_version ?? 1,
     created_at: params.created_at ?? new Date(),
     modified_at: params.modified_at ?? new Date(),
-  } satisfies DocumentNode;
+  }) satisfies DocumentNode;
 }
 
 export interface DocumentTDO extends TransferDataObject {
@@ -62,10 +62,7 @@ export function create_DocumentTDO(
   };
 }
 
-export async function convert_to_tdo(
-  editor: MixEditor,
-  document: DocumentNode
-) {
+export async function to_tdo(editor: MixEditor, document: DocumentNode) {
   return {
     id: document.id,
     type: "document",
@@ -76,20 +73,18 @@ export async function convert_to_tdo(
       await Promise.all(
         document.children
           .get()
-          .map((child) =>
-            editor.node_manager.execute_handler("convert_to_tdo", child)
-          )
+          .map((child) => editor.node_manager.execute_handler("to_tdo", child))
       )
     ).filter((child) => child !== undefined),
   } satisfies DocumentTDO;
 }
 
 export async function init_document(editor: MixEditor) {
-  const { node_manager, document, tdo_manager, event_manager } = editor;
+  const { node_manager, document, node_tdo_manager, event_manager } = editor;
 
   // 注册文档节点保存行为
   node_manager.register_handlers("document", {
-    convert_to_tdo: convert_to_tdo,
+    to_tdo: to_tdo,
     get_children_count: (_, node) => {
       return node.children.get().length;
     },
@@ -131,12 +126,14 @@ export async function init_document(editor: MixEditor) {
   });
 
   // 注册文档节点加载行为
-  tdo_manager.register_handler("document", "convert_to_node", async (_, tdo) => {
+  node_tdo_manager.register_handler("document", "to_node", async (_, tdo) => {
     const dtdo = tdo as DocumentTDO;
     const nodes = (
       await Promise.all(
         // TODO：缺失对没有注册或加载失败的节点的处理
-        dtdo.children.map((child) => tdo_manager.convert_to_node(child))
+        dtdo.children.map((child) =>
+          node_tdo_manager.execute_handler("to_node", child)
+        )
       )
     ).filter((node) => node !== undefined) as Node[];
     const document = node_manager.create_node(create_DocumentNode, {
@@ -153,7 +150,8 @@ export async function init_document(editor: MixEditor) {
 
   // 注册加载流程
   event_manager.add_handler("load", async (props) => {
-    const new_document = (await tdo_manager.convert_to_node(
+    const new_document = (await node_tdo_manager.execute_handler(
+      "to_node",
       props.event.tdo
     )) as DocumentNode;
     document.set(new_document);

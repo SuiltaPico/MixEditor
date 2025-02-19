@@ -14,6 +14,7 @@ import {
   CaretNavigateFrom,
   create_DeferredOperation,
   create_InsertChildrenOperation,
+  create_Node,
   create_NodeRefTDO,
   DeleteFromPointDecision,
   InsertNodesDecision,
@@ -68,14 +69,14 @@ export function create_ParagraphNode(
   children: Node[],
   marks?: MarkMap
 ) {
-  return {
+  return create_Node<ParagraphNode>({
     id,
     type: "paragraph",
     children: createSignal(children, {
       equals: false,
     }),
     marks: createSignal<MarkMap>(marks ?? {}),
-  } satisfies ParagraphNode;
+  });
 }
 
 export const ParagraphRenderer: NodeRenderer<ParagraphNode> = (props) => {
@@ -108,14 +109,18 @@ export function paragraph() {
     id: "paragraph",
     init: async (ctx: MixEditorPluginContext) => {
       const editor = ctx.editor;
-      const { node_manager, mark_manager, operation_manager, tdo_manager } =
-        editor;
+      const {
+        node_manager,
+        mark_manager,
+        operation_manager,
+        node_tdo_manager,
+      } = editor;
       const browser_view_plugin =
         await editor.plugin_manager.wait_plugin_inited<BrowserViewPluginResult>(
           "browser-view"
         );
 
-      tdo_manager.register_handler(
+      node_tdo_manager.register_handler(
         "paragraph",
         "convert_to_node",
         async (_, tdo) => {
@@ -123,13 +128,15 @@ export function paragraph() {
           // TODO：缺失对没有注册或加载失败的节点的处理
           const children = (
             await Promise.all(
-              dtdo.children.map((child) => tdo_manager.convert_to_node(child))
+              dtdo.children.map((child) =>
+                node_tdo_manager.execute_handler("to_node", child)
+              )
             )
           ).filter((child) => child !== undefined) as Node[];
           const paragraph_node = node_manager.create_node(
             create_ParagraphNode,
             children,
-            await load_mark_map(tdo_manager, dtdo.marks)
+            await load_mark_map(node_tdo_manager, dtdo.marks)
           );
           children.forEach((child) => {
             node_manager.set_parent(child, paragraph_node);
@@ -139,7 +146,7 @@ export function paragraph() {
       );
 
       node_manager.register_handlers("paragraph", {
-        convert_to_tdo: async (_, node) => {
+        to_tdo: async (_, node) => {
           const paragraph_node = node as ParagraphNode;
           return {
             id: paragraph_node.id,
@@ -148,9 +155,7 @@ export function paragraph() {
               await Promise.all(
                 paragraph_node.children
                   .get()
-                  .map((child) =>
-                    node_manager.execute_handler("convert_to_tdo", child)
-                  )
+                  .map((child) => node_manager.execute_handler("to_tdo", child))
               )
             ).filter((child) => child !== undefined),
             marks: await save_mark_map(
@@ -277,7 +282,7 @@ export function paragraph() {
               node.children.get().length,
               [
                 create_NodeRefTDO(
-                  node_manager.generate_id(),
+                  node_manager.gen_id(),
                   (target as ParagraphNode).children
                     .get()
                     .map((child) => child.id)

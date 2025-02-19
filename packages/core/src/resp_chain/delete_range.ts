@@ -1,10 +1,10 @@
 import { MixEditor } from "../mixeditor";
-import { Node } from "../node/node";
+import { Node } from "../entity/node/node";
 import {
   get_common_ancestor_from_node,
   is_ancestor,
   is_parent,
-} from "../node/path";
+} from "../common/entity/node/path";
 import { Operation } from "../operation/Operation";
 import { create_BatchOperation } from "../operation/operations";
 import { Selected, SelectedData } from "../selection";
@@ -280,7 +280,7 @@ export async function execute_delete_range(
   }
 
   return create_BatchOperation(
-    editor.operation_manager.generate_id(),
+    editor.operation_manager.gen_id(),
     operations
   );
 }

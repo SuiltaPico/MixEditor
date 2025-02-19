@@ -1,6 +1,6 @@
 import { MixEditor } from "../mixeditor";
-import { Node } from "../node/node";
-import { get_common_ancestor_from_node } from "../node/path";
+import { Node } from "../entity/node/node";
+import { get_common_ancestor_from_node } from "../common/entity/node/path";
 import { Operation } from "../operation/Operation";
 import { create_DeleteRangeOperation } from "../operation/operations/delete_range";
 

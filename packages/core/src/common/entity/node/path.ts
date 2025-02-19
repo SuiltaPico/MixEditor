@@ -1,5 +1,5 @@
-import { Node } from "./node";
-import { NodeHandlerMap, NodeManager } from "./node_manager";
+import { Node } from "../../../entity/node/node";
+import { NodeHandlerMap, NodeManager } from "../../../entity/node/manager";
 
 /** 获取节点路径 */
 export async function get_node_path(

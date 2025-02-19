@@ -3,4 +3,6 @@ export interface TransferDataObject {
   id: string;
   /** 传输数据对象类型。 */
   type: string;
+  /** 是否是节点。 */
+  _is_node?: false;
 }

@@ -12,15 +12,17 @@ import {
   create_DeferredOperation,
   create_DeleteRangeOperation,
   create_InsertChildrenOperation,
+  create_Node,
   DeleteFromPointDecision,
   DeleteRangeDecision,
+  EventHandler,
   get_node_path,
-  has_same_marks,
   InsertNodesDecision,
   load_mark_map,
   MarkMap,
   MarkTDOMap,
   MergeNodeDecision,
+  MixEditorEventManagerContext,
   MixEditorPluginContext,
   NavigateDirection,
   Node,
@@ -33,6 +35,9 @@ import { onMount } from "solid-js";
 declare module "@mixeditor/core" {
   interface AllNodes {
     text: TextNode;
+  }
+  interface AllEvents {
+    "text:filter_merging_node": TextFilterMergingNodeEvent;
   }
 }
 
@@ -55,6 +60,7 @@ export function create_TextTDO(
   } satisfies TextNodeTDO;
 }
 
+/** 文本节点。 */
 export interface TextNode extends Node {
   type: "text";
   text: WrappedSignal<string>;
@@ -62,12 +68,35 @@ export interface TextNode extends Node {
 }
 
 export function create_TextNode(id: string, text: string, marks?: MarkMap) {
-  return {
+  return create_Node<TextNode>({
     id,
     type: "text",
     text: createSignal(text),
     marks: createSignal<MarkMap>(marks ?? {}),
-  } satisfies TextNode;
+  });
+}
+
+export interface TextFilterMergingNodeEvent {
+  type: "text:filter_merging_node";
+  target: Node[];
+}
+
+export async function filter_merging_node_schema_check(
+  params: Parameters<
+    EventHandler<TextFilterMergingNodeEvent, MixEditorEventManagerContext>
+  >[0]
+) {
+  const { event, wait_dependencies, manager_context } = params;
+  await wait_dependencies();
+  const { target } = event;
+}
+
+export async function filter_merging_node_marks_check(
+  params: Parameters<
+    EventHandler<TextFilterMergingNodeEvent, MixEditorEventManagerContext>
+  >[0]
+) {
+  const { event, wait_dependencies, manager_context } = params;
 }
 
 export const TextRenderer: NodeRenderer<TextNode> = (props) => {
@@ -96,11 +125,12 @@ export function text() {
       const { editor } = ctx;
       const {
         node_manager,
+        node_tdo_manager,
         mark_manager,
         plugin_manager,
         selection,
         operation_manager,
-        tdo_manager,
+        event_manager,
       } = editor;
       const browser_view_plugin =
         await plugin_manager.wait_plugin_inited<BrowserViewPluginResult>(
@@ -108,26 +138,39 @@ export function text() {
         );
       const { renderer_manager } = browser_view_plugin;
 
-      tdo_manager.register_handler(
-        "text",
-        "convert_to_node",
-        async (_, tdo) => {
-          const ttdo = tdo as TextNodeTDO;
-          const node = create_TextNode(
-            ttdo.id,
-            ttdo.content,
-            await load_mark_map(tdo_manager, ttdo.marks)
-          );
-          node_manager.record_node(node);
-          return node;
+      event_manager.add_handler(
+        "text:filter_merging_node",
+        filter_merging_node_schema_check,
+        {
+          dependencies: [],
+          tags: ["text:node_schema_check"],
         }
       );
+      event_manager.add_handler(
+        "text:filter_merging_node",
+        filter_merging_node_marks_check,
+        {
+          dependencies: [filter_merging_node_schema_check as any],
+          tags: ["text:node_marks_check"],
+        }
+      );
+
+      node_tdo_manager.register_handler("text", "to_node", async (_, tdo) => {
+        const ttdo = tdo as TextNodeTDO;
+        const node = create_TextNode(
+          ttdo.id,
+          ttdo.content,
+          await load_mark_map(node_tdo_manager, ttdo.marks)
+        );
+        node_manager.record_node(node);
+        return node;
+      });
 
       node_manager.set_tag("text", ["plain_text"]);
       node_manager.set_merge_tags("text", ["plain_text"]);
 
       node_manager.register_handlers("text", {
-        convert_to_tdo: async (_, node) => {
+        to_tdo: async (_, node) => {
           return {
             id: node.id,
             type: "text",
@@ -145,7 +188,7 @@ export function text() {
           const result = [];
           for (const index of indexes) {
             result.push(
-              create_TextTDO(node_manager.generate_id(), text.slice(index))
+              create_TextNode(node_manager.gen_id(), text.slice(index))
             );
           }
           return result;
@@ -171,7 +214,7 @@ export function text() {
           const slice_text = text.slice(from, to + 1);
           node.text.set(new_value);
 
-          return [create_TextTDO(node_manager.generate_id(), slice_text)];
+          return [create_TextTDO(node_manager.gen_id(), slice_text)];
         },
 
         handle_caret_navigate: (_, node, to, direction) => {
@@ -208,11 +251,11 @@ export function text() {
           )!;
 
           async function is_mergeable(node: Node) {
-            if (node.type !== "text") return false;
-            const text_node = node as TextNodeTDO;
+            if (!node_manager.is_allow_to_merge("text", node.type))
+              return false;
             const node_marks = await load_mark_map(
               tdo_manager,
-              text_node.marks
+              await node_manager.execute_handler("get_marks", node)!
             );
             return has_same_marks(self_marks, node_marks);
           }
@@ -321,22 +364,19 @@ export function text() {
           }
         },
 
-        handle_merge_node: (_, node, target) => {
-          console.log("text:handle_merge_node", node, target);
+        handle_merge_node: async (_, node, target) => {
+          event_manager.emit(create_MergeNodeEvent(node, target));
+          return MergeNodeDecision.Reject;
 
-          if (target.type !== "text") {
-            return MergeNodeDecision.Reject;
-          }
-
-          const generate_insert_children_operation = () => [
+          const generate_insert_children_operation = async () => [
             operation_manager.create_operation(
               create_InsertChildrenOperation,
               node.id,
               node.text.get().length,
               [
                 create_TextTDO(
-                  node_manager.generate_id(),
-                  (target as TextNode).text.get()
+                  node_manager.gen_id(),
+                  await node_manager.execute_handler("to_plain_text", target)!
                 ),
               ]
             ),
