@@ -46,7 +46,7 @@ export const paragraph_delete_children: ParagraphDeleteChildrenFunction =
 
     return await Promise.all(
       deleted_children.map(
-        (child) => node_manager.execute_handler("save_to_tdo", child as any)!
+        (child) => node_manager.execute_handler("convert", child as any, "tdo")!
       )
     );
   };

@@ -1,31 +1,63 @@
 import { MaybePromise, UlidIdGenerator } from "@mixeditor/common";
 import { HandlerManager, ItemHandlerMap } from "../common/HandlerManager";
-import { MixEditor } from "../mixeditor";
-import { TransferDataObject } from "./tdo";
-import { Node } from "./node";
-import { NodeContext } from "./node_context";
-import { CaretNavigateEnterDecision } from "../resp_chain/caret_navigate";
 import { NavigateDirection } from "../common/navigate";
+import { ParametersExceptFirst } from "../common/type";
+import { MixEditor } from "../mixeditor";
+import { CaretNavigateEnterDecision } from "../resp_chain/caret_navigate";
 import { DeleteFromPointDecision } from "../resp_chain/delete_from_point";
 import { DeleteRangeDecision } from "../resp_chain/delete_range";
-import { ParametersExceptFirst } from "../common/type";
-import { MergeNodeDecision } from "../resp_chain/merge_node";
-import { Mark, MarkMap } from "./mark";
 import {
   InsertNodeFrom,
   InsertNodesDecision,
 } from "../resp_chain/insert_nodes";
-import { TwoLevelTypeMap } from "../common/TwoLevelTypeMap";
+import { MergeNodeDecision } from "../resp_chain/merge_node";
+import { MarkMap } from "./mark";
+import { Node } from "./node";
+import { NodeContext } from "./node_context";
+import { TransferDataObject } from "./tdo";
+import { ConvertHandlerMap } from "../common/handler";
 
+/**
+ * 节点处理器函数类型定义
+ * @template TParams 处理器参数类型数组
+ * @template TResult 处理器返回结果类型
+ */
 export type NodeHandler<TParams extends any[] = any[], TResult = void> = (
   editor: MixEditor,
   node: Node,
   ...params: TParams
 ) => MaybePromise<TResult>;
 
+/**
+ * 节点转换格式映射接口
+ * 定义节点支持转换的目标格式及其对应的返回类型
+ */
+export interface NodeConvertFormatMap {
+  /** 转换为纯文本格式 */
+  plain_text: string;
+  /** 转换为传输数据对象格式 */
+  tdo: TransferDataObject;
+}
+
+/**
+ * 节点转换格式类型
+ * 表示支持的转换格式名称的联合类型
+ */
+export type NodeConvertFormat = keyof NodeConvertFormatMap;
+
+/**
+ * 节点转换处理器映射类型
+ * 包含将节点转换为不同格式的具体处理方法
+ */
+type NodeConvertHandlerMap = ConvertHandlerMap<
+  NodeConvertFormatMap,
+  [editor: MixEditor, node: Node]
+>;
+
 /** 节点处理器类型表。 */
 export interface NodeHandlerMap<TNode extends Node = Node>
-  extends ItemHandlerMap<MixEditor, TNode> {
+  extends ItemHandlerMap<MixEditor, TNode>,
+    NodeConvertHandlerMap {
   // --- 树结构访问 ---
   /** 获取子节点 */
   get_child: NodeHandler<[index: number], Node | undefined>;
@@ -58,10 +90,6 @@ export interface NodeHandlerMap<TNode extends Node = Node>
     [from: number, to: number],
     TransferDataObject[]
   >;
-  /** 保存节点 */
-  save_to_tdo: NodeHandler<[], TransferDataObject>;
-  /** 保存节点为纯文本 */
-  save_to_plain_text: NodeHandler<[], string>;
 
   // --- 责任链决策 ---
   /** 移动节点 */
@@ -100,6 +128,7 @@ export interface NodeHandlerMap<TNode extends Node = Node>
   handle_merge_node: NodeHandler<[target: Node], MergeNodeDecision>;
 }
 
+/** 节点管理器的处理器管理器类型 */
 type NodeManagerHandlerManager<
   TNodeHandler extends NodeHandlerMap<any> = any,
   TNode extends Node = Node
@@ -118,9 +147,7 @@ export class NodeManager<
   private handler_manager: NodeManagerHandlerManager<TNodeHandler, TNode>;
   /** 节点上下文 */
   private node_contexts = new WeakMap<Node, NodeContext>();
-  /** 被合并的节点。键为合并者，值为愿意被合并者的集合。 */
-  private node_allowed_to_merge = new Map<string, Set<string>>();
-  /** 愿意被合并的节点。键为被合并者，值为愿意合并的标签。 */
+  /** 愿意被合并的节点。键为合并目标的标签，值为接受该标签合并的节点类型集合。 */
   private tag_allowed_to_be_merged = new Map<string, Set<string>>();
 
   register_handler!: NodeManagerHandlerManager<
@@ -136,6 +163,53 @@ export class NodeManager<
     TNodeHandler,
     TNode
   >["execute_handler"];
+
+  /**
+   * 设置节点类型允许被哪些标签合并。
+   */
+  set_merge_tags(
+    /** 要配置的节点类型 */
+    node_type: string,
+    /** 要添加的允许合并标签（该类型节点愿意被这些标签的节点合并） */
+    add_tags: Iterable<string>,
+    /** 要移除的允许合并标签（可选） */
+    remove_tags?: Iterable<string>
+  ) {
+    // 添加允许合并的标签
+    for (const tag of add_tags) {
+      let allowed_types = this.tag_allowed_to_be_merged.get(tag);
+      if (!allowed_types) {
+        allowed_types = new Set();
+        this.tag_allowed_to_be_merged.set(tag, allowed_types);
+      }
+      allowed_types.add(node_type);
+    }
+
+    // 移除不再允许合并的标签
+    if (remove_tags) {
+      for (const tag of remove_tags) {
+        const allowed_types = this.tag_allowed_to_be_merged.get(tag);
+        allowed_types?.delete(node_type);
+      }
+    }
+  }
+
+  /** 设置节点标签。 */
+  set_tag(
+    /** 要设置标签的节点类型 */
+    node_type: string,
+    /** 要添加的标签 */
+    add_tags: Iterable<string>,
+    /** 要移除的标签（可选） */
+    remove_tags?: Iterable<string>
+  ) {
+    this.editor.tag_manager.set_tags_of_key(node_type, new Set(add_tags));
+    if (remove_tags) {
+      for (const tag of remove_tags) {
+        this.editor.tag_manager.remove_tags_of_key(node_type, tag);
+      }
+    }
+  }
 
   /** 获取节点 ID */
   generate_id() {
@@ -198,6 +272,7 @@ export class NodeManager<
       MixEditor
     >(this.editor);
 
+    /** 要代理的处理器管理器的方法 */
     const proxy_methods_list = [
       "register_handlers",
       "register_handler",

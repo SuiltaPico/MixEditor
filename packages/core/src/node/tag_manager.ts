@@ -112,6 +112,15 @@ export class TagManager<TKey> {
     this.node_type_tag_map.set(key, filtered_tags);
   }
 
+  /** 移除 `key` 的标签。*/
+  remove_tags_of_key(key: TKey, tags: Iterable<string>) {
+    const tags_set = this.node_type_tag_map.get(key);
+    if (!tags_set) return;
+    for (const tag of tags) {
+      tags_set.delete(tag);
+    }
+  }
+
   /** 获取 `key` 的标签集合。*/
   get_tags_of_key(key: TKey) {
     return this.node_type_tag_map.get(key);

@@ -110,20 +110,24 @@ export function text() {
 
       tdo_manager.register_handler(
         "text",
-        "load",
-        async (_, data: TextNodeTDO) => {
+        "convert_to_node",
+        async (_, tdo) => {
+          const ttdo = tdo as TextNodeTDO;
           const node = create_TextNode(
-            data.id,
-            data.content,
-            await load_mark_map(tdo_manager, data.marks)
+            ttdo.id,
+            ttdo.content,
+            await load_mark_map(tdo_manager, ttdo.marks)
           );
           node_manager.record_node(node);
           return node;
         }
       );
 
+      node_manager.set_tag("text", ["plain_text"]);
+      node_manager.set_merge_tags("text", ["plain_text"]);
+
       node_manager.register_handlers("text", {
-        save_to_tdo: async (_, node) => {
+        convert_to_tdo: async (_, node) => {
           return {
             id: node.id,
             type: "text",

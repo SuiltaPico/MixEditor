@@ -113,7 +113,7 @@ export class MixEditor {
     >[0]) => {
       await wait_dependencies();
       const tdo = await this.node_manager.execute_handler(
-        "save",
+        "convert_to_tdo",
         this.document.get()
       );
       event.context.save_result = tdo;

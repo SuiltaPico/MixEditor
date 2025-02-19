@@ -10,7 +10,10 @@ export async function save_mark_map(
   if (!mark_map) return result;
 
   for (const [key, value] of Object.entries(mark_map)) {
-    result[key] = await mark_manager.execute_handler("save_to_tdo", value);
+    result[key] = await mark_manager.execute_handler(
+      "convert_to_tdo",
+      value
+    );
   }
   return result;
 }
@@ -23,7 +26,7 @@ export async function load_mark_map(
   if (!mark_map) return result;
 
   for (const [key, value] of Object.entries(mark_map)) {
-    result[key] = await tdo_manager.execute_handler("load", value);
+    result[key] = await tdo_manager.execute_handler("convert_to_mark", value);
   }
   return result;
 }

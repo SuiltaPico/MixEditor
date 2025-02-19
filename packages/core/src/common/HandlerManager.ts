@@ -1,6 +1,13 @@
 import { TwoLevelTypeMap } from "./TwoLevelTypeMap";
 import { ParametersExceptFirst2 } from "./type";
 
+export const handler_manager_method_list = [
+  "register_handler",
+  "register_handlers",
+  "get_handler",
+  "execute_handler",
+] as const;
+
 /** 项目的处理器表 */
 export type ItemHandlerMap<TContext, TItem> = Record<
   string,

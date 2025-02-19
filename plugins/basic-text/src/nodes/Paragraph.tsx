@@ -115,27 +115,31 @@ export function paragraph() {
           "browser-view"
         );
 
-      tdo_manager.register_handler("paragraph", "load", async (_, tdo) => {
-        const dtdo = tdo as ParagraphNodeTDO;
-        // TODO：缺失对没有注册或加载失败的节点的处理
-        const children = (
-          await Promise.all(
-            dtdo.children.map((child) => tdo_manager.load(child))
-          )
-        ).filter((child) => child !== undefined) as Node[];
-        const paragraph_node = node_manager.create_node(
-          create_ParagraphNode,
-          children,
-          await load_mark_map(tdo_manager, tdo.marks)
-        );
-        children.forEach((child) => {
-          node_manager.set_parent(child, paragraph_node);
-        });
-        return paragraph_node;
-      });
+      tdo_manager.register_handler(
+        "paragraph",
+        "convert_to_node",
+        async (_, tdo) => {
+          const dtdo = tdo as ParagraphNodeTDO;
+          // TODO：缺失对没有注册或加载失败的节点的处理
+          const children = (
+            await Promise.all(
+              dtdo.children.map((child) => tdo_manager.convert_to_node(child))
+            )
+          ).filter((child) => child !== undefined) as Node[];
+          const paragraph_node = node_manager.create_node(
+            create_ParagraphNode,
+            children,
+            await load_mark_map(tdo_manager, dtdo.marks)
+          );
+          children.forEach((child) => {
+            node_manager.set_parent(child, paragraph_node);
+          });
+          return paragraph_node;
+        }
+      );
 
       node_manager.register_handlers("paragraph", {
-        save_to_tdo: async (_, node) => {
+        convert_to_tdo: async (_, node) => {
           const paragraph_node = node as ParagraphNode;
           return {
             id: paragraph_node.id,
@@ -144,7 +148,9 @@ export function paragraph() {
               await Promise.all(
                 paragraph_node.children
                   .get()
-                  .map((child) => node_manager.execute_handler("save", child))
+                  .map((child) =>
+                    node_manager.execute_handler("convert_to_tdo", child)
+                  )
               )
             ).filter((child) => child !== undefined),
             marks: await save_mark_map(

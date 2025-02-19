@@ -62,7 +62,10 @@ export function create_DocumentTDO(
   };
 }
 
-export async function save_document(editor: MixEditor, document: DocumentNode) {
+export async function convert_to_tdo(
+  editor: MixEditor,
+  document: DocumentNode
+) {
   return {
     id: document.id,
     type: "document",
@@ -73,7 +76,9 @@ export async function save_document(editor: MixEditor, document: DocumentNode) {
       await Promise.all(
         document.children
           .get()
-          .map((child) => editor.node_manager.execute_handler("save_to_tdo", child))
+          .map((child) =>
+            editor.node_manager.execute_handler("convert_to_tdo", child)
+          )
       )
     ).filter((child) => child !== undefined),
   } satisfies DocumentTDO;
@@ -84,7 +89,7 @@ export async function init_document(editor: MixEditor) {
 
   // 注册文档节点保存行为
   node_manager.register_handlers("document", {
-    save_to_tdo: save_document,
+    convert_to_tdo: convert_to_tdo,
     get_children_count: (_, node) => {
       return node.children.get().length;
     },
@@ -126,12 +131,12 @@ export async function init_document(editor: MixEditor) {
   });
 
   // 注册文档节点加载行为
-  tdo_manager.register_handler("document", "load", async (_, tdo) => {
+  tdo_manager.register_handler("document", "convert_to_node", async (_, tdo) => {
     const dtdo = tdo as DocumentTDO;
     const nodes = (
       await Promise.all(
         // TODO：缺失对没有注册或加载失败的节点的处理
-        dtdo.children.map((child) => tdo_manager.load(child))
+        dtdo.children.map((child) => tdo_manager.convert_to_node(child))
       )
     ).filter((node) => node !== undefined) as Node[];
     const document = node_manager.create_node(create_DocumentNode, {
@@ -148,7 +153,7 @@ export async function init_document(editor: MixEditor) {
 
   // 注册加载流程
   event_manager.add_handler("load", async (props) => {
-    const new_document = (await tdo_manager.load(
+    const new_document = (await tdo_manager.convert_to_node(
       props.event.tdo
     )) as DocumentNode;
     document.set(new_document);

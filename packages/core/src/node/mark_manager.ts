@@ -1,9 +1,14 @@
 import { UlidIdGenerator } from "@mixeditor/common";
-import { HandlerManager, ItemHandlerMap } from "../common/HandlerManager";
+import {
+  handler_manager_method_list,
+  HandlerManager,
+  ItemHandlerMap,
+} from "../common/HandlerManager";
 import { MixEditor } from "../mixeditor";
 import { Mark } from "./mark";
 import { ParametersExceptFirst } from "../common/type";
 import { TransferDataObject } from "./tdo";
+import { ConvertHandlerMap } from "../common/handler";
 
 export type MarkHandler<TArgs extends any[], TResult> = (
   editor: MixEditor,
@@ -11,28 +16,43 @@ export type MarkHandler<TArgs extends any[], TResult> = (
   ...args: TArgs
 ) => TResult;
 
-/** 节点处理器类型表。 */
-export interface MarkHandlerMap<TMark extends Mark = Mark>
-  extends ItemHandlerMap<MixEditor, TMark> {
-  /** 表达当前标记是否与另一个标记相等。 */
-  equal: MarkHandler<[other: TMark], boolean>;
-  /** 保存节点 */
-  save_to_tdo: MarkHandler<[], TransferDataObject>;
+/** 标记转换格式映射接口 */
+export interface MarkConvertFormatMap {
+  /** 转换为传输数据对象格式 */
+  tdo: TransferDataObject;
 }
 
+/** 标记转换格式类型 */
+export type MarkConvertFormat = keyof MarkConvertFormatMap;
+
+/** 标记转换处理器映射类型 */
+type MarkConvertHandlerMap = ConvertHandlerMap<
+  MarkConvertFormatMap,
+  [editor: MixEditor, mark: Mark]
+>;
+
+/** 标记处理器类型表。 */
+export interface MarkHandlerMap<TMark extends Mark = Mark>
+  extends ItemHandlerMap<MixEditor, TMark>,
+    MarkConvertHandlerMap {
+  /** 表达当前标记是否与另一个标记相等。 */
+  equal: MarkHandler<[other: TMark], boolean>;
+}
+
+/** 标记管理器的处理器管理器类型 */
 type MarkManagerHandlerManager<
   TMarkHandler extends MarkHandlerMap<any> = any,
   TMark extends Mark = Mark
 > = HandlerManager<TMarkHandler, TMark, Mark, MixEditor>;
 
-/** 节点管理器 */
+/** 标记管理器 */
 export class MarkManager<
   TMarkHandler extends MarkHandlerMap<any> = any,
   TMark extends Mark = Mark
 > {
-  /** 节点 ID 管理器 */
+  /** 标记 ID 管理器 */
   private idgen = new UlidIdGenerator();
-  /** 节点 ID 映射 */
+  /** 标记 ID 映射 */
   private id_mark_map = new Map<string, Mark>();
   /** 处理器管理器 */
   private handler_manager: MarkManagerHandlerManager<TMarkHandler, TMark>;
@@ -51,12 +71,12 @@ export class MarkManager<
     TMark
   >["execute_handler"];
 
-  /** 获取节点 ID */
+  /** 获取标记 ID */
   generate_id() {
     return this.idgen.next();
   }
 
-  /** 创建节点 */
+  /** 创建标记 */
   create_mark<TMarkFactory extends (id: string, ...args: any[]) => TMark>(
     mark_factory: TMarkFactory,
     ...args: ParametersExceptFirst<TMarkFactory>
@@ -67,9 +87,9 @@ export class MarkManager<
     return mark;
   }
 
-  /** 获取节点 ID */
-  get_node_by_id(node_id: string) {
-    return this.id_mark_map.get(node_id);
+  /** 获取标记 */
+  get_mark_by_id(mark_id: string) {
+    return this.id_mark_map.get(mark_id);
   }
 
   constructor(public editor: MixEditor) {
@@ -79,17 +99,10 @@ export class MarkManager<
       Mark,
       MixEditor
     >(this.editor);
-    this.register_handlers = this.handler_manager.register_handlers.bind(
-      this.handler_manager
-    );
-    this.register_handler = this.handler_manager.register_handler.bind(
-      this.handler_manager
-    );
-    this.get_handler = this.handler_manager.get_handler.bind(
-      this.handler_manager
-    );
-    this.execute_handler = this.handler_manager.execute_handler.bind(
-      this.handler_manager
-    );
+    for (const method_name of handler_manager_method_list) {
+      this[method_name] = this.handler_manager[method_name].bind(
+        this.handler_manager
+      ) as any;
+    }
   }
 }
