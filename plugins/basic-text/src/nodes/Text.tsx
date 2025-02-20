@@ -333,8 +333,17 @@ export function text() {
           for (const node of nodes_to_insert) {
             if (!(await is_mergeable(self_marks, node))) break;
             head_nodes.push(node);
-            head_content_length += (node as TextNodeTDO).content.length;
-            head_text_content += (node as TextNodeTDO).content;
+            let node_text;
+            if (node.type === "text") {
+              node_text = (node as TextNodeTDO).content;
+            } else {
+              node_text = await node_tdo_manager.execute_handler(
+                "to_plain_text",
+                node
+              )!;
+            }
+            head_content_length += node_text.length;
+            head_text_content += node_text;
           }
 
           // 如果还有剩余节点，则从尾部开始合并，直到遇到非文本节点
@@ -343,8 +352,17 @@ export function text() {
           for (let i = nodes_to_insert.length - 1; i >= 0; i--) {
             const node = nodes_to_insert[i];
             if (!(await is_mergeable(self_marks, node))) break;
+            let node_text;
+            if (node.type === "text") {
+              node_text = (node as TextNodeTDO).content;
+            } else {
+              node_text = await node_tdo_manager.execute_handler(
+                "to_plain_text",
+                node
+              )!;
+            }
             tail_nodes.push(node);
-            tail_text_content += (node as TextNodeTDO).content;
+            tail_text_content += node_text;
           }
 
           return InsertNodesDecision.Accept({
@@ -519,7 +537,7 @@ export function text() {
         "bv:pointer_move": create_DynamicStrategy(async (_, node, context) => {
           const { event } = context;
           const raw_event = event.raw;
-          
+
           if (raw_event.buttons !== 1) return BvPointerEventDecision.none;
           // TODO：下面函数通过节流函数触发，确保最小采样率是 60fps
 

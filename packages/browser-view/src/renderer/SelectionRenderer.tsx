@@ -282,6 +282,7 @@ export const RangeRenderer: Component<{
   let caret: HTMLDivElement | null = null;
   /** 选区输入框。用于激活浏览器输入法。 */
   let inputer: HTMLDivElement | null = null;
+  let resize_observer: ResizeObserver | undefined;
 
   const handle_inputer_composition_end = () => {
     // TODO: 处理输入法结束
@@ -297,6 +298,12 @@ export const RangeRenderer: Component<{
 
   onMount(() => {
     renderer_manager.editor_root.addEventListener("pointerup", focus_inputer);
+    resize_observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        
+      }
+    });
+    resize_observer.observe(renderer_manager.editor_root);
   });
 
   onCleanup(() => {
@@ -304,6 +311,7 @@ export const RangeRenderer: Component<{
       "pointerup",
       focus_inputer
     );
+    resize_observer?.disconnect();
   });
 
   // 自动更新选区位置

@@ -15,6 +15,8 @@ export interface NodeTDO extends TransferDataObject {}
 export interface NodeTDOConvertFormatMap {
   /** 转换为节点格式 */
   node: Node;
+  /** 转换为纯文本格式 */
+  plain_text: string;
 }
 
 /** 传输数据对象转换格式类型 */
