@@ -121,9 +121,12 @@ export function paragraph() {
           "browser-view"
         );
 
+      node_manager.set_tag("paragraph", ["block", "inline_container"]);
+      node_manager.set_mergeable_into_tags("paragraph", ["block_container"]);
+
       node_tdo_manager.register_handler(
         "paragraph",
-        "convert_to_node",
+        "to_node",
         async (_, tdo) => {
           const dtdo = tdo as ParagraphNodeTDO;
           // TODO：缺失对没有注册或加载失败的节点的处理
@@ -217,9 +220,9 @@ export function paragraph() {
 
         delete_children: paragraph_delete_children,
 
-        handle_insert_nodes: (_, node, insert_index, nodes_to_insert, from) => {
-          return InsertNodesDecision.Reject;
-        },
+        // handle_insert_nodes: (_, node, insert_index, nodes_to_insert, from) => {
+        //   return InsertNodesDecision.Reject;
+        // },
 
         "bv:get_child_caret": (_, node, child_index) => {
           const children = node.children.get();

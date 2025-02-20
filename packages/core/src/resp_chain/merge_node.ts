@@ -104,10 +104,12 @@ export async function execute_merge_node(
     const host = full_ancestors_chain1[i];
     const source = full_ancestors_chain2[i];
 
-    const decision = await node_manager.execute_handler(
-      "handle_merge_node",
-      host,
-      source as any
+    const decision = await node_manager.get_decision(
+      "merge_node",
+      host as any,
+      {
+        target: source,
+      }
     );
     console.log("execute_merge_node", host, source, decision);
 

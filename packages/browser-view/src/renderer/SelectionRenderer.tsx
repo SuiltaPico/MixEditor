@@ -46,11 +46,13 @@ async function execute_selected_mask_respo_chain(
   to: number,
   rects: Rect[]
 ) {
-  const result = await editor.node_manager.execute_handler(
-    "bv:handle_selected_mask",
-    node,
-    from,
-    to
+  const result = await editor.node_manager.get_decision(
+    "bv:draw_selected_mask",
+    node as any,
+    {
+      from,
+      to,
+    }
   );
   const type = result?.type ?? "skip";
   if (type === "skip") return;

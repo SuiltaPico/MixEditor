@@ -79,7 +79,7 @@ export class NodeManager<
   /**
    * 设置节点类型允许被哪些标签合并。
    */
-  set_merge_tags(
+  set_mergeable_into_tags(
     /** 要配置的节点类型 */
     node_type: string,
     /** 要添加的允许合并标签（该类型节点愿意被这些标签的节点合并） */

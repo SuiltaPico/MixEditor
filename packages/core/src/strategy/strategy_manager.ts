@@ -9,10 +9,7 @@ export const strategy_manager_method_list = [
 ] as const;
 
 /** 策略表规范 */
-export type NameToStrategyMap = Record<
-  string,
-  { context: any; decision: any }
->;
+export type NameToStrategyMap = Record<string, { context: any; decision: any }>;
 
 /** 策略简写 */
 type StrategyManagerStrategy<
@@ -89,7 +86,7 @@ export class StrategyManager<
     if (strategy.type === "static") {
       return strategy.value as TNameToStrategyMap[TStrategyName]["decision"];
     } else {
-      return (await strategy.decision(context, item, this.context)) as
+      return (await strategy.decision(this.context, item, context)) as
         | TNameToStrategyMap[TStrategyName]["decision"]
         | undefined;
     }

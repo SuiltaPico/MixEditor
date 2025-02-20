@@ -182,8 +182,11 @@ export function text() {
         return node;
       });
 
-      node_manager.set_tag("text", ["plain_text"]);
-      node_manager.set_merge_tags("text", ["plain_text"]);
+      node_manager.set_tag("text", ["inline", "text_container"]);
+      node_manager.set_mergeable_into_tags("text", [
+        "inline_container",
+        "text_container",
+      ]);
 
       node_manager.register_handlers("text", {
         to_tdo: async (_, node) => {
@@ -478,7 +481,7 @@ export function text() {
           return BvPointerEventDecision.none;
         }),
 
-        "bv:selected_mask": create_DynamicStrategy((_, node, params) => {
+        "bv:draw_selected_mask": create_DynamicStrategy((_, node, params) => {
           const { from, to } = params;
           const selection = editor.selection.get_selected();
           if (selection?.type === "collapsed")
@@ -516,6 +519,7 @@ export function text() {
         "bv:pointer_move": create_DynamicStrategy(async (_, node, context) => {
           const { event } = context;
           const raw_event = event.raw;
+          
           if (raw_event.buttons !== 1) return BvPointerEventDecision.none;
           // TODO：下面函数通过节流函数触发，确保最小采样率是 60fps
 

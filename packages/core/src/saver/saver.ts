@@ -36,6 +36,8 @@ export class Saver {
 
   /** 从文档传输数据对象加载文档，并应用到编辑器上。 */
   async load(tdo: DocumentTDO) {
+    console.log("load", tdo);
+    
     await this.editor.event_manager.emit({
       type: "before_load",
       tdo,

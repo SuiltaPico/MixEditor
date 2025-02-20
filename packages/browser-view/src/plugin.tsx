@@ -163,12 +163,7 @@ export function browser_view(props: { element: HTMLElement }) {
       editor.event_manager.add_handler("bv:pointer_move", handle_pointer_move);
       editor.event_manager.add_handler("bv:key_down", handle_key_down);
 
-      const default_handler = () => BvPointerEventDecision.none;
       node_manager.register_handlers(DefaultItemType, {
-        "bv:handle_pointer_down": default_handler,
-        "bv:handle_pointer_up": default_handler,
-        "bv:handle_pointer_move": default_handler,
-
         "bv:get_child_caret": () => {
           return undefined;
         },

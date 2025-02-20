@@ -1,6 +1,6 @@
 import {
   get_common_ancestor_from_node,
-  is_parent
+  is_parent,
 } from "../common/entity/node/path";
 import { Node } from "../entity/node/node";
 import { MixEditor } from "../mixeditor";
@@ -111,11 +111,13 @@ export async function execute_delete_range(
     current = start.node;
     temp_start_child_path = start.child_path;
     while (current && current !== common_ancestor) {
-      const result = await node_manager.execute_handler(
-        "handle_delete_range",
-        current,
-        temp_start_child_path,
-        Number.MAX_SAFE_INTEGER
+      const result = await node_manager.get_decision(
+        "delete_range",
+        current as any,
+        {
+          start: temp_start_child_path,
+          end: Number.MAX_SAFE_INTEGER,
+        }
       );
 
       const decision_type = result?.type ?? "delete_self";
@@ -149,11 +151,13 @@ export async function execute_delete_range(
     current = end.node;
     temp_end_child_path = end.child_path;
     while (current && current !== common_ancestor) {
-      const result = await node_manager.execute_handler(
-        "handle_delete_range",
-        current,
-        0,
-        temp_end_child_path
+      const result = await node_manager.get_decision(
+        "delete_range",
+        current as any,
+        {
+          start: 0,
+          end: temp_end_child_path,
+        }
       );
 
       const decision_type = result?.type ?? "delete_self";
@@ -196,11 +200,13 @@ export async function execute_delete_range(
     temp_end_child_path =
       common_ancestor_data.path2[common_ancestor_data.ancestor_index] - 1;
     while (current) {
-      const result = await node_manager.execute_handler(
-        "handle_delete_range",
-        current,
-        temp_start_child_path,
-        temp_end_child_path
+      const result = await node_manager.get_decision(
+        "delete_range",
+        current as any,
+        {
+          start: temp_start_child_path,
+          end: temp_end_child_path,
+        }
       );
 
       const decision_type = result?.type ?? "delete_self";
