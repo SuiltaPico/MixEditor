@@ -1,9 +1,9 @@
 import {
   BrowserViewPluginResult,
+  BvDrawSelectedMaskDecision,
+  BvPointerEventDecision,
   get_caret_pos_from_point,
   NodeRenderer,
-  BvPointerEventDecision,
-  BvDrawSelectedMaskDecision,
   WithMixEditorNode,
 } from "@mixeditor/browser-view";
 import { createSignal, WrappedSignal } from "@mixeditor/common";
@@ -16,17 +16,17 @@ import {
   create_Node,
   DeleteFromPointDecision,
   DeleteRangeDecision,
-  EventHandler,
   get_node_path,
   InsertNodesDecision,
   load_mark_map,
+  mark_map_is_equal,
   MarkMap,
   MarkTDOMap,
   MergeNodeDecision,
-  MixEditorEventManagerContext,
   MixEditorPluginContext,
   NavigateDirection,
   Node,
+  NodeTDO,
   path_compare,
   save_mark_map,
   TransferDataObject,
@@ -82,27 +82,27 @@ export interface TextFilterMergingNodeEvent {
   target: Node[];
 }
 
-export async function filter_merging_node_schema_check(
-  params: Parameters<
-    EventHandler<TextFilterMergingNodeEvent, MixEditorEventManagerContext>
-  >[0]
-) {
-  const { event, wait_dependencies, manager_context } = params;
-  await wait_dependencies();
-  const { target } = event;
-  const { node_manager } = manager_context.editor;
-  return target.filter((node) => {
-    return node_manager.is_allow_to_merge("text", node.type);
-  });
-}
+// export async function filter_merging_node_schema_check(
+//   params: Parameters<
+//     EventHandler<TextFilterMergingNodeEvent, MixEditorEventManagerContext>
+//   >[0]
+// ) {
+//   const { event, wait_dependencies, manager_context } = params;
+//   await wait_dependencies();
+//   const { target } = event;
+//   const { node_manager } = manager_context.editor;
+//   return target.filter((node) => {
+//     return node_manager.is_allow_to_merge("text", node.type);
+//   });
+// }
 
-export async function filter_merging_node_marks_check(
-  params: Parameters<
-    EventHandler<TextFilterMergingNodeEvent, MixEditorEventManagerContext>
-  >[0]
-) {
-  const { event, wait_dependencies, manager_context } = params;
-}
+// export async function filter_merging_node_marks_check(
+//   params: Parameters<
+//     EventHandler<TextFilterMergingNodeEvent, MixEditorEventManagerContext>
+//   >[0]
+// ) {
+//   const { event, wait_dependencies, manager_context } = params;
+// }
 
 export const TextRenderer: NodeRenderer<TextNode> = (props) => {
   const { node, editor } = props;
@@ -138,28 +138,38 @@ export function text() {
         operation_manager,
         event_manager,
       } = editor;
+
       const browser_view_plugin =
         await plugin_manager.wait_plugin_inited<BrowserViewPluginResult>(
           "browser-view"
         );
       const { renderer_manager } = browser_view_plugin;
 
-      event_manager.add_handler(
-        "text:filter_merging_node",
-        filter_merging_node_schema_check,
-        {
-          dependencies: [],
-          tags: ["text:node_schema_check"],
-        }
-      );
-      event_manager.add_handler(
-        "text:filter_merging_node",
-        filter_merging_node_marks_check,
-        {
-          dependencies: [filter_merging_node_schema_check as any],
-          tags: ["text:node_marks_check"],
-        }
-      );
+      async function is_mergeable(self_marks: MarkMap, tdo: NodeTDO) {
+        if (!node_manager.is_allow_to_merge("text", tdo.type)) return false;
+        const node_marks = await load_mark_map(
+          mark_tdo_manager,
+          await node_tdo_manager.execute_handler("get_marks", tdo)!
+        );
+        return mark_map_is_equal(mark_manager, self_marks, node_marks);
+      }
+
+      // event_manager.add_handler(
+      //   "text:filter_merging_node",
+      //   filter_merging_node_schema_check,
+      //   {
+      //     dependencies: [],
+      //     tags: ["text:node_schema_check"],
+      //   }
+      // );
+      // event_manager.add_handler(
+      //   "text:filter_merging_node",
+      //   filter_merging_node_marks_check,
+      //   {
+      //     dependencies: [filter_merging_node_schema_check as any],
+      //     tags: ["text:node_marks_check"],
+      //   }
+      // );
 
       node_tdo_manager.register_handler("text", "to_node", async (_, tdo) => {
         const ttdo = tdo as TextNodeTDO;
@@ -313,22 +323,12 @@ export function text() {
             node
           )!;
 
-          async function is_mergeable(node: Node) {
-            if (!node_manager.is_allow_to_merge("text", node.type))
-              return false;
-            const node_marks = await load_mark_map(
-              mark_tdo_manager,
-              await node_manager.execute_handler("get_marks", node)!
-            );
-            return has_same_marks(self_marks, node_marks);
-          }
-
           // 从头开始合并，直到遇到不能合并的节点
           const head_nodes = [];
           let head_content_length = 0;
           let head_text_content = "";
           for (const node of nodes_to_insert) {
-            if (!(await is_mergeable(node))) break;
+            if (!(await is_mergeable(self_marks, node))) break;
             head_nodes.push(node);
             head_content_length += (node as TextNodeTDO).content.length;
             head_text_content += (node as TextNodeTDO).content;
@@ -339,7 +339,7 @@ export function text() {
           let tail_text_content = "";
           for (let i = nodes_to_insert.length - 1; i >= 0; i--) {
             const node = nodes_to_insert[i];
-            if (!(await is_mergeable(node))) break;
+            if (!(await is_mergeable(self_marks, node))) break;
             tail_nodes.push(node);
             tail_text_content += (node as TextNodeTDO).content;
           }
@@ -351,14 +351,14 @@ export function text() {
                 create_InsertChildrenOperation,
                 node.id,
                 insert_index,
-                [node_manager.create_node(create_TextNode, tail_text_content)]
+                [node_tdo_manager.create_tdo(create_TextTDO, tail_text_content)]
               ),
               // 插入头部节点
               operation_manager.create_operation(
                 create_InsertChildrenOperation,
                 node.id,
                 insert_index,
-                [node_manager.create_node(create_TextNode, head_text_content)]
+                [node_tdo_manager.create_tdo(create_TextTDO, head_text_content)]
               ),
             ],
             // 拒绝剩余的节点
@@ -431,8 +431,12 @@ export function text() {
 
         merge_node: create_DynamicStrategy(async (_, node, context) => {
           const { target } = context;
-          event_manager.emit(create_MergeNodeEvent(node, target));
-          return MergeNodeDecision.Reject;
+          // event_manager.emit(create_MergeNodeEvent(node, target));
+          // return MergeNodeDecision.Reject;
+
+          if (await is_mergeable(node.marks.get(), target as any)) {
+            return MergeNodeDecision.Reject;
+          }
 
           const generate_insert_children_operation = async () => [
             operation_manager.create_operation(

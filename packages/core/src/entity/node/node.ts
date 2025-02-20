@@ -8,6 +8,8 @@ export interface Node {
   type: string;
   /** 是否是节点。*/
   _is_node: true;
+  /** 是否是标记。 */
+  _is_mark?: false;
 }
 
 /** 创建一个节点。 */

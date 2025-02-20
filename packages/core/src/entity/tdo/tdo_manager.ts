@@ -17,8 +17,6 @@ export class TDOManager<
   TTDOHandler extends ItemHandlerMap<MixEditor, TTDO> = any,
   TTDO extends TransferDataObject = TransferDataObject
 > {
-  /** 传输数据对象 ID 管理器 */
-  private idgen = new UlidIdGenerator();
   /** 处理器管理器 */
   private handler_manager: TDOHandlerManager<TTDOHandler, TTDO>;
 
@@ -26,11 +24,6 @@ export class TDOManager<
   register_handlers!: TDOHandlerManager<TTDOHandler, TTDO>["register_handlers"];
   get_handler!: TDOHandlerManager<TTDOHandler, TTDO>["get_handler"];
   execute_handler!: TDOHandlerManager<TTDOHandler, TTDO>["execute_handler"];
-
-  /** 获取传输数据对象 ID */
-  gen_id() {
-    return this.idgen.next();
-  }
 
   constructor(public editor: MixEditor) {
     this.handler_manager = new HandlerManager<

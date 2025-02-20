@@ -44,7 +44,8 @@ export function mark_map_is_equal(
   for (const mark_id in map1) {
     const mark1 = map1[mark_id];
     const mark2 = map2[mark_id];
-    if (!mark_manager.execute_handler("is_equal", mark1, mark2)) return false;
+    if (!mark_manager.execute_handler("is_equal", mark1 as any, mark2))
+      return false;
   }
 
   return true;

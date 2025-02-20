@@ -5,4 +5,6 @@ export interface TransferDataObject {
   type: string;
   /** 是否是节点。 */
   _is_node?: false;
+  /** 是否是标记。 */
+  _is_mark?: false;
 }
