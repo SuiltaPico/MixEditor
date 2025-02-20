@@ -2,15 +2,16 @@ import {
   BrowserViewPluginResult,
   get_caret_pos_from_point,
   NodeRenderer,
-  PointerEventDecision,
-  SelectedMaskDecision,
+  BvPointerEventDecision,
+  BvDrawSelectedMaskDecision,
   WithMixEditorNode,
 } from "@mixeditor/browser-view";
 import { createSignal, WrappedSignal } from "@mixeditor/common";
 import {
-  CaretNavigateEnterDecision,
+  CaretNavigateDecision,
   create_DeferredOperation,
   create_DeleteRangeOperation,
+  create_DynamicStrategy,
   create_InsertChildrenOperation,
   create_Node,
   DeleteFromPointDecision,
@@ -89,6 +90,10 @@ export async function filter_merging_node_schema_check(
   const { event, wait_dependencies, manager_context } = params;
   await wait_dependencies();
   const { target } = event;
+  const { node_manager } = manager_context.editor;
+  return target.filter((node) => {
+    return node_manager.is_allow_to_merge("text", node.type);
+  });
 }
 
 export async function filter_merging_node_marks_check(
@@ -127,6 +132,7 @@ export function text() {
         node_manager,
         node_tdo_manager,
         mark_manager,
+        mark_tdo_manager,
         plugin_manager,
         selection,
         operation_manager,
@@ -217,28 +223,85 @@ export function text() {
           return [create_TextTDO(node_manager.gen_id(), slice_text)];
         },
 
-        handle_caret_navigate: (_, node, to, direction) => {
+        "bv:handle_delegated_pointer_down": (_, node, event, caret_pos) => {
+          const html_node = node_manager.get_context(node)?.["bv:html_node"];
+          // 应该是文本节点
+          if (!html_node || caret_pos.node !== html_node.firstChild) return;
+
+          const rect_index = caret_pos.offset;
+          selection.collapsed_select({
+            node,
+            child_path: rect_index,
+          });
+          return;
+        },
+
+        "bv:get_child_caret": (_, node, index) => {
+          const context = editor.node_manager.get_context(node);
+          const html_node = context?.["bv:html_node"];
+          if (!html_node) return undefined;
+          const root_rect =
+            renderer_manager.editor_root.getBoundingClientRect();
+
+          const range = document.createRange();
+          const text_node = html_node.firstChild;
+          if (!text_node) throw new Error("文本节点的起始节点丢失。");
+
+          if (index < node.text.get().length) {
+            range.setStart(html_node.firstChild!, index);
+          } else {
+            range.setStart(html_node.firstChild!, index);
+          }
+
+          range.collapse(true);
+
+          const range_rects = range.getClientRects();
+          if (range_rects.length > 0) {
+            const caret_rect = range_rects[0];
+            return {
+              x: caret_rect.left - root_rect.left - 1,
+              y: caret_rect.top - root_rect.top,
+              height: caret_rect.height,
+            };
+          } else {
+            // 处理没有rect的情况，比如文本为空
+            // 使用html_node的位置作为默认
+            const node_rect = html_node.getBoundingClientRect();
+            return {
+              x: node_rect.left - root_rect.left - 1,
+              y: node_rect.top - root_rect.top,
+              height: node_rect.height,
+            };
+          }
+        },
+      });
+
+      node_manager.register_strategies("text", {
+        caret_navigate: create_DynamicStrategy((_, node, context) => {
           const text = node.text.get();
-          to += direction;
-          if (to > text.length) {
-            to = text.length;
+          let { from, direction } = context;
+          from += direction;
+          if (from > text.length) {
+            from = text.length;
           }
           const to_prev = direction === NavigateDirection.Prev;
 
-          if ((to_prev && to >= text.length) || (!to_prev && to <= 0)) {
+          if ((to_prev && from >= text.length) || (!to_prev && from <= 0)) {
             // 顺方向前边界进入
-            return CaretNavigateEnterDecision.Enter(
-              to_prev ? text.length - 1 : 1
-            );
-          } else if ((to_prev && to <= 0) || (!to_prev && to >= text.length)) {
+            return CaretNavigateDecision.Enter(to_prev ? text.length - 1 : 1);
+          } else if (
+            (to_prev && from <= 0) ||
+            (!to_prev && from >= text.length)
+          ) {
             // 顺方向后边界跳过
-            return CaretNavigateEnterDecision.Skip;
+            return CaretNavigateDecision.Skip;
           } else {
-            return CaretNavigateEnterDecision.Enter(to);
+            return CaretNavigateDecision.Enter(from);
           }
-        },
+        }),
 
-        handle_insert_nodes: async (_, node, insert_index, nodes_to_insert) => {
+        insert_nodes: create_DynamicStrategy(async (_, node, context) => {
+          let { insert_index, nodes_to_insert } = context;
           const text = node.text.get();
 
           // 边界修复
@@ -254,7 +317,7 @@ export function text() {
             if (!node_manager.is_allow_to_merge("text", node.type))
               return false;
             const node_marks = await load_mark_map(
-              tdo_manager,
+              mark_tdo_manager,
               await node_manager.execute_handler("get_marks", node)!
             );
             return has_same_marks(self_marks, node_marks);
@@ -305,9 +368,10 @@ export function text() {
             ),
             split_index: insert_index + head_content_length,
           });
-        },
+        }),
 
-        handle_delete_from_point: (_, node, from, direction) => {
+        delete_from_point: create_DynamicStrategy((_, node, context) => {
+          const { from, direction } = context;
           const text = node.text.get();
           const to_prev = direction === NavigateDirection.Prev;
           if (to_prev) {
@@ -344,27 +408,29 @@ export function text() {
               ),
             });
           }
-        },
+        }),
 
-        handle_delete_range: (_, node, from, to) => {
+        delete_range: create_DynamicStrategy((_, node, context) => {
+          const { start, end } = context;
           const text = node.text.get();
           // console.log(node, "handle_delete_range", from, to);
 
-          if (from <= 0 && to >= text.length) {
+          if (start <= 0 && end >= text.length) {
             return DeleteRangeDecision.DeleteSelf;
           } else {
             return DeleteRangeDecision.Done({
               operation: operation_manager.create_operation(
                 create_DeleteRangeOperation,
                 node.id,
-                from,
-                to - 1
+                start,
+                end - 1
               ),
             });
           }
-        },
+        }),
 
-        handle_merge_node: async (_, node, target) => {
+        merge_node: create_DynamicStrategy(async (_, node, context) => {
+          const { target } = context;
           event_manager.emit(create_MergeNodeEvent(node, target));
           return MergeNodeDecision.Reject;
 
@@ -390,49 +456,39 @@ export function text() {
               ),
             ],
           });
-        },
+        }),
 
-        "bv:handle_delegated_pointer_down": (_, node, event, caret_pos) => {
-          const html_node = node_manager.get_context(node)?.["bv:html_node"];
-          // 应该是文本节点
-          if (!html_node || caret_pos.node !== html_node.firstChild) return;
-
-          const rect_index = caret_pos.offset;
-          selection.collapsed_select({
-            node,
-            child_path: rect_index,
-          });
-          return;
-        },
-
-        "bv:handle_pointer_down": (_, node, element, event) => {
+        "bv:pointer_down": create_DynamicStrategy((_, node, context) => {
+          const { event } = context;
           event.context.bv_handled = true;
           const raw_event = event.raw;
           const result = get_caret_pos_from_point(
             raw_event.clientX,
             raw_event.clientY
           )!;
-          if (!result) return PointerEventDecision.none;
+          if (!result) return BvPointerEventDecision.none;
           editor.selection.collapsed_select({
             node,
             child_path: result.offset,
           });
-          return PointerEventDecision.none;
-        },
+          return BvPointerEventDecision.none;
+        }),
 
-        "bv:handle_selected_mask": (_, node, from, to) => {
+        "bv:selected_mask": create_DynamicStrategy((_, node, params) => {
+          const { from, to } = params;
           const selection = editor.selection.get_selected();
-          if (selection?.type === "collapsed") return SelectedMaskDecision.skip;
+          if (selection?.type === "collapsed")
+            return BvDrawSelectedMaskDecision.skip;
 
           const context = node_manager.get_context(node);
           const html_node = context?.["bv:html_node"];
-          if (!html_node) return SelectedMaskDecision.skip;
+          if (!html_node) return BvDrawSelectedMaskDecision.skip;
 
           const root_rect =
             renderer_manager.editor_root.getBoundingClientRect();
           const range = document.createRange();
           const text_node = html_node.firstChild;
-          if (!text_node) return SelectedMaskDecision.skip;
+          if (!text_node) return BvDrawSelectedMaskDecision.skip;
 
           const adjusted_to = Math.min(node.text.get().length, to);
           range.setStart(text_node, from);
@@ -440,7 +496,7 @@ export function text() {
 
           const range_rects = range.getClientRects();
           if (range_rects.length > 0) {
-            return SelectedMaskDecision.render(
+            return BvDrawSelectedMaskDecision.render(
               Array.from(range_rects).map((rect) => ({
                 x: rect.left - root_rect.left,
                 y: rect.top - root_rect.top,
@@ -449,25 +505,26 @@ export function text() {
               }))
             );
           } else {
-            return SelectedMaskDecision.skip;
+            return BvDrawSelectedMaskDecision.skip;
           }
-        },
+        }),
 
-        "bv:handle_pointer_move": async (_, node, element, event) => {
+        "bv:pointer_move": create_DynamicStrategy(async (_, node, context) => {
+          const { event } = context;
           const raw_event = event.raw;
-          if (raw_event.buttons !== 1) return PointerEventDecision.none;
+          if (raw_event.buttons !== 1) return BvPointerEventDecision.none;
           // TODO：下面函数通过节流函数触发，确保最小采样率是 60fps
 
           // 获取选区
           const selected = editor.selection.get_selected();
-          if (!selected) return PointerEventDecision.none;
+          if (!selected) return BvPointerEventDecision.none;
 
           // 计算鼠标所在的字符索引
           const mouse_index = get_caret_pos_from_point(
             raw_event.clientX,
             raw_event.clientY
           )?.offset;
-          if (!mouse_index) return PointerEventDecision.none;
+          if (!mouse_index) return BvPointerEventDecision.none;
 
           // 获取自己的路径和选区起始节点的路径
           const self_path = await get_node_path(editor.node_manager, node);
@@ -551,47 +608,8 @@ export function text() {
             }
           }
 
-          return PointerEventDecision.none;
-        },
-
-        "bv:get_child_caret": (_, node, index) => {
-          const context = editor.node_manager.get_context(node);
-          const html_node = context?.["bv:html_node"];
-          if (!html_node) return undefined;
-          const root_rect =
-            renderer_manager.editor_root.getBoundingClientRect();
-
-          const range = document.createRange();
-          const text_node = html_node.firstChild;
-          if (!text_node) throw new Error("文本节点的起始节点丢失。");
-
-          if (index < node.text.get().length) {
-            range.setStart(html_node.firstChild!, index);
-          } else {
-            range.setStart(html_node.firstChild!, index);
-          }
-
-          range.collapse(true);
-
-          const range_rects = range.getClientRects();
-          if (range_rects.length > 0) {
-            const caret_rect = range_rects[0];
-            return {
-              x: caret_rect.left - root_rect.left - 1,
-              y: caret_rect.top - root_rect.top,
-              height: caret_rect.height,
-            };
-          } else {
-            // 处理没有rect的情况，比如文本为空
-            // 使用html_node的位置作为默认
-            const node_rect = html_node.getBoundingClientRect();
-            return {
-              x: node_rect.left - root_rect.left - 1,
-              y: node_rect.top - root_rect.top,
-              height: node_rect.height,
-            };
-          }
-        },
+          return BvPointerEventDecision.none;
+        }),
       });
 
       // 注册渲染器

@@ -1,6 +1,6 @@
 import { MixEditor } from "../../mixeditor";
 import { TransferDataObject } from "../../entity/tdo/tdo";
-import { Operation } from "../Operation";
+import { Operation } from "../operation";
 
 export interface InsertChildrenOperation extends Operation {
   type: "insert_children";

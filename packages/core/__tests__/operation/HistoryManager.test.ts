@@ -2,12 +2,12 @@ import { defer } from "../../src/common/promise";
 import {
   HistoryManager,
   OperationState,
-} from "../../src/operation/HistoryManager";
+} from "../../src/operation/history_manager";
 import {
   OperationManager,
   Operation,
   OperationHandlerMap,
-} from "../../src/operation/Operation";
+} from "../../src/operation/operation";
 import { describe, test, expect, jest, beforeEach } from "@jest/globals";
 
 // 模拟 Operation 类

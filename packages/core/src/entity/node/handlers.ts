@@ -1,32 +1,37 @@
 import { WrappedSignal } from "@mixeditor/common";
 import { MixEditor } from "../../mixeditor";
 import { create_DeleteRangeOperation } from "../../operation/operations";
-import { DeleteRangeDecision } from "../../resp_chain";
+import { DeleteRangeDecision, DeleteRangeStrategyContext } from "../../resp_chain";
 import { Node } from "./node";
-import { NodeHandlerMap } from "./manager";
+import { NodeManagerHandlerMap } from "./maps";
+import { create_DynamicStrategy } from "../../strategy/strategy";
 
-export const paragraph_handle_delete_range: NodeHandlerMap["handle_delete_range"] =
-  (editor, node, start, end) => {
-    const { operation_manager } = editor;
-    const children_count = operation_manager.execute_handler(
-      "get_children_count",
-      node as any
-    );
-    // 如果选中了整个段落,则删除自身
-    if (start <= 0 && end >= children_count) {
-      return DeleteRangeDecision.DeleteSelf;
-    }
+export const paragraph_delete_range_strategy = create_DynamicStrategy<
+  Node,
+  DeleteRangeStrategyContext,
+  DeleteRangeDecision,
+  MixEditor
+>((editor, node, { start, end }) => {
+  const { operation_manager } = editor;
+  const children_count = operation_manager.execute_handler(
+    "get_children_count",
+    node as any
+  );
+  // 如果选中了整个段落,则删除自身
+  if (start <= 0 && end >= children_count) {
+    return DeleteRangeDecision.DeleteSelf;
+  }
 
-    // 否则,创建一个 DeleteChildrenOperation 操作来删除选中的子节点
-    return DeleteRangeDecision.Done({
-      operation: operation_manager.create_operation(
-        create_DeleteRangeOperation,
-        node.id,
-        start,
-        end
-      ),
-    });
-  };
+  // 否则,创建一个 DeleteChildrenOperation 操作来删除选中的子节点
+  return DeleteRangeDecision.Done({
+    operation: operation_manager.create_operation(
+      create_DeleteRangeOperation,
+      node.id,
+      start,
+      end
+    ),
+  });
+});
 
 export type ParagraphDeleteChildrenFunction = (
   editor: MixEditor,
@@ -35,7 +40,7 @@ export type ParagraphDeleteChildrenFunction = (
   },
   from: number,
   to: number
-) => ReturnType<NodeHandlerMap["delete_children"]>;
+) => ReturnType<NodeManagerHandlerMap["delete_children"]>;
 
 export const paragraph_delete_children: ParagraphDeleteChildrenFunction =
   async (editor, node, from, to) => {

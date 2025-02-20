@@ -1,6 +1,6 @@
 import { NavigateDirection } from "../common/navigate";
 import { MixEditor } from "../mixeditor";
-import { Operation } from "../operation/Operation";
+import { Operation } from "../operation/operation";
 import { Selected, SelectedData } from "../selection";
 import { execute_delete_range } from "./delete_range";
 
@@ -56,6 +56,18 @@ export type DeleteFromPointDecision =
   | DeleteFromPointDecisionDeleteSelf
   | DeleteFromPointDecisionDone;
 
+export interface DeleteFromPointStrategyContext {
+  /** 要删除的方向。 */
+  direction: NavigateDirection;
+  /** 删除的起点。 */
+  from: number;
+}
+
+export interface DeleteFromPointStrategyConfig {
+  context: DeleteFromPointStrategyContext;
+  decision: DeleteFromPointDecision;
+}
+
 export async function execute_delete_from_point(
   editor: MixEditor,
   selected_data: SelectedData,
@@ -71,11 +83,13 @@ export async function execute_delete_from_point(
   const to_prev = direction === NavigateDirection.Prev;
 
   // 执行当前节点的删除处理
-  const result = await node_manager.execute_handler(
-    "handle_delete_from_point",
-    selected_data.node,
-    selected_data.child_path,
-    direction
+  const result = await node_manager.get_decision(
+    "delete_from_point",
+    selected_data.node as any,
+    {
+      direction,
+      from: selected_data.child_path,
+    }
   );
 
   // 如果返回 Done，结束责任链

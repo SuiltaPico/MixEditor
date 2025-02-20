@@ -1,5 +1,5 @@
 import { MaybePromise, UlidIdGenerator } from "@mixeditor/common";
-import { HandlerManager, ItemHandlerMap } from "../common/HandlerManager";
+import { HandlerManager, ItemHandlerMap } from "../common/handler_manager";
 import { MixEditor } from "../mixeditor";
 import { ParametersExceptFirst } from "../common/type";
 

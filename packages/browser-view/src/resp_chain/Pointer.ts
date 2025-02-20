@@ -6,7 +6,7 @@ import {
 } from "@mixeditor/core";
 import { DOMCaretPos } from "../common/dom";
 
-export const PointerEventDecision = {
+export const BvPointerEventDecision = {
   none: {
     type: "none",
   },
@@ -15,15 +15,25 @@ export const PointerEventDecision = {
   },
 } as const;
 
-export type PointerEventDecision =
-  | (typeof PointerEventDecision)[keyof typeof PointerEventDecision];
+export type BvPointerEventDecision =
+  | (typeof BvPointerEventDecision)[keyof typeof BvPointerEventDecision];
 
-export type PointerEventHandler = (
-  editor: MixEditor,
-  node: Node,
-  element: HTMLElement,
-  event: EventToEventForEmit<BvPointerEvent, MixEditorEventManagerContext>
-) => MaybePromise<PointerEventDecision>;
+export type BvPointerEventStrategyName =
+  | "bv:pointer_down"
+  | "bv:pointer_up"
+  | "bv:pointer_move";
+
+export interface BvPointerEventStrategyConfig {
+  context: {
+    element: HTMLElement;
+    event: EventToEventForEmit<BvPointerEvent, MixEditorEventManagerContext>;
+  };
+  decision: BvPointerEventDecision;
+}
+
+export type BvPointerEventStrategyConfigMap = {
+  [key in BvPointerEventStrategyName]: BvPointerEventStrategyConfig;
+};
 
 type BvPointerBaseEvent = {
   raw: PointerEvent;
@@ -48,11 +58,6 @@ export type BvPointerEvent =
   | BvPointerDownEvent
   | BvPointerUpEvent
   | BvPointerMoveEvent;
-
-export type BvPointerEventHandlerName =
-  | "bv:handle_pointer_down"
-  | "bv:handle_pointer_up"
-  | "bv:handle_pointer_move";
 
 export type BvDelegatedPointerEventHandler = (
   editor: MixEditor,

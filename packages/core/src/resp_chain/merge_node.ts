@@ -1,7 +1,7 @@
 import { MixEditor } from "../mixeditor";
 import { Node } from "../entity/node/node";
 import { get_common_ancestor_from_node } from "../common/entity/node/path";
-import { Operation } from "../operation/Operation";
+import { Operation } from "../operation/operation";
 import { create_DeleteRangeOperation } from "../operation/operations/delete_range";
 
 /** 节点对合并的决策 */
@@ -27,6 +27,16 @@ export type MergeNodeDecisionDone = ReturnType<
 >;
 export type MergeNodeDecision = MergeNodeDecisionReject | MergeNodeDecisionDone;
 
+export interface MergeNodeStrategyContext {
+  /** 要合并的目标节点。 */
+  target: Node;
+}
+
+export interface MergeNodeStrategyConfig {
+  context: MergeNodeStrategyContext;
+  decision: MergeNodeDecision;
+}
+
 /** 执行简单节点合并。 */
 export async function execute_simple_merge_node(
   editor: MixEditor,
@@ -36,11 +46,9 @@ export async function execute_simple_merge_node(
   const operations: Operation[] = [];
   const { node_manager, operation_manager } = editor;
 
-  const decision = await node_manager.execute_handler(
-    "handle_merge_node",
-    host,
-    source as any
-  );
+  const decision = await node_manager.get_decision("merge_node", host as any, {
+    target: source,
+  });
   console.log("execute_simple_merge_node", host, source, decision);
 
   if (decision?.type === "done") {

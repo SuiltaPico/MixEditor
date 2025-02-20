@@ -1,42 +1,48 @@
 import { PluginManager } from "@mauchise/plugin-manager";
 import { createSignal } from "@mixeditor/common";
 import { NavigateDirection } from "./common/navigate";
-import {
-  DeleteSelectedEvent,
-  handle_delete_selected,
-} from "./event/delete_select";
-import {
-  EventHandler,
-  EventManager,
-  MixEditorEventManagerContext,
-} from "./event/event";
-import { MarkManager } from "./entity/mark/manager";
-import { AllNodeTypes } from "./entity/node/node";
-import { NodeHandlerMap, NodeManager } from "./entity/node/manager";
-import {
-  create_DocumentNode,
-  DocumentTDO,
-  init_document,
-} from "./entity/node/nodes/document";
-import { HistoryManager } from "./operation/HistoryManager";
-import { OperationManager } from "./operation/Operation";
-import { init_operations } from "./operation/operations";
-import { MixEditorPlugin, MixEditorPluginContext } from "./plugin";
-import { execute_caret_navigate_from_selected_data } from "./resp_chain/caret_navigate";
-import { Saver } from "./saver/saver";
-import { SelectedData, Selection } from "./selection";
 import { TagManager } from "./common/tag_manager";
+import { MarkManager } from "./entity/mark/manager";
+import {
+  MarkTDO,
+  MarkTDOHandlerManager,
+  MarkTDOHandlerMap,
+} from "./entity/mark/mark_tdo";
+import { NodeManager } from "./entity/node/manager";
+import {
+  NodeManagerHandlerMap,
+  NodeManagerStrategyMap,
+} from "./entity/node/maps";
+import { AllNodeTypes } from "./entity/node/node";
 import {
   NodeTDO,
   NodeTDOHandlerManager,
   NodeTDOHandlerMap,
 } from "./entity/node/node_tdo";
 import {
-  MarkTDO,
-  MarkTDOHandlerManager,
-  MarkTDOHandlerMap,
-} from "./entity/mark/mark_tdo";
+  create_DocumentNode,
+  init_document,
+} from "./entity/node/nodes/document";
 import { AllEvents } from "./event";
+import { handle_delete_selected } from "./event/delete_select";
+import {
+  EventHandler,
+  EventManager,
+  MixEditorEventManagerContext,
+} from "./event/event";
+import { HistoryManager } from "./operation/history_manager";
+import { OperationManager } from "./operation/operation";
+import { init_operations } from "./operation/operations";
+import { MixEditorPlugin, MixEditorPluginContext } from "./plugin";
+import { execute_caret_navigate_from_selected_data } from "./resp_chain/caret_navigate";
+import { Saver } from "./saver/saver";
+import { SelectedData, Selection } from "./selection";
+
+export type MixEditorNodeManager = NodeManager<
+  AllNodeTypes,
+  NodeManagerHandlerMap<AllNodeTypes>,
+  NodeManagerStrategyMap
+>;
 
 export class MixEditor {
   /** 操作管理器。 */
@@ -45,8 +51,7 @@ export class MixEditor {
   history_manager = new HistoryManager(this.operation_manager);
 
   /** 文档节点管理器。 */
-  node_manager: NodeManager<NodeHandlerMap<AllNodeTypes>, AllNodeTypes> =
-    new NodeManager<NodeHandlerMap<AllNodeTypes>, AllNodeTypes>(this);
+  node_manager: MixEditorNodeManager = new NodeManager<AllNodeTypes>(this);
   /** 文档节点传输数据对象管理器。 */
   node_tdo_manager: NodeTDOHandlerManager<NodeTDOHandlerMap<any>, NodeTDO> =
     new NodeTDOHandlerManager<NodeTDOHandlerMap<any>, NodeTDO>(this);
@@ -71,7 +76,10 @@ export class MixEditor {
   event_manager: EventManager<
     AllEvents[keyof AllEvents],
     MixEditorEventManagerContext
-  > = new EventManager<AllEvents[keyof AllEvents], MixEditorEventManagerContext>({
+  > = new EventManager<
+    AllEvents[keyof AllEvents],
+    MixEditorEventManagerContext
+  >({
     editor: this,
   });
   /** 插件管理器。 */

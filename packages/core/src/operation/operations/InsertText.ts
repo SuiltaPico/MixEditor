@@ -1,5 +1,5 @@
 import { MixEditor } from "../../mixeditor";
-import { Operation } from "../Operation";
+import { Operation } from "../operation";
 
 // 添加插入文本操作
 export class InsertTextOperation implements Operation {

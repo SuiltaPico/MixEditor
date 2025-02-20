@@ -1,5 +1,5 @@
 import { MixEditor } from "../../mixeditor";
-import { Operation } from "../Operation";
+import { Operation } from "../operation";
 
 export interface DeleteRangeOperation extends Operation {
   data: {

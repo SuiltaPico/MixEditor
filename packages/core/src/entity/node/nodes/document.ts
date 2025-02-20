@@ -5,13 +5,14 @@ import { AnyTDO } from "../../../saver/saver";
 import { TransferDataObject } from "../../tdo/tdo";
 import { NavigateDirection } from "../../../common/navigate";
 import {
-  CaretNavigateEnterDecision,
-  CaretNavigateFrom,
+  CaretNavigateDecision,
+  CaretNavigateSource,
 } from "../../../resp_chain/caret_navigate";
 import {
   paragraph_delete_children,
-  paragraph_handle_delete_range,
+  paragraph_delete_range_strategy,
 } from "../handlers";
+import { create_DynamicStrategy } from "../../../strategy/strategy";
 
 /** 文档。 */
 export interface DocumentNode extends Node {
@@ -98,31 +99,36 @@ export async function init_document(editor: MixEditor) {
       return node.children.get();
     },
     delete_children: paragraph_delete_children,
-    handle_caret_navigate: (_, node, to, direction, from) => {
-      const children_count = node.children.get().length;
-      const to_prev = direction === NavigateDirection.Prev;
+  });
 
-      to += direction;
+  node_manager.register_strategies("document", {
+    caret_navigate: create_DynamicStrategy(
+      (_, node, { from: to, direction, src }) => {
+        const children_count = node.children.get().length;
+        const to_prev = direction === NavigateDirection.Prev;
 
-      if (from === CaretNavigateFrom.Child) {
-        // 从子区域跳入
-        if ((to_prev && to < 0) || (!to_prev && to >= children_count)) {
-          // 超出该方向的尾边界，则跳过
-          return CaretNavigateEnterDecision.Skip;
+        to += direction;
+
+        if (src === CaretNavigateSource.Child) {
+          // 从子区域跳入
+          if ((to_prev && to < 0) || (!to_prev && to >= children_count)) {
+            // 超出该方向的尾边界，则跳过
+            return CaretNavigateDecision.Skip;
+          }
+          // 进入下一个子区域，注意前向时索引需要-1
+          return CaretNavigateDecision.EnterChild(to_prev ? to - 1 : to);
+        } else if (src === CaretNavigateSource.Parent) {
+          // 根区域不应该从父区域进入
+          throw new Error(
+            "根区域顶层索引约定为无界，所以不可能从根区域顶层索引进入。这可能是插件直接设置了选区导致的错误选择了根区域的索引。"
+          );
+        } else {
+          // 从自身索引移动（Self），根区域不应该有这种情况
+          throw new Error("根区域不应该有自身索引移动的情况");
         }
-        // 进入下一个子区域，注意前向时索引需要-1
-        return CaretNavigateEnterDecision.EnterChild(to_prev ? to - 1 : to);
-      } else if (from === CaretNavigateFrom.Parent) {
-        // 根区域不应该从父区域进入
-        throw new Error(
-          "根区域顶层索引约定为无界，所以不可能从根区域顶层索引进入。这可能是插件直接设置了选区导致的错误选择了根区域的索引。"
-        );
-      } else {
-        // 从自身索引移动（Self），根区域不应该有这种情况
-        throw new Error("根区域不应该有自身索引移动的情况");
       }
-    },
-    handle_delete_range: paragraph_handle_delete_range,
+    ),
+    delete_range: paragraph_delete_range_strategy,
   });
 
   // 注册文档节点加载行为

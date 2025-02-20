@@ -1,5 +1,5 @@
 import { NavigateDirection } from "../common/navigate";
-import { Operation } from "../operation/Operation";
+import { Operation } from "../operation/operation";
 import { execute_delete_from_point } from "../resp_chain/delete_from_point";
 import { execute_delete_range } from "../resp_chain/delete_range";
 import { Selected } from "../selection";

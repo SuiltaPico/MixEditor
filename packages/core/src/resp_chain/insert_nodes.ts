@@ -1,9 +1,7 @@
-import { MixEditor } from "../mixeditor";
 import { Node } from "../entity/node/node";
-import { TransferDataObject } from "../entity/tdo/tdo";
-import { Operation } from "../operation/Operation";
-import { create_BatchOperation } from "../operation/operations";
 import { NodeTDO } from "../entity/node/node_tdo";
+import { MixEditor } from "../mixeditor";
+import { Operation } from "../operation/operation";
 
 /** 插入来源。 */
 export type InsertNodeFrom = {
@@ -47,6 +45,20 @@ export type InsertNodesDecision =
   | InsertNodesDecisionReject
   | InsertNodesDecisionAccept;
 
+export interface InsertNodesStrategyContext {
+  /** 要插入的索引。 */
+  insert_index: number;
+  /** 要插入的节点。 */
+  nodes_to_insert: NodeTDO[];
+  /** 插入的来源。 */
+  from?: InsertNodeFrom;
+}
+
+export interface InsertNodesStrategyConfig {
+  context: InsertNodesStrategyContext;
+  decision: InsertNodesDecision;
+}
+
 /** 执行节点插入。 */
 export async function execute_insert_nodes(
   editor: MixEditor,
@@ -66,12 +78,14 @@ export async function execute_insert_nodes(
   // 从起始节点开始向上遍历
   while (current) {
     // 处理当前节点的插入决策
-    const result = await node_manager.execute_handler(
-      "handle_insert_nodes",
-      current,
-      current_index,
-      remaining_nodes,
-      current_from
+    const result = await node_manager.get_decision(
+      "insert_nodes",
+      current as any,
+      {
+        insert_index: current_index,
+        nodes_to_insert: remaining_nodes,
+        from: current_from,
+      }
     );
 
     if (result?.type === "accept") {

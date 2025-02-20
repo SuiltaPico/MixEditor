@@ -3,7 +3,7 @@ import {
   OperationHandlerMap,
   OperationManager,
   OperationManagerNoBehaviorError,
-} from "../../src/operation/Operation";
+} from "../../src/operation/operation";
 import { describe, test, expect, jest, beforeEach } from "@jest/globals";
 
 describe("OperationManager", () => {

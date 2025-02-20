@@ -1,11 +1,10 @@
-import { MixEditor } from "../mixeditor";
-import { Node } from "../entity/node/node";
 import {
   get_common_ancestor_from_node,
-  is_ancestor,
-  is_parent,
+  is_parent
 } from "../common/entity/node/path";
-import { Operation } from "../operation/Operation";
+import { Node } from "../entity/node/node";
+import { MixEditor } from "../mixeditor";
+import { Operation } from "../operation/operation";
 import { create_BatchOperation } from "../operation/operations";
 import { Selected, SelectedData } from "../selection";
 import { execute_merge_node, execute_simple_merge_node } from "./merge_node";
@@ -39,6 +38,18 @@ export type DeleteRangeDecision =
   | DeleteRangeDecisionDeleteSelf
   | DeleteRangeDecisionDone;
 
+export interface DeleteRangeStrategyContext {
+  /** 要删除的起点。 */
+  start: number;
+  /** 要删除的终点。 */
+  end: number;
+}
+
+export interface DeleteRangeStrategyConfig {
+  context: DeleteRangeStrategyContext;
+  decision: DeleteRangeDecision;
+}
+
 export async function execute_delete_range(
   editor: MixEditor,
   start: SelectedData,
@@ -53,11 +64,13 @@ export async function execute_delete_range(
   if (start.node === end.node) {
     current = start.node;
     while (current) {
-      const result = await node_manager.execute_handler(
-        "handle_delete_range",
-        current,
-        start.child_path,
-        end.child_path
+      const result = await node_manager.get_decision(
+        "delete_range",
+        current as any,
+        {
+          start: start.child_path,
+          end: end.child_path,
+        }
       );
       if (!result || result.type === "delete_self") {
         // --- 否则则继续执行 delete_range 责任链 ---
@@ -279,8 +292,5 @@ export async function execute_delete_range(
     }
   }
 
-  return create_BatchOperation(
-    editor.operation_manager.gen_id(),
-    operations
-  );
+  return create_BatchOperation(editor.operation_manager.gen_id(), operations);
 }

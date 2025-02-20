@@ -5,13 +5,21 @@ import {
   MixEditorPluginContext,
   MixEditorEventManagerContext,
   create_DeleteSelectedEvent,
+  MixEditor,
+  create_StaticStrategy,
 } from "@mixeditor/core";
 import { render } from "solid-js/web";
 import {
   BvPointerEvent,
-  BvPointerEventHandlerName,
-  PointerEventDecision,
-  SelectedMaskDecision,
+  BvPointerEventStrategyName,
+  BvPointerEventDecision,
+  BvDrawSelectedMaskDecision,
+  BvPointerDownEvent,
+  BvPointerUpEvent,
+  BvPointerMoveEvent,
+  BvDelegatedPointerEventHandler,
+  BvPointerEventStrategyConfigMap,
+  BvDrawSelectedMaskStrategyConfig,
 } from ".";
 import { BvSelection } from "./BvSelection";
 import { DocumentRenderer } from "./renderer/DocumentRenderer";
@@ -19,6 +27,39 @@ import { EditorRenderer } from "./renderer/EditorRenderer";
 import { WithMixEditorNode } from "./renderer/NodeRenderer";
 import { NodeRendererManager } from "./renderer/NodeRendererManager";
 import { BvKeyDownEvent } from "./resp_chain/Key";
+import { MaybePromise } from "@mixeditor/common";
+
+// 扩展主模块
+declare module "@mixeditor/core" {
+  // 添加浏览器视图新增的事件
+  interface AllEvents {
+    "bv:pointer_down": BvPointerDownEvent;
+    "bv:pointer_up": BvPointerUpEvent;
+    "bv:pointer_move": BvPointerMoveEvent;
+    "bv:key_down": BvKeyDownEvent;
+  }
+
+  interface NodeManagerHandlerMap {
+    /** 获取子节点的位置。 */
+    "bv:get_child_caret": (
+      context: MixEditor,
+      node: Node,
+      child_index: number
+    ) => MaybePromise<{ x: number; y: number; height: number } | undefined>;
+    "bv:handle_delegated_pointer_down": BvDelegatedPointerEventHandler;
+  }
+
+  interface NodeManagerStrategyMap extends BvPointerEventStrategyConfigMap {
+    "bv:draw_selected_mask": BvDrawSelectedMaskStrategyConfig;
+  }
+
+  interface NodeContext {
+    /** 对应的 HTML 节点。 */
+    "bv:html_node"?: HTMLElement;
+  }
+
+  type a = NodeManagerStrategyMap["bv:pointer_move"];
+}
 
 export interface BrowserViewPluginResult {
   renderer_manager: NodeRendererManager;
@@ -41,7 +82,7 @@ export function browser_view(props: { element: HTMLElement }) {
       const bv_selection = new BvSelection(ctx.editor);
 
       function generate_handler<TEvent extends BvPointerEvent>(
-        handler_name: BvPointerEventHandlerName
+        handler_name: BvPointerEventStrategyName
       ) {
         return async (
           params: Parameters<
@@ -64,15 +105,16 @@ export function browser_view(props: { element: HTMLElement }) {
           // 向上开始传播
           while (current_node) {
             // 执行节点的指针事件处理
-            const result = await node_manager.execute_handler(
+            const result = await node_manager.get_decision(
               handler_name,
-              current_node,
-              current,
-              // @ts-ignore
-              params.event
+              current_node as any,
+              {
+                element: current,
+                event: params.event,
+              }
             )!;
 
-            if (result.type === "stop_propagation") {
+            if (result?.type === "stop_propagation") {
               return;
             }
             current_node = node_manager.get_parent(current_node);
@@ -80,9 +122,9 @@ export function browser_view(props: { element: HTMLElement }) {
         };
       }
 
-      const handle_pointer_down = generate_handler("bv:handle_pointer_down");
-      const handle_pointer_up = generate_handler("bv:handle_pointer_up");
-      const handle_pointer_move = generate_handler("bv:handle_pointer_move");
+      const handle_pointer_down = generate_handler("bv:pointer_down");
+      const handle_pointer_up = generate_handler("bv:pointer_up");
+      const handle_pointer_move = generate_handler("bv:pointer_move");
 
       async function handle_key_down(
         params: Parameters<
@@ -121,7 +163,7 @@ export function browser_view(props: { element: HTMLElement }) {
       editor.event_manager.add_handler("bv:pointer_move", handle_pointer_move);
       editor.event_manager.add_handler("bv:key_down", handle_key_down);
 
-      const default_handler = () => PointerEventDecision.none;
+      const default_handler = () => BvPointerEventDecision.none;
       node_manager.register_handlers(DefaultItemType, {
         "bv:handle_pointer_down": default_handler,
         "bv:handle_pointer_up": default_handler,
@@ -132,10 +174,10 @@ export function browser_view(props: { element: HTMLElement }) {
         },
       });
 
-      node_manager.register_handlers("document", {
-        "bv:handle_selected_mask": () => {
-          return SelectedMaskDecision.enter;
-        },
+      node_manager.register_strategies("document", {
+        "bv:draw_selected_mask": create_StaticStrategy(
+          BvDrawSelectedMaskDecision.enter
+        ),
       });
 
       // 渲染编辑器

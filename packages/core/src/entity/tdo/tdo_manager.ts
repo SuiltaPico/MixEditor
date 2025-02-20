@@ -3,7 +3,7 @@ import {
   handler_manager_method_list,
   HandlerManager,
   ItemHandlerMap,
-} from "../../common/HandlerManager";
+} from "../../common/handler_manager";
 import { MixEditor } from "../../mixeditor";
 import { TransferDataObject } from "./tdo";
 

@@ -1,5 +1,5 @@
 import { ConvertHandlerMap } from "../../common/handler";
-import { ItemHandlerMap } from "../../common/HandlerManager";
+import { ItemHandlerMap } from "../../common/handler_manager";
 import { MixEditor } from "../../mixeditor";
 import { TransferDataObject } from "../tdo/tdo";
 import { TDOManager } from "../tdo/tdo_manager";

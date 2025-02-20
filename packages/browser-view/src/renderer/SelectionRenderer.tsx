@@ -17,7 +17,7 @@ import { NodeRendererManager } from "./NodeRendererManager";
 import { BvSelection } from "../BvSelection";
 import "./SelectionRenderer.css";
 import { createSignal, Rect } from "@mixeditor/common";
-import { SelectedMaskDecisionRender } from "../resp_chain/Selection";
+import { BvDrawSelectedMaskDecisionRender } from "../resp_chain/Selection";
 
 /** 选区渲染器。
  * 负责渲染选区。
@@ -81,7 +81,7 @@ async function execute_selected_mask_respo_chain(
     }
     await Promise.all(promises);
   } else if (type === "render") {
-    rects.push(...(result as SelectedMaskDecisionRender).rects);
+    rects.push(...(result as BvDrawSelectedMaskDecisionRender).rects);
   }
 }
 

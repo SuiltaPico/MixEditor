@@ -1,5 +1,5 @@
 import { MixEditor } from "../../mixeditor";
-import { Operation } from "../Operation";
+import { Operation } from "../operation";
 
 /** 批量操作。
  * 批量操作是多个操作的集合，可以一起执行和撤销。

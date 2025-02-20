@@ -3,7 +3,7 @@ import {
   Operation,
   OperationManager,
   OperationRunningBehavior,
-} from "./Operation";
+} from "./operation";
 import { CanceledError } from "../common/error";
 import { AsyncTask } from "../common/promise";
 

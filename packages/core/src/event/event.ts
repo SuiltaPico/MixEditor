@@ -1,6 +1,7 @@
 import { Graph } from "../common/data_struct/Graph";
 import { MaybePromise } from "@mixeditor/common";
 import { MixEditor } from "../mixeditor";
+import { TagManager } from "../common/tag_manager";
 
 export type MixEditorEventManagerContext = {
   editor: MixEditor;
@@ -59,6 +60,8 @@ export class EventManager<
     string,
     Graph<EventHandler<TEvent, TContext>>
   >();
+  /** 监听器的标签管理器。*/
+  private tag_manager = new TagManager<EventHandler<TEvent, TContext>>();
 
   /** 检查 `ancestor_handler` 是否是 `child_handler` 的祖先。*/
   private has_ancestor_handler(

@@ -1,21 +1,21 @@
 import { Rect } from "@mixeditor/common";
 
-export type SelectedMaskDecisionSkip = {
+export type BvDrawSelectedMaskDecisionSkip = {
   type: "skip";
 };
 
-export type SelectedMaskDecisionEnter = {
+export type BvDrawSelectedMaskDecisionEnter = {
   type: "enter";
 };
 
-export type SelectedMaskDecisionRender = {
+export type BvDrawSelectedMaskDecisionRender = {
   type: "render";
   /** 选区范围。 */
   rects: Rect[];
 };
 
 /** 选区绘制决策。 */
-export const SelectedMaskDecision = {
+export const BvDrawSelectedMaskDecision = {
   /** 跳过，不绘制选区。 */
   skip: {
     type: "skip",
@@ -33,7 +33,15 @@ export const SelectedMaskDecision = {
 } as const;
 
 /** 选区绘制决策。 */
-export type SelectedMaskDecision =
-  | SelectedMaskDecisionSkip
-  | SelectedMaskDecisionEnter
-  | SelectedMaskDecisionRender;
+export type BvDrawSelectedMaskDecision =
+  | BvDrawSelectedMaskDecisionSkip
+  | BvDrawSelectedMaskDecisionEnter
+  | BvDrawSelectedMaskDecisionRender;
+
+export interface BvDrawSelectedMaskStrategyConfig {
+  context: {
+    from: number;
+    to: number;
+  };
+  decision: BvDrawSelectedMaskDecision;
+}

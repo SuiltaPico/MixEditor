@@ -97,9 +97,8 @@ export class HandlerManager<
     ...args: ParametersExceptFirst2<THandlerMap[THandler]>
   ) {
     let handler = this.get_handler(item.type, handler_name);
-    if (handler === undefined) {
-      return undefined;
-    }
+    if (handler === undefined) return undefined;
+
     return (handler as any)(
       this.context,
       item,

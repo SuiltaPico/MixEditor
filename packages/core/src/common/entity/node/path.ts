@@ -1,9 +1,11 @@
 import { Node } from "../../../entity/node/node";
-import { NodeHandlerMap, NodeManager } from "../../../entity/node/manager";
+import { NodeManager } from "../../../entity/node/manager";
+import { NodeManagerHandlerMap } from "../../../entity/node/maps";
+import { MixEditorNodeManager } from "../../../mixeditor";
 
 /** 获取节点路径 */
 export async function get_node_path(
-  node_manager: NodeManager<NodeHandlerMap<any>, any>,
+  node_manager: MixEditorNodeManager,
   node: Node
 ) {
   let result: number[] = [];
@@ -24,7 +26,7 @@ export async function get_node_path(
 
 /** 获取节点路径和祖先节点（不包含自身） */
 export async function get_node_path_and_ancestors(
-  node_manager: NodeManager<NodeHandlerMap<any>, any>,
+  node_manager: MixEditorNodeManager,
   node: Node
 ) {
   let path: number[] = [];
@@ -47,7 +49,7 @@ export async function get_node_path_and_ancestors(
 
 /** 获取节点的公共祖先节点，和节点的路径 */
 export async function get_common_ancestor_from_node(
-  node_manager: NodeManager<NodeHandlerMap<any>, any>,
+  node_manager: MixEditorNodeManager,
   node1: Node,
   node2: Node
 ) {
@@ -133,7 +135,7 @@ export function path_compare(path1: number[], path2: number[]) {
 
 /** 判断 maybe_parent 是否是 node 的父节点 */
 export function is_parent(
-  node_manager: NodeManager<NodeHandlerMap<any>, any>,
+  node_manager: MixEditorNodeManager,
   node: Node,
   maybe_parent: Node
 ) {
@@ -143,7 +145,7 @@ export function is_parent(
 
 /** 判断 maybe_ancestor 是否是 node 的祖先节点 */
 export function is_ancestor(
-  node_manager: NodeManager<NodeHandlerMap<any>, any>,
+  node_manager: MixEditorNodeManager,
   node: Node,
   maybe_ancestor: Node
 ) {
