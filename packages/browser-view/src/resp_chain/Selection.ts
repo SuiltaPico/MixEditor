@@ -17,15 +17,15 @@ export type BvDrawSelectedMaskDecisionRender = {
 /** 选区绘制决策。 */
 export const BvDrawSelectedMaskDecision = {
   /** 跳过，不绘制选区。 */
-  skip: {
+  Skip: {
     type: "skip",
   },
   /** 进入自己的逐个子节点。 */
-  enter: {
+  Enter: {
     type: "enter",
   },
   /** 默认行为。（直接在当前节点绘制选区） */
-  render: (rects: Rect[]) => ({
+  Render: (rects: Rect[]) => ({
     type: "render" as const,
     /** 选区范围。 */
     rects,

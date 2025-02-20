@@ -18,7 +18,6 @@ import {
   create_Node,
   create_NodeRefTDO,
   DeleteFromPointDecision,
-  InsertNodesDecision,
   load_mark_map,
   MarkMap,
   MarkTDOMap,
@@ -369,8 +368,8 @@ export function paragraph() {
         "bv:draw_selected_mask": create_DynamicStrategy((_, node, context) => {
           const selection = editor.selection.get_selected();
           if (selection?.type === "collapsed")
-            return BvDrawSelectedMaskDecision.skip;
-          return BvDrawSelectedMaskDecision.enter;
+            return BvDrawSelectedMaskDecision.Skip;
+          return BvDrawSelectedMaskDecision.Enter;
         }),
       });
 

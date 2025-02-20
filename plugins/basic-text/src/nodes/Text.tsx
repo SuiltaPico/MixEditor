@@ -18,6 +18,7 @@ import {
   DeleteRangeDecision,
   get_node_path,
   InsertNodesDecision,
+  is_Node,
   load_mark_map,
   mark_map_is_equal,
   MarkMap,
@@ -213,17 +214,27 @@ export function text() {
           return result;
         },
 
-        insert_children: (_, node, to, children) => {
+        insert_children: async (_, node, to, children) => {
           console.log("text:insert_children", node, to, children);
 
+          let content = "";
+          for (const child of children) {
+            if (child.type === "text") {
+              if (is_Node(child)) {
+                content += (child as TextNode).text.get();
+              } else {
+                content += (child as TextNodeTDO).content;
+              }
+            } else {
+              content += await node_manager.execute_handler(
+                "to_plain_text",
+                child
+              )!;
+            }
+          }
+
           const text = node.text.get();
-          const new_value =
-            text.slice(0, to) +
-            children
-              .filter((child) => child.type === "text")
-              .map((it) => (it as TextNodeTDO).content)
-              .join("") +
-            text.slice(to);
+          const new_value = text.slice(0, to) + content + text.slice(to);
           node.text.set(new_value);
         },
 
@@ -233,7 +244,7 @@ export function text() {
           const slice_text = text.slice(from, to + 1);
           node.text.set(new_value);
 
-          return [create_TextTDO(node_manager.gen_id(), slice_text)];
+          return [create_TextTDO("", slice_text)];
         },
 
         "bv:handle_delegated_pointer_down": (_, node, event, caret_pos) => {
@@ -503,17 +514,17 @@ export function text() {
           const { from, to } = params;
           const selection = editor.selection.get_selected();
           if (selection?.type === "collapsed")
-            return BvDrawSelectedMaskDecision.skip;
+            return BvDrawSelectedMaskDecision.Skip;
 
           const context = node_manager.get_context(node);
           const html_node = context?.["bv:html_node"];
-          if (!html_node) return BvDrawSelectedMaskDecision.skip;
+          if (!html_node) return BvDrawSelectedMaskDecision.Skip;
 
           const root_rect =
             renderer_manager.editor_root.getBoundingClientRect();
           const range = document.createRange();
           const text_node = html_node.firstChild;
-          if (!text_node) return BvDrawSelectedMaskDecision.skip;
+          if (!text_node) return BvDrawSelectedMaskDecision.Skip;
 
           const adjusted_to = Math.min(node.text.get().length, to);
           range.setStart(text_node, from);
@@ -521,7 +532,7 @@ export function text() {
 
           const range_rects = range.getClientRects();
           if (range_rects.length > 0) {
-            return BvDrawSelectedMaskDecision.render(
+            return BvDrawSelectedMaskDecision.Render(
               Array.from(range_rects).map((rect) => ({
                 x: rect.left - root_rect.left,
                 y: rect.top - root_rect.top,
@@ -530,7 +541,7 @@ export function text() {
               }))
             );
           } else {
-            return BvDrawSelectedMaskDecision.skip;
+            return BvDrawSelectedMaskDecision.Skip;
           }
         }),
 

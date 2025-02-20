@@ -1,5 +1,4 @@
 import { Node } from "../entity/node/node";
-import { NodeTDO } from "../entity/node/node_tdo";
 import { MixEditor } from "../mixeditor";
 import { Operation } from "../operation/operation";
 
@@ -36,7 +35,7 @@ export type InsertNodesDecisionAccept = {
   /** 插入的操作。 */
   operations: Operation[];
   /** 不接受的节点。 */
-  rejected_nodes: NodeTDO[];
+  rejected_nodes: Node[];
   /** 如果父节点要分割自己时，应该分割的索引。 */
   split_index: number;
 };
@@ -49,7 +48,7 @@ export interface InsertNodesStrategyContext {
   /** 要插入的索引。 */
   insert_index: number;
   /** 要插入的节点。 */
-  nodes_to_insert: NodeTDO[];
+  nodes_to_insert: Node[];
   /** 插入的来源。 */
   from?: InsertNodeFrom;
 }
@@ -64,7 +63,7 @@ export async function execute_insert_nodes(
   editor: MixEditor,
   node: Node,
   insert_index: number,
-  nodes_to_insert: NodeTDO[],
+  nodes_to_insert: Node[],
   from?: InsertNodeFrom
 ) {
   const node_manager = editor.node_manager;

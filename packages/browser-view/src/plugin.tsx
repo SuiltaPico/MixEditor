@@ -171,7 +171,7 @@ export function browser_view(props: { element: HTMLElement }) {
 
       node_manager.register_strategies("document", {
         "bv:draw_selected_mask": create_StaticStrategy(
-          BvDrawSelectedMaskDecision.enter
+          BvDrawSelectedMaskDecision.Enter
         ),
       });
 

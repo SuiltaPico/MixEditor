@@ -78,9 +78,9 @@ export interface NodeManagerHandlerMap<TNode extends Node = Node>
    */
   split: NodeHandler<[indexes: number[]], Node[]>;
   /** 插入子节点 */
-  insert_children: NodeHandler<[index: number, children: NodeTDO[]], void>;
+  insert_children: NodeHandler<[index: number, children: Node[]], void>;
   /** 删除子节点 */
-  delete_children: NodeHandler<[from: number, to: number], NodeTDO[]>;
+  delete_children: NodeHandler<[from: number, to: number], Node[]>;
 }
 
 /** 节点管理器策略表。 */
