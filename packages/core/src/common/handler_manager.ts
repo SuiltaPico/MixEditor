@@ -32,7 +32,7 @@ export const HandlerManagerDefaultItemType = "default";
 export class HandlerManager<
   THandlerMap extends ItemHandlerMap<TContext, TItem>,
   TItem extends TAbstractItem,
-  TAbstractItem extends { type: string },
+  TAbstractItem extends { nodeName: string },
   TContext
 > {
   /** 项目处理器 */
@@ -54,7 +54,7 @@ export class HandlerManager<
   /** 为所有项目注册处理器。如果项目类型为默认类型，则设置为默认处理器。 */
   register_handlers<
     TItemType extends
-      | ItemOfHandlerBehavior<THandlerMap>["type"]
+      | ItemOfHandlerBehavior<THandlerMap>["nodeName"]
       | typeof HandlerManagerDefaultItemType,
     THandlers extends {
       [key in keyof THandlerMap]?: (
@@ -96,7 +96,7 @@ export class HandlerManager<
     item: TAbstractItem,
     ...args: ParametersExceptFirst2<THandlerMap[THandler]>
   ) {
-    let handler = this.get_handler(item.type, handler_name);
+    let handler = this.get_handler(item.nodeName, handler_name);
     if (handler === undefined) return undefined;
 
     return (handler as any)(

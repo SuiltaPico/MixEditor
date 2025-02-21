@@ -13,7 +13,7 @@ export type NameToStrategyMap = Record<string, { context: any; decision: any }>;
 
 /** 策略简写 */
 type StrategyManagerStrategy<
-  TItem extends { type: string },
+  TItem extends { nodeName: string },
   TNameToStrategyMap extends NameToStrategyMap,
   TGlobalContext
 > = Strategy<
@@ -25,19 +25,19 @@ type StrategyManagerStrategy<
 
 /** 策略管理器。 */
 export class StrategyManager<
-  TItem extends { type: string },
+  TItem extends { nodeName: string },
   TNameToStrategyMap extends NameToStrategyMap,
   TGlobalContext = any
 > {
   private strategy_map = new TwoLevelTypeMap<
-    TItem["type"],
+    TItem["nodeName"],
     keyof TNameToStrategyMap,
     StrategyManagerStrategy<TItem, TNameToStrategyMap, TGlobalContext>
   >();
 
   /** 注册策略。 */
   register_strategy(
-    item_type: TItem["type"],
+    item_type: TItem["nodeName"],
     strategy_name: keyof TNameToStrategyMap,
     strategy: StrategyManagerStrategy<TItem, TNameToStrategyMap, TGlobalContext>
   ) {
@@ -45,7 +45,7 @@ export class StrategyManager<
   }
 
   /** 为所有项目注册策略。 */
-  register_strategies<TItemType extends TItem["type"]>(
+  register_strategies<TItemType extends TItem["nodeName"]>(
     item_type: TItemType,
     strategies: Partial<{
       [key in keyof TNameToStrategyMap]: Strategy<
@@ -72,7 +72,7 @@ export class StrategyManager<
   ):
     | StrategyManagerStrategy<TItem, TNameToStrategyMap, TGlobalContext>
     | undefined {
-    return this.strategy_map.get(item.type, strategy_name);
+    return this.strategy_map.get(item.nodeName, strategy_name);
   }
 
   /** 获取决策。 */

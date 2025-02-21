@@ -1,110 +1,107 @@
-import { createSignal, WrappedSignal } from "@mixeditor/common";
-import { MixEditor } from "../../../mixeditor";
-import { create_Node, type Node } from "../node";
-import { AnyTDO } from "../../../saver/saver";
-import { TransferDataObject } from "../../tdo/tdo";
+import * as Y from "yjs";
 import { NavigateDirection } from "../../../common/navigate";
+import { get_node_children } from "../../../common/entity/node/yjs";
+import { MixEditor } from "../../../mixeditor";
 import {
   CaretNavigateDecision,
   CaretNavigateSource,
 } from "../../../resp_chain/caret_navigate";
+import { AnyTDO } from "../../../saver/saver";
+import { create_DynamicStrategy } from "../../../strategy/strategy";
+import { MarkTDOMap } from "../../mark/mark_tdo";
+import { TransferDataObject } from "../../tdo/tdo";
 import {
   paragraph_delete_children,
   paragraph_delete_range_strategy,
 } from "../handlers";
-import { create_DynamicStrategy } from "../../../strategy/strategy";
+import { BaseNodeAttributes, Node, create_Node } from "../node";
 
-/** 文档。 */
-export interface DocumentNode extends Node {
-  type: "document";
-  children: WrappedSignal<Node[]>;
-  schema_version: number;
-  created_at: Date;
-  modified_at: Date;
+/** 文档节点属性 */
+export interface DocumentNodeAttributes extends BaseNodeAttributes {
+  /** 创建时间 */
+  created_at: number;
+  /** 修改时间 */
+  modified_at: number;
+}
+
+/** 文档节点。 */
+export interface DocumentNode extends Node<DocumentNodeAttributes> {
+  nodeName: "document";
 }
 
 export function create_DocumentNode(
+  editor: MixEditor,
   id: string,
-  params: Partial<Omit<DocumentNode, "type" | "id" | "children">> & {
-    children: Node[];
-  }
-) {
-  return create_Node({
+  params: Partial<
+    Omit<DocumentNodeAttributes, "id"> & {
+      children: Node[];
+    }
+  >
+): DocumentNode {
+  const attrs: DocumentNodeAttributes = {
     id,
-    type: "document",
-    children: createSignal(params.children ?? [], {
-      equals: false,
-    }),
-    schema_version: params.schema_version ?? 1,
-    created_at: params.created_at ?? new Date(),
-    modified_at: params.modified_at ?? new Date(),
-  }) satisfies DocumentNode;
+    created_at: params.created_at ?? Date.now(),
+    modified_at: params.modified_at ?? Date.now(),
+  };
+  return create_Node(editor.ydoc, "document", attrs) as DocumentNode;
 }
 
+/** 文档传输数据对象 */
 export interface DocumentTDO extends TransferDataObject {
   type: "document";
-  schema_version: number;
-  created_at: Date;
-  modified_at: Date;
+  created_at: number;
+  modified_at: number;
   children: AnyTDO[];
 }
 
+/** 创建文档传输数据对象 */
 export function create_DocumentTDO(
   id: string,
-  params: Partial<Omit<DocumentTDO, "type" | "id">>
+  params: Partial<Omit<DocumentTDO, "id" | "type">> = {}
 ): DocumentTDO {
   return {
     id,
     type: "document",
-    schema_version: params.schema_version ?? 1,
-    created_at: params.created_at ?? new Date(),
-    modified_at: params.modified_at ?? new Date(),
+    created_at: params.created_at ?? Date.now(),
+    modified_at: params.modified_at ?? Date.now(),
     children: params.children ?? [],
   };
 }
 
 export async function to_tdo(editor: MixEditor, document: DocumentNode) {
+  const attrs = document.getAttributes();
   return {
-    id: document.id,
+    id: attrs.id ?? "",
     type: "document",
-    schema_version: document.schema_version,
-    created_at: document.created_at,
-    modified_at: document.modified_at,
+    created_at: attrs.created_at ?? Date.now(),
+    modified_at: attrs.modified_at ?? Date.now(),
     children: (
       await Promise.all(
-        document.children
-          .get()
-          .map((child) => editor.node_manager.execute_handler("to_tdo", child))
+        get_node_children(document).map((child) =>
+          editor.node_manager.execute_handler("to_tdo", child)
+        )
       )
-    ).filter((child) => child !== undefined),
+    ).filter((tdo) => tdo !== undefined) as AnyTDO[],
   } satisfies DocumentTDO;
 }
 
 export async function init_document(editor: MixEditor) {
-  const { node_manager, document, node_tdo_manager, event_manager } = editor;
+  const {
+    node_manager,
+    ydoc: document,
+    node_tdo_manager,
+    event_manager,
+  } = editor;
 
   // 注册文档节点保存行为
   node_manager.register_handlers("document", {
-    to_tdo: to_tdo,
-    get_children_count: (_, node) => {
-      return node.children.get().length;
-    },
-    get_child: (_, node, index) => {
-      return node.children.get()[index] as any;
-    },
-    get_index_of_child: (_, node, child) => {
-      return node.children.get().indexOf(child);
-    },
-    get_children: (_, node) => {
-      return node.children.get();
-    },
-    delete_children: paragraph_delete_children,
+    to_tdo,
   });
 
   node_manager.register_strategies("document", {
     caret_navigate: create_DynamicStrategy(
       (_, node, { from: to, direction, src }) => {
-        const children_count = node.children.get().length;
+        const children_count = node.length;
         const to_prev = direction === NavigateDirection.Prev;
 
         to += direction;
@@ -142,9 +139,8 @@ export async function init_document(editor: MixEditor) {
         )
       )
     ).filter((node) => node !== undefined) as Node[];
-    const document = node_manager.create_node(create_DocumentNode, {
+    const document = node_manager.create_node(create_DocumentNode, dtdo.id, {
       children: nodes,
-      schema_version: dtdo.schema_version,
       created_at: dtdo.created_at,
       modified_at: dtdo.modified_at,
     });

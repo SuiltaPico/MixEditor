@@ -1,4 +1,3 @@
-import { UlidIdGenerator } from "@mixeditor/common";
 import {
   handler_manager_method_list,
   HandlerManager,
@@ -13,6 +12,7 @@ import {
 import { NodeContext } from "./context";
 import { NodeManagerHandlerMap, NodeManagerStrategyMap } from "./maps";
 import { Node } from "./node";
+import * as Y from "yjs";
 
 /** 节点管理器的处理器管理器类型 */
 type NodeManagerHandlerManager<
@@ -26,10 +26,9 @@ export class NodeManager<
   THandlerMap extends NodeManagerHandlerMap<TNode> = NodeManagerHandlerMap<TNode>,
   TStrategyMap extends NodeManagerStrategyMap = NodeManagerStrategyMap
 > {
-  /** 节点 ID 管理器 */
-  private idgen = new UlidIdGenerator();
   /** 节点 ID 映射 */
-  private id_node_map = new Map<string, Node>();
+  private id_node_map = new Y.Map<string>();
+
   /** 处理器管理器 */
   private handler_manager: NodeManagerHandlerManager<THandlerMap, TNode>;
   /** 节点上下文 */
@@ -159,18 +158,16 @@ export class NodeManager<
     return host_allowed_types.has(be_merged_node_type);
   }
 
-  /** 获取节点 ID */
-  gen_id() {
-    return this.idgen.next();
-  }
-
   /** 创建节点 */
-  create_node<TNodeFactory extends (id: string, ...args: any[]) => TNode>(
-    node_factory: TNodeFactory,
-    ...args: ParametersExceptFirst<TNodeFactory>
-  ) {
-    const node_id = this.idgen.next();
-    const node = node_factory(node_id, ...args);
+  create_node<
+    TNodeFactory extends (
+      editor: MixEditor,
+      id: string,
+      ...args: any[]
+    ) => TNode
+  >(node_factory: TNodeFactory, ...args: ParametersExceptFirst<TNodeFactory>) {
+    const node_id = this.editor.gen_id();
+    const node = node_factory(this.editor, node_id, ...args);
     this.id_node_map.set(node_id, node);
     return node;
   }
