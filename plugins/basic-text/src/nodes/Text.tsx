@@ -217,24 +217,17 @@ export function text() {
         insert_children: async (_, node, to, children) => {
           console.log("text:insert_children", node, to, children);
 
-          let content = "";
+          let new_content = "";
+
+          // 仅接受 TextTDO 的输入
           for (const child of children) {
             if (child.type === "text") {
-              if (is_Node(child)) {
-                content += (child as TextNode).text.get();
-              } else {
-                content += (child as TextNodeTDO).content;
-              }
-            } else {
-              content += await node_manager.execute_handler(
-                "to_plain_text",
-                child
-              )!;
+              new_content += (child as TextNodeTDO).content;
             }
           }
 
           const text = node.text.get();
-          const new_value = text.slice(0, to) + content + text.slice(to);
+          const new_value = text.slice(0, to) + new_content + text.slice(to);
           node.text.set(new_value);
         },
 

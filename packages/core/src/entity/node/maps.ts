@@ -76,11 +76,11 @@ export interface NodeManagerHandlerMap<TNode extends Node = Node>
    *
    * 本节点应当是被分割的第一个节点。应该返回 [本节点, ...其余分割节点]。
    */
-  split: NodeHandler<[indexes: number[]], Node[]>;
+  split: NodeHandler<[indexes: number[]], NodeTDO[]>;
   /** 插入子节点 */
-  insert_children: NodeHandler<[index: number, children: Node[]], void>;
+  insert_children: NodeHandler<[index: number, children: NodeTDO[]], void>;
   /** 删除子节点 */
-  delete_children: NodeHandler<[from: number, to: number], Node[]>;
+  delete_children: NodeHandler<[from: number, to: number], NodeTDO[]>;
 }
 
 /** 节点管理器策略表。 */
