@@ -27,7 +27,7 @@ export class NodeManager<
   TStrategyMap extends NodeManagerStrategyMap = NodeManagerStrategyMap
 > {
   /** 节点 ID 映射 */
-  private id_node_map = new Y.Map<string>();
+  private id_node_map: Y.Map<string>;
 
   /** 处理器管理器 */
   private handler_manager: NodeManagerHandlerManager<THandlerMap, TNode>;
@@ -210,6 +210,7 @@ export class NodeManager<
   }
 
   constructor(public editor: MixEditor) {
+    this.id_node_map = editor.ydoc.getMap("id_node_map");
     this.handler_manager = new HandlerManager<
       THandlerMap,
       TNode,
