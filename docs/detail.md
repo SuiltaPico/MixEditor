@@ -1,25 +1,55 @@
-# MixEditor 架构设计
+# 从本质出发
+## 核心拓展（`@mixeditor/*-core`）
+### 文档核心（`@mixeditor/doc-core`）
+#### 文档内容
+文档的实体间构成树形关系。定义实体行为：
+```ts
+interface EntBehavior {
+  // --- 读 ---
+  get_tree_length: EntBehaviorHandler<{}, number>;
+  get_tree_child: EntBehaviorHandler<{
+    index: number;
+  }, ID>;
+  get_tree_children: EntBehaviorHandler<{}, ID[]>;
+  get_tree_index_of: EntBehaviorHandler<{
+    id: ID;
+  }, number>;
+  // --- 写 ---
+  insert_tree_children: EntBehaviorHandler<{
+    to: number;
+    children: ID[];
+  }, void>;
+  remove_tree_children: EntBehaviorHandler<{
+    from: number;
+    to: number;
+  }, void>;
+}
+```
 
-## 起因
 
-观察到编辑器（复文本、低代码、DAW）编辑的本质都是一样的，因此想做一个适用于所有场景的编辑器核心予以复用。
 
-## 目的
+### 树状历史（`@mixeditor/tree-history-core`）
+（类似 Git 的树状历史）
 
-MixEditor 的目的是一个通用编辑器框架。但是我并不知道如何设计它。我希望从这个目的开始，自上而下地细化出完整的设计思路。
+## 视图（`@mixeditor/*-view`）
+### 双向映射  
+1. **输出映射**：将 $Content$ 转换为用户可感知的界面（如文本、图形）。  
+2. **输入映射**：将用户交互事件转换为操作 $Op$，触发状态迁移。
 
-### 编辑器的本质
-* 内容
-编辑器的内容是个实体的集合。内容由实体构成，而实体由状态构成。
-* 编辑
-内容是静态的，对内容进行修改的行为就是编辑，而编辑即状态迁移 `S --Delta-> S*`。
-  * 变更信息（`Delta`）
-    `Delta` 描述了状态迁移的方法。而 `Delta` 经常会其逆元 `Inv(Delta)`，使得 `S --Delta-> S* --InvDelta-> S*`。
-    * 历史回溯
-      在编辑过程中，常有对现在内容不满而回溯的需求。如果 `Delta` 能产生其逆元，那么回溯即可实现。我们可以构筑个 timeline 来记录到达当前内容的每个 `Delta`，即可让用户进行历史回溯。
-      * `Delta` 合并
-3. 视图
-  * 输出映射
-    编辑器需要将内容映射入用户的心智，因此需要视图层将编辑器的内容进行映射。
-  * 输入映射
-    视图需要将用户的内容更改意图转换为“变更信息”，然后驱动编辑器对内容进行变更。
+### 单向数据流
+用户输入产生事件，事件处理器产生原始 $\Delta$，$\Delta$ 被验证后，执行器执行 $\Delta$ 并生成新的状态，并记录 $\Delta$ 至 History。然后视图层对新状态进行渲染。
+
+数学描述为：
+$$
+\begin{CD}
+UserInput @>event>> Op @>apply>> (S', \Delta_{inv}) @>record>> History \\
+@. @. @VVrenderV \\
+@. @. View'
+\end{CD}
+$$
+
+### 浏览器视图（`@mixeditor/browser-view`）
+
+
+## 协作（`@mixeditor/*-collab`）
+### Yjs 协作适配（`@mixeditor/yjs-collab`）
