@@ -1,5 +1,5 @@
 import { Plugin } from "@mauchise/plugin-manager";
-import { MixEditor } from "./mixeditor";
+import { MixEditor } from "./mix_editor";
 
 export type MixEditorPluginContext = {
   editor: MixEditor;

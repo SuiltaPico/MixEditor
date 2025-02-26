@@ -9,13 +9,13 @@ export * from "./entity/node";
 export * from "./entity/tdo/tdo";
 export * from "./entity/tdo/tdo_manager";
 export * from "./event";
-export * from "./mixeditor";
+export * from "./mix_editor";
 export * from "./operation/history_manager";
 export * from "./operation/operation";
 export * from "./operation/operations";
 export * from "./plugin";
 export * from "./resp_chain";
 export * from "./saver/saver";
-export * from "./selection";
+export * from "./selection/selection";
 export * from "./strategy";
 
