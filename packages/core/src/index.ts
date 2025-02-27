@@ -4,7 +4,10 @@ export { HandlerManagerDefaultItemType as DefaultItemType } from "./common/handl
 export * from "./common/navigate";
 
 export * from "./content";
+export * from "./core";
 export * from "./ent";
 export * from "./op";
 export * from "./plugin";
+export * from "./selection";
+export * from "./tdo";
 

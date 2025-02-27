@@ -2,9 +2,14 @@ import { ContentCtx } from "../content/content_ctx";
 import { EntBehaviorMap } from "../ent/ent_behavior";
 import { EntCtx, EntMap } from "../ent/ent_ctx";
 import { OpBehaviorMap, OpCtx, OpMap } from "../op";
-import { PluginCtx } from "../plugin/";
+import { PluginCtx } from "../plugin";
 import { SelectionCtx } from "../selection/selection";
-import { ICore, InitParams, SelectionMap } from "./interface";
+import {
+  TDODeserializerMap,
+  TDOSerializeCtx,
+  TDOSerializerMap,
+} from "../tdo/serialize/serialize_ctx";
+import { ICoreCtx, InitParams, SelectionMap } from "./core_ctx";
 
 /** MixEditor 的实体行为映射表，供插件扩展 */
 export interface MEEntBehaviorMap extends EntBehaviorMap<any> {}
@@ -19,9 +24,13 @@ export interface MEOpBehaviorMap extends OpBehaviorMap<any> {}
 /** MixEditor 的选区表，供插件扩展 */
 export interface MESelectionMap extends SelectionMap {}
 
-export class MixEditor
-  implements ICore<MEEntMap, MEEntBehaviorMap, MESelectionMap>
-{
+/** MixEditor 的TDO序列化表，供插件扩展 */
+export interface METDOSerializeMap extends TDOSerializerMap<any> {}
+
+/** MixEditor 的TDO反序列化表，供插件扩展 */
+export interface METDODeSerializeMap extends TDODeserializerMap<any> {}
+
+export class MixEditor implements ICoreCtx {
   ent: EntCtx<MEEntMap, MEEntBehaviorMap, ThisType<this>>;
   content: ContentCtx<this["ent"]>;
 
@@ -30,9 +39,13 @@ export class MixEditor
 
   pipe_bus: PipeCtx;
 
-  selection = new SelectionCtx<MESelectionMap>();
+  selection: SelectionCtx<MESelectionMap>;
 
-  tdo_serialize: TDOSerializeCtx;
+  tdo_serialize: TDOSerializeCtx<
+    METDOSerializeMap,
+    METDODeSerializeMap,
+    ThisType<this>
+  >;
 
   plugin: PluginCtx<ThisType<this>>;
 
@@ -57,6 +70,12 @@ export class MixEditor
     this.ent = new EntCtx(this);
     this.content = new ContentCtx(this.ent);
     this.op = new OpCtx(this);
+    this.selection = new SelectionCtx();
+    this.tdo_serialize = new TDOSerializeCtx<
+      METDOSerializeMap,
+      METDODeSerializeMap,
+      ThisType<this>
+    >(this);
     this.plugin = new PluginCtx(this);
   }
 }

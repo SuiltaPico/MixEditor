@@ -3,19 +3,17 @@ import { SelectionCtx } from "../selection/selection";
 import { EntMap, IEntCtx } from "../ent/ent_ctx";
 import { EntBehaviorMap } from "../ent/ent_behavior";
 import { ContentCtx } from "../content/content_ctx";
+import { TDOSerializeCtx } from "../tdo/serialize/serialize_ctx";
+import { RootEnt } from "./root_ent";
 
 export type SelectionMap = Record<string, any>;
 
 export interface InitParams {
-  root_ent?: RootEntity;
+  root_ent?: RootEnt;
 }
 
-export interface ICore<
-  TEnt extends EntMap,
-  TBehaviorMap extends EntBehaviorMap<any>,
-  TSelectionMap extends SelectionMap
-> {
-  ent: IEntCtx<TEnt, TBehaviorMap, ThisType<this>>;
+export interface ICoreCtx {
+  ent: IEntCtx<any, any, ThisType<this>>;
   content: ContentCtx<this["ent"]>;
 
   op: OpManager;
@@ -23,9 +21,9 @@ export interface ICore<
 
   pipe_bus: PipeManager;
 
-  selection: SelectionCtx<TSelectionMap>;
+  selection: SelectionCtx<any>;
 
-  tdo_serialize: TDOSerializeManager;
+  tdo_serialize: TDOSerializeCtx<any, any, ThisType<this>>;
 
   plugin: PluginManager;
 
