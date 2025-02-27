@@ -61,7 +61,7 @@ export interface IBehaviorHandlerManager<
   /** 注册行为处理器。 */
   register_handler<
     TItemType extends TItem["type"],
-    TBehaviorId extends keyof TBehaviorMap
+    TBehaviorId extends Extract<keyof TBehaviorMap, string>
   >(
     item_type: TItemType,
     behavior_id: TBehaviorId,
@@ -78,12 +78,12 @@ export interface IBehaviorHandlerManager<
     }>
   ): void;
   /** 获取行为。 */
-  get_handler<TType extends keyof TBehaviorMap>(
+  get_handler<TType extends Extract<keyof TBehaviorMap, string>>(
     item_type: string,
     behavior_id: TType
   ): TBehaviorMap[TType] | undefined;
   /** 执行行为。 */
-  exec_behavior<TType extends keyof TBehaviorMap>(
+  exec_behavior<TType extends Extract<keyof TBehaviorMap, string>>(
     item: TItem,
     behavior_id: TType,
     params: Parameters<TBehaviorMap[TType]>[0]
@@ -118,7 +118,7 @@ export class BehaviorHandlerManager<
   >();
 
   /** 设置项目处理器。如果项目类型为默认类型，则设置为默认处理器。 */
-  register_handler<TBehaviorId extends keyof TBehaviorMap>(
+  register_handler<TBehaviorId extends Extract<keyof TBehaviorMap, string>>(
     item_type: string,
     behavior_id: TBehaviorId,
     handler: TBehaviorMap[TBehaviorId]
@@ -139,14 +139,14 @@ export class BehaviorHandlerManager<
     for (const [property_name, handler] of Object.entries(handlers)) {
       this.register_handler(
         item_type,
-        property_name as keyof TBehaviorMap,
+        property_name as Extract<keyof TBehaviorMap, string>,
         handler as any
       );
     }
   }
 
   /** 获取处理器。 */
-  get_handler<TBehaviorId extends keyof TBehaviorMap>(
+  get_handler<TBehaviorId extends Extract<keyof TBehaviorMap, string>>(
     item_type: string,
     behavior_id: TBehaviorId
   ): TBehaviorMap[TBehaviorId] | undefined {
@@ -162,7 +162,7 @@ export class BehaviorHandlerManager<
   }
 
   /** 执行行为。 */
-  exec_behavior<TBehaviorId extends keyof TBehaviorMap>(
+  exec_behavior<TBehaviorId extends Extract<keyof TBehaviorMap, string>>(
     item: TItem,
     behavior_id: TBehaviorId,
     params: Parameters<TBehaviorMap[TBehaviorId]>[0]

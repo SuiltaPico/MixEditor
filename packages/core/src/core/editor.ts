@@ -1,10 +1,13 @@
+import { ContentCtx } from "../content/content_ctx";
 import { EntBehaviorMap } from "../ent/ent_behavior";
 import { EntCtx, EntMap } from "../ent/ent_ctx";
 import { SelectionCtx } from "../selection/selection";
 import { ICore, SelectionMap } from "./interface";
 
 /** MixEditor 的实体行为映射表，供插件扩展 */
-export interface MEEntBehaviorMap extends EntBehaviorMap<any> {}
+export interface MEEntBehaviorMap extends EntBehaviorMap<any> {
+  
+}
 
 /** MixEditor 的实体表，供插件扩展 */
 export interface MEEntMap extends EntMap {}
@@ -12,12 +15,14 @@ export interface MEEntMap extends EntMap {}
 /** MixEditor 的选区表，供插件扩展 */
 export interface MESelectionMap extends SelectionMap {}
 
-export class MixEditor implements ICore<MEEntBehaviorMap, MESelectionMap> {
-  ent: EntCtx<MEEntBehaviorMap, MEEntMap, ThisType<this>>;
-  content: ContentCtx;
+export class MixEditor
+  implements ICore<MEEntMap, MEEntBehaviorMap, MESelectionMap>
+{
+  ent: EntCtx<MEEntMap, MEEntBehaviorMap, ThisType<this>>;
+  content: ContentCtx<this["ent"]>;
 
-  op: OpManager;
-  history: HistoryManager;
+  op: OpCtx;
+  history: HistoryCtx;
 
   pipe_bus: PipeManager;
 
@@ -44,5 +49,6 @@ export class MixEditor implements ICore<MEEntBehaviorMap, MESelectionMap> {
 
   constructor() {
     this.ent = new EntCtx(this);
+    this.content = new ContentCtx(this.ent);
   }
 }

@@ -15,23 +15,27 @@ export type EntMap = {
 
 /** 实体上下文。 */
 export interface IEntCtx<
-  TEnt extends Ent,
-  TBehaviorMap extends EntBehaviorMap<TEnt>,
+  TEntMap extends EntMap,
+  TBehaviorMap extends EntBehaviorMap<TExCtx>,
   TExCtx extends any
-> extends IBehaviorHandlerManager<TEnt, TBehaviorMap, TExCtx> {
+> extends IBehaviorHandlerManager<
+    TEntMap[keyof TEntMap],
+    TBehaviorMap,
+    TExCtx
+  > {
   ex_ctx: TExCtx;
   gen_id: () => string;
 }
 
 export type EntMapOfIEntCtx<T extends IEntCtx<any, any, any>> =
-  T extends IEntCtx<infer TEnt, any, any> ? { [key: string]: TEnt } : never;
+  T extends IEntCtx<infer TEntMap, any, any> ? TEntMap : never;
 
 /** 实体上下文。 */
 export class EntCtx<
-  TBehaviorMap extends EntBehaviorMap<any>,
   TEntMap extends EntMap,
+  TBehaviorMap extends EntBehaviorMap<TExCtx>,
   TExCtx extends any
-> implements IEntCtx<TEntMap[keyof TEntMap], TBehaviorMap, TExCtx>
+> implements IEntCtx<TEntMap, TBehaviorMap, TExCtx>
 {
   ex_ctx: TExCtx;
   private behavior: BehaviorHandlerManager<

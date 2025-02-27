@@ -1,7 +1,7 @@
 import { createSignal, WrappedSignal } from "@mixeditor/common";
 import { create_RootEnt, RootEnt } from "../core/root_ent";
 import { Ent } from "../ent/ent";
-import { EntCtx, EntMapOfIEntCtx } from "../ent/ent_ctx";
+import { EntCtx, EntMapOfIEntCtx, IEntCtx } from "../ent/ent_ctx";
 
 /** 内容上下文接口 */
 export interface IContentCtx<TEnt extends Ent> {
@@ -9,7 +9,7 @@ export interface IContentCtx<TEnt extends Ent> {
 }
 
 /** 内容上下文实现 */
-export class ContentCtx<TEntCtx extends EntCtx<any, any, any>>
+export class ContentCtx<TEntCtx extends IEntCtx<any, any, any>>
   implements IContentCtx<EntMapOfIEntCtx<TEntCtx>["root"]>
 {
   root: WrappedSignal<EntMapOfIEntCtx<TEntCtx>["root"]>;
@@ -19,7 +19,7 @@ export class ContentCtx<TEntCtx extends EntCtx<any, any, any>>
     this.root = createSignal(
       create_RootEnt(this.ent_ctx.gen_id(), {
         children: [],
-      }) as EntMapOfIEntCtx<TEntCtx>["root"]
+      }) as any as EntMapOfIEntCtx<TEntCtx>["root"]
     );
   }
 }
