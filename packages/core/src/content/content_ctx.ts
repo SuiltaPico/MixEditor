@@ -1,7 +1,7 @@
 import { createSignal, WrappedSignal } from "@mixeditor/common";
-import { create_RootEnt, RootEnt } from "../core/root_ent";
+import { create_RootEnt } from "../core/root_ent";
 import { Ent } from "../ent/ent";
-import { EntCtx, EntMapOfIEntCtx, IEntCtx } from "../ent/ent_ctx";
+import { EntMapOfIEntCtx, IEntCtx } from "../ent/ent_ctx";
 
 /** 内容上下文接口 */
 export interface IContentCtx<TEnt extends Ent> {

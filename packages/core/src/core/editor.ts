@@ -2,7 +2,7 @@ import { ContentCtx } from "../content/content_ctx";
 import { EntBehaviorMap } from "../ent/ent_behavior";
 import { EntCtx, EntMap } from "../ent/ent_ctx";
 import { OpBehaviorMap, OpCtx, OpMap } from "../op";
-import { PluginCtx } from "../plugin/plugin";
+import { PluginCtx } from "../plugin/";
 import { SelectionCtx } from "../selection/selection";
 import { ICore, InitParams, SelectionMap } from "./interface";
 
