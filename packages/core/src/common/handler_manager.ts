@@ -1,3 +1,4 @@
+import { IBehaviorHandlerManager, IItem } from "./behavior";
 import { TwoLevelTypeMap } from "./data_struct/two_level_type_map";
 import { ParametersExceptFirst2 } from "./type";
 
@@ -31,10 +32,9 @@ export const HandlerManagerDefaultItemType = "default";
 /** 项目处理器管理器 */
 export class HandlerManager<
   THandlerMap extends ItemHandlerMap<TContext, TItem>,
-  TItem extends TAbstractItem,
-  TAbstractItem extends { nodeName: string },
+  TItem extends IItem,
   TContext
-> {
+> implements IBehaviorHandlerManager<TItem, THandlerMap> {
   /** 项目处理器 */
   private handler_map = new TwoLevelTypeMap<
     THandlerMap,

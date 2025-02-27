@@ -1,7 +1,7 @@
 import { Node } from "../../../entity/node/node";
 import { NodeManager } from "../../../entity/node/manager";
 import { NodeManagerHandlerMap } from "../../../entity/node/maps";
-import { MixEditorNodeManager } from "../../../mix_editor";
+import { MixEditorNodeManager } from "../../../core/interface";
 
 /** 获取节点路径 */
 export async function get_node_path(

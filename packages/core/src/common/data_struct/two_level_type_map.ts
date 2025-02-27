@@ -4,6 +4,12 @@ export class TwoLevelTypeMap<
   TValue
 > {
   private map: Map<TMasterKey, Map<TSegmentKey, TValue>> = new Map();
+  get_master_keys() {
+    return this.map.keys();
+  }
+  get_segment_keys(master_key: TMasterKey) {
+    return this.map.get(master_key)?.keys();
+  }
   get(master_type: TMasterKey, segment_type: TSegmentKey) {
     return this.map.get(master_type)?.get(segment_type);
   }
