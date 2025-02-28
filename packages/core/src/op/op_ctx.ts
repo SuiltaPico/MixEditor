@@ -13,7 +13,7 @@ export interface IOpCtx<
   TOpMap extends OpMap,
   TBehaviorMap extends OpBehaviorMap<TExCtx>,
   TExCtx extends any
-> extends IBehaviorHandlerManager<TOpMap[keyof TOpMap], TBehaviorMap, TExCtx> {
+> extends IBehaviorHandlerManager<Op, TBehaviorMap, TOpMap, TExCtx> {
   ex_ctx: TExCtx;
   gen_id: () => string;
 }
@@ -30,7 +30,7 @@ export class OpCtx<
 > implements IOpCtx<TOpMap, TBehaviorMap, TExCtx>
 {
   ex_ctx: TExCtx;
-  private behavior: BehaviorHandlerManager<TBehaviorMap, Op, TExCtx>;
+  private behavior: BehaviorHandlerManager<TBehaviorMap, Op, TOpMap, TExCtx>;
   private id_generator = new UlidIdGenerator();
 
   gen_id() {
@@ -45,9 +45,12 @@ export class OpCtx<
 
   constructor(ex_ctx: TExCtx) {
     this.ex_ctx = ex_ctx;
-    this.behavior = new BehaviorHandlerManager<TBehaviorMap, Op, TExCtx>(
-      ex_ctx
-    );
+    this.behavior = new BehaviorHandlerManager<
+      TBehaviorMap,
+      Op,
+      TOpMap,
+      TExCtx
+    >(ex_ctx);
     bind_methods(this, this.behavior, IBehaviorHandlerManager_methods);
   }
 }

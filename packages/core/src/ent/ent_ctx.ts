@@ -18,11 +18,7 @@ export interface IEntCtx<
   TEntMap extends EntMap,
   TBehaviorMap extends EntBehaviorMap<TExCtx>,
   TExCtx extends any
-> extends IBehaviorHandlerManager<
-    TEntMap[keyof TEntMap],
-    TBehaviorMap,
-    TExCtx
-  > {
+> extends IBehaviorHandlerManager<Ent, TBehaviorMap, TEntMap, TExCtx> {
   ex_ctx: TExCtx;
   gen_id: () => string;
 }
@@ -38,11 +34,7 @@ export class EntCtx<
 > implements IEntCtx<TEntMap, TBehaviorMap, TExCtx>
 {
   ex_ctx: TExCtx;
-  private behavior: BehaviorHandlerManager<
-    TBehaviorMap,
-    TEntMap[keyof TEntMap],
-    TExCtx
-  >;
+  private behavior: BehaviorHandlerManager<TBehaviorMap, Ent, TEntMap, TExCtx>;
   /** 实体标签集。 */
   private tag_manager: TagManager<keyof TEntMap>;
   /** 实体ID生成器。 */
@@ -63,7 +55,8 @@ export class EntCtx<
     this.ex_ctx = ex_ctx;
     this.behavior = new BehaviorHandlerManager<
       TBehaviorMap,
-      TEntMap[keyof TEntMap],
+      Ent,
+      TEntMap,
       TExCtx
     >(ex_ctx);
     this.tag_manager = new TagManager<keyof TEntMap>();

@@ -1,7 +1,15 @@
 import { ContentCtx } from "../content/content_ctx";
-import { EntBehaviorMap } from "../ent/ent_behavior";
+import { Ent } from "../ent";
+import { EntBehaviorHandler, EntBehaviorMap } from "../ent/ent_behavior";
 import { EntCtx, EntMap } from "../ent/ent_ctx";
-import { OpBehaviorMap, OpCtx, OpMap } from "../op";
+import { EntTDO } from "../ent/tdo/tdo";
+import {
+  EntTDOBehaviorHandler,
+  EntTDOBehaviorMap,
+} from "../ent/tdo/tdo_behavior";
+import { EntTDOCtx, EntTDOMap } from "../ent/tdo/tdo_ctx";
+import { OpBehaviorHandler, OpBehaviorMap, OpCtx, OpMap } from "../op";
+import { PipeCtx, PipeEventMap } from "../pipe";
 import { PluginCtx } from "../plugin";
 import { SelectionCtx } from "../selection/selection";
 import {
@@ -10,34 +18,83 @@ import {
   TDOSerializerMap,
 } from "../tdo/serialize/serialize_ctx";
 import { ICoreCtx, InitParams, SelectionMap } from "./core_ctx";
+import { RootEnt, RootEntTDO } from "./ent/root_ent";
+import {
+  DestroyEvent,
+  InitEvent,
+  LoadSerializedToContentEvent,
+  LoadTdoToContentEvent,
+  regist_core_behaviors,
+  SaveContentToSerializedEvent,
+  SaveContentToTdoEvent,
+} from "./regist_core_behaviors";
+
+export type MEEntBehaviorHandler<
+  TParams extends object,
+  TResult
+> = EntBehaviorHandler<TParams, TResult, MixEditor>;
+export type MEEntTDOBehaviorHandler<
+  TParams extends object,
+  TResult
+> = EntTDOBehaviorHandler<TParams, TResult, MixEditor>;
+export type MEOpBehaviorHandler<
+  TParams extends object,
+  TResult
+> = OpBehaviorHandler<TParams, TResult, MixEditor>;
 
 /** MixEditor 的实体行为映射表，供插件扩展 */
-export interface MEEntBehaviorMap extends EntBehaviorMap<any> {}
+export interface MEEntBehaviorMap extends EntBehaviorMap<any> {
+  to_tdo: MEEntBehaviorHandler<{}, EntTDO>;
+}
 /** MixEditor 的实体表，供插件扩展 */
-export interface MEEntMap extends EntMap {}
+export interface MEEntMap extends EntMap {
+  root: RootEnt;
+}
+
+/** MixEditor 的实体TDO表，供插件扩展 */
+export interface MEEntTDOMap extends EntTDOMap {
+  root: RootEntTDO;
+}
+/** MixEditor 的实体TDO行为映射表，供插件扩展 */
+export interface MEEntTDOBehaviorMap extends EntTDOBehaviorMap<any> {
+  to_ent: MEEntTDOBehaviorHandler<{}, Ent>;
+}
 
 /** MixEditor 的操作表，供插件扩展 */
 export interface MEOpMap extends OpMap {}
 /** MixEditor 的操作行为映射表，供插件扩展 */
-export interface MEOpBehaviorMap extends OpBehaviorMap<any> {}
+export interface MEOpBehaviorMap extends OpBehaviorMap<any> {
+  to_ent: MEOpBehaviorHandler<{}, Ent>;
+}
 
 /** MixEditor 的选区表，供插件扩展 */
 export interface MESelectionMap extends SelectionMap {}
 
 /** MixEditor 的TDO序列化表，供插件扩展 */
 export interface METDOSerializeMap extends TDOSerializerMap<any> {}
-
 /** MixEditor 的TDO反序列化表，供插件扩展 */
 export interface METDODeSerializeMap extends TDODeserializerMap<any> {}
 
+/** MixEditor 的管道事件表，供插件扩展 */
+export interface MEPipeEventMap extends PipeEventMap<any> {
+  init: InitEvent;
+  destroy: DestroyEvent;
+  load_tdo_to_content: LoadTdoToContentEvent;
+  save_content_to_tdo: SaveContentToTdoEvent;
+  load_serialized_to_content: LoadSerializedToContentEvent;
+  save_content_to_serialized: SaveContentToSerializedEvent;
+}
+
+/** MixEditor 的上下文。 */
 export class MixEditor implements ICoreCtx {
-  ent: EntCtx<MEEntMap, MEEntBehaviorMap, ThisType<this>>;
+  ent: EntCtx<MEEntMap, MEEntBehaviorMap, this>;
+  ent_tdo: EntTDOCtx<MEEntTDOMap, MEEntTDOBehaviorMap, this>;
   content: ContentCtx<this["ent"]>;
 
-  op: OpCtx<MEOpMap, MEOpBehaviorMap, ThisType<this>>;
-  history: HistoryCtx;
+  op: OpCtx<MEOpMap, MEOpBehaviorMap, this>;
+  // history: HistoryCtx;
 
-  pipe_bus: PipeCtx;
+  pipe: PipeCtx<MEPipeEventMap, this>;
 
   selection: SelectionCtx<MESelectionMap>;
 
@@ -52,24 +109,26 @@ export class MixEditor implements ICoreCtx {
   async init(params: InitParams) {
     regist_core_behaviors(this);
 
-    await this.pipe_bus.execute({ type: "init" }); // 初始化插件
+    await this.pipe.execute({ pipe_id: "init" }); // 初始化插件
 
-    if (params.root_ent) {
-      await this.pipe_bus.execute({
-        type: "load_tdo_to_content",
-        input: params.root_ent,
+    if (params.root_ent_tdo) {
+      await this.pipe.execute({
+        pipe_id: "load_tdo_to_content",
+        input: params.root_ent_tdo,
       });
     }
   }
 
   async destroy() {
-    await this.pipe_bus.execute({ type: "destroy" }); // 销毁插件
+    await this.pipe.execute({ pipe_id: "destroy" }); // 销毁插件
   }
 
   constructor() {
     this.ent = new EntCtx(this);
+    this.ent_tdo = new EntTDOCtx(this);
     this.content = new ContentCtx(this.ent);
     this.op = new OpCtx(this);
+    this.pipe = new PipeCtx<MEPipeEventMap, this>(this);
     this.selection = new SelectionCtx();
     this.tdo_serialize = new TDOSerializeCtx<
       METDOSerializeMap,

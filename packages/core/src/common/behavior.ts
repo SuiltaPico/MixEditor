@@ -56,6 +56,7 @@ export interface IBehaviorMap<TItem extends IItem, TExCtx> {
 export interface IBehaviorHandlerManager<
   TItem extends IItem,
   TBehaviorMap extends IBehaviorMap<TItem, TExCtx>,
+  TItemMap extends Record<string, TItem>,
   TExCtx
 > {
   /** 注册行为处理器。 */
@@ -68,11 +69,11 @@ export interface IBehaviorHandlerManager<
     handler: TypeSpecifiedBehaviorHandler<TItem, TBehaviorMap[TBehaviorId]>
   ): void;
   /** 注册多个行为处理器。 */
-  register_handlers<TItemType extends TItem["type"]>(
+  register_handlers<TItemType extends Extract<keyof TItemMap, string>>(
     item_type: TItemType,
     handlers: Partial<{
       [key in keyof TBehaviorMap]: TypeSpecifiedBehaviorHandler<
-        TItem,
+        TItemMap[TItemType],
         TBehaviorMap[key]
       >;
     }>
@@ -95,7 +96,7 @@ export const IBehaviorHandlerManager_methods = [
   "register_handlers",
   "get_handler",
   "exec_behavior",
-] satisfies (keyof IBehaviorHandlerManager<any, any, any>)[];
+] satisfies (keyof IBehaviorHandlerManager<any, any, any, any>)[];
 
 /** 行为处理器的管理器。
  *
@@ -107,8 +108,9 @@ export const IBehaviorHandlerManager_methods = [
 export class BehaviorHandlerManager<
   TBehaviorMap extends IBehaviorMap<TItem, TExCtx>,
   TItem extends IItem,
+  TItemMap extends Record<string, TItem>,
   TExCtx
-> implements IBehaviorHandlerManager<TItem, TBehaviorMap, TExCtx>
+> implements IBehaviorHandlerManager<TItem, TBehaviorMap, TItemMap, TExCtx>
 {
   /** 行为处理器 */
   private behavior_map = new TwoLevelTypeMap<
@@ -127,11 +129,11 @@ export class BehaviorHandlerManager<
   }
 
   /** 为所有项目注册处理器。如果项目类型为默认类型，则设置为默认处理器。 */
-  register_handlers<TItemType extends TItem["type"]>(
+  register_handlers<TItemType extends Extract<keyof TItemMap, string>>(
     item_type: TItemType,
     handlers: Partial<{
       [key in keyof TBehaviorMap]: TypeSpecifiedBehaviorHandler<
-        TItem,
+        TItemMap[TItemType],
         TBehaviorMap[key]
       >;
     }>
@@ -165,15 +167,16 @@ export class BehaviorHandlerManager<
   exec_behavior<TBehaviorId extends Extract<keyof TBehaviorMap, string>>(
     item: TItem,
     behavior_id: TBehaviorId,
-    params: Parameters<TBehaviorMap[TBehaviorId]>[0]
+    params: Omit<Parameters<TBehaviorMap[TBehaviorId]>[0], "item" | "ex_ctx">
   ) {
+    const params_with_ctx = params as Parameters<TBehaviorMap[TBehaviorId]>[0];
     // 注入上下文
-    params.item = item;
-    params.ex_ctx = this.exec_ctx;
+    params_with_ctx.item = item;
+    params_with_ctx.ex_ctx = this.exec_ctx;
 
     let handler = this.get_handler(item.type, behavior_id);
     if (handler === undefined) return undefined;
-    return handler(params);
+    return handler(params_with_ctx) as ReturnType<TBehaviorMap[TBehaviorId]>;
   }
 
   constructor(public exec_ctx: TExCtx) {}

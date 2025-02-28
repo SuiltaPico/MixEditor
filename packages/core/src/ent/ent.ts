@@ -7,6 +7,3 @@ export interface Ent {
   /** 实体的类型。 */
   type: string;
 }
-
-/** 实体的传输对象 */
-export interface EntTDO extends TDO {}

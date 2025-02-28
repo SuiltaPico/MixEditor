@@ -1,4 +1,4 @@
-import { Plugin } from "@mauchise/plugin-manager";
+import { Plugin } from "./plugin";
 
 /** 插件未找到错误 */
 export class PluginNotFoundError extends Error {
@@ -18,9 +18,9 @@ export type PluginManagerState =
   | { type: "inited" };
 
 /** 插件数据结构 */
-type PluginData<T> = {
+type PluginData<TPlugin> = {
   inited: boolean;
-  plugin: T;
+  plugin: TPlugin;
   pwr: PromiseWithResolvers<void>;
   exposed: any;
 };
@@ -171,6 +171,15 @@ export class PluginCtx<
     }
 
     return result;
+  }
+
+  /** 销毁所有已注册的插件 */
+  async destroy() {
+    await Promise.all(
+      Array.from(this.plugins.values()).map(async (pluginData) => {
+        await pluginData.plugin.dispose();
+      })
+    );
   }
 
   constructor(ex_ctx: TExCtx) {

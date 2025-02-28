@@ -1,5 +1,5 @@
 import { createSignal, WrappedSignal } from "@mixeditor/common";
-import { create_RootEnt } from "../core/root_ent";
+import { create_RootEnt } from "../core/ent/root_ent";
 import { Ent } from "../ent/ent";
 import { EntMapOfIEntCtx, IEntCtx } from "../ent/ent_ctx";
 

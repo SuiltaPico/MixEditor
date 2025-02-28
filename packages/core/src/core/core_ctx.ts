@@ -1,31 +1,34 @@
 import { MaybePromise } from "@mixeditor/common";
-import { SelectionCtx } from "../selection/selection";
-import { EntMap, IEntCtx } from "../ent/ent_ctx";
-import { EntBehaviorMap } from "../ent/ent_behavior";
 import { ContentCtx } from "../content/content_ctx";
+import { IEntCtx } from "../ent/ent_ctx";
+import { IEntTDOCtx } from "../ent/tdo/tdo_ctx";
+import { IOpCtx } from "../op";
+import { PipeCtx } from "../pipe/pipe_ctx";
+import { PluginCtx } from "../plugin";
+import { SelectionCtx } from "../selection/selection";
 import { TDOSerializeCtx } from "../tdo/serialize/serialize_ctx";
-import { RootEnt } from "./root_ent";
-
+import { RootEntTDO } from "./ent/root_ent";
 export type SelectionMap = Record<string, any>;
 
 export interface InitParams {
-  root_ent?: RootEnt;
+  root_ent_tdo?: RootEntTDO;
 }
 
 export interface ICoreCtx {
   ent: IEntCtx<any, any, ThisType<this>>;
+  ent_tdo: IEntTDOCtx<any, any, ThisType<this>>;
   content: ContentCtx<this["ent"]>;
 
-  op: OpManager;
-  history: HistoryManager;
+  op: IOpCtx<any, any, ThisType<this>>;
+  // history: IHistoryCtx;
 
-  pipe_bus: PipeManager;
+  pipe: PipeCtx<any, this>;
 
   selection: SelectionCtx<any>;
 
   tdo_serialize: TDOSerializeCtx<any, any, ThisType<this>>;
 
-  plugin: PluginManager;
+  plugin: PluginCtx<ThisType<this>>;
 
   init(params: InitParams): MaybePromise<void>;
   destroy(): MaybePromise<void>;
