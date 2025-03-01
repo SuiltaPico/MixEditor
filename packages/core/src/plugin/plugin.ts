@@ -24,5 +24,5 @@ export interface Plugin<TExCtx = any> {
   /** 初始化函数 */
   init: (ctx: TExCtx) => any | Promise<any>;
   /** 销毁函数 */
-  dispose: () => void | Promise<void>;
+  dispose: (ctx: TExCtx) => void | Promise<void>;
 }

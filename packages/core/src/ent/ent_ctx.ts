@@ -13,6 +13,11 @@ export type EntMap = {
   [key: string]: Ent;
 };
 
+/** 领域上下文。 */
+export type DomainCtxMap = {
+  [key: string]: any;
+};
+
 /** 实体上下文。 */
 export interface IEntCtx<
   TEntMap extends EntMap,
@@ -30,15 +35,21 @@ export type EntMapOfIEntCtx<T extends IEntCtx<any, any, any>> =
 export class EntCtx<
   TEntMap extends EntMap,
   TBehaviorMap extends EntBehaviorMap<TExCtx>,
+  TDomainCtxMap extends DomainCtxMap,
   TExCtx extends any
 > implements IEntCtx<TEntMap, TBehaviorMap, TExCtx>
 {
   ex_ctx: TExCtx;
-  private behavior: BehaviorHandlerManager<TBehaviorMap, Ent, TEntMap, TExCtx>;
+  protected behavior: BehaviorHandlerManager<TBehaviorMap, Ent, TEntMap, TExCtx>;
   /** 实体标签集。 */
   private tag_manager: TagManager<keyof TEntMap>;
   /** 实体ID生成器。 */
   private id_generator = new UlidIdGenerator();
+  /** 领域上下文。 */
+  private domains = new Map<
+    string,
+    WeakMap<Ent, TDomainCtxMap[keyof TDomainCtxMap]>
+  >();
 
   /** 生成新的实体ID。 */
   gen_id() {
@@ -50,6 +61,32 @@ export class EntCtx<
   register_handler!: (typeof this.behavior)["register_handler"];
   register_handlers!: (typeof this.behavior)["register_handlers"];
   get_handler!: (typeof this.behavior)["get_handler"];
+
+  /** 注册领域。 */
+  register_domain(domain: string) {
+    this.domains.set(domain, new WeakMap());
+  }
+  /** 注销领域。 */
+  unregister_domain(domain: string) {
+    this.domains.delete(domain);
+  }
+  /** 设置领域上下文。 */
+  set_domain_ctx<TDomainId extends Extract<keyof TDomainCtxMap, string>>(
+    domain: TDomainId,
+    ent: Ent,
+    ctx: TDomainCtxMap[TDomainId]
+  ) {
+    const domain_ctx = this.domains.get(domain);
+    domain_ctx!.set(ent, ctx);
+  }
+  /** 获取领域上下文。 */
+  get_domain_ctx<TDomainId extends Extract<keyof TDomainCtxMap, string>>(
+    domain: TDomainId,
+    ent: Ent
+  ) {
+    const domain_ctx = this.domains.get(domain);
+    return domain_ctx!.get(ent) as TDomainCtxMap[TDomainId] | undefined;
+  }
 
   constructor(ex_ctx: TExCtx) {
     this.ex_ctx = ex_ctx;

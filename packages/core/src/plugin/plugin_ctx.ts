@@ -89,7 +89,7 @@ export class PluginCtx<
     const pluginData = this.plugins.get(id);
     if (!pluginData) throw new PluginNotFoundError(id);
 
-    await pluginData.plugin.dispose();
+    await pluginData.plugin.dispose(this.ex_ctx);
     this.plugins.delete(id);
 
     if (this.state.type === "not_fully_inited") {
@@ -104,7 +104,7 @@ export class PluginCtx<
     }
   }
 
-  /** 等待插件初始化完成 */
+  /** 等待插件初始化完成。返回插件暴露的接口。 */
   async wait_plugin_inited<TExposed>(id: string): Promise<TExposed> {
     const pluginData = this.plugins.get(id);
     if (!pluginData) throw new PluginNotFoundError(id);
@@ -113,7 +113,7 @@ export class PluginCtx<
     return pluginData.exposed as TExposed;
   }
 
-  /** 等待插件初始化完成 */
+  /** 等待多个插件初始化完成。返回插件暴露的接口。 */
   async wait_plugins_inited<TExposed extends any[]>(
     ids: string[]
   ): Promise<TExposed> {
@@ -174,10 +174,10 @@ export class PluginCtx<
   }
 
   /** 销毁所有已注册的插件 */
-  async destroy() {
+  async destroy(ctx: TExCtx) {
     await Promise.all(
       Array.from(this.plugins.values()).map(async (pluginData) => {
-        await pluginData.plugin.dispose();
+        await pluginData.plugin.dispose(ctx);
       })
     );
   }

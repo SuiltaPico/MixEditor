@@ -89,7 +89,7 @@ export function regist_core_behaviors(core: MixEditor) {
     {
       id: "plugin_destroy",
       execute: async (evt) => {
-        await plugin.destroy();
+        await plugin.destroy(evt.ex_ctx);
       },
     },
   ]);
@@ -100,7 +100,8 @@ export function regist_core_behaviors(core: MixEditor) {
     create_PipeStage_chain([
       {
         id: "root_fix",
-        execute: async (evt) => {
+        execute: async (evt, wait_deps) => {
+          await wait_deps();
           if (!evt.input.type || evt.input.type !== "root") {
             evt.input = create_RootEntTDO(evt.input.id || "root", {
               children: evt.input.children,
@@ -110,7 +111,8 @@ export function regist_core_behaviors(core: MixEditor) {
       },
       {
         id: "convert_tdo_to_ent",
-        execute: async (evt) => {
+        execute: async (evt, wait_deps) => {
+          await wait_deps();
           evt.output = (await ent_tdo.exec_behavior(
             evt.input,
             "to_ent",
@@ -120,7 +122,8 @@ export function regist_core_behaviors(core: MixEditor) {
       },
       {
         id: "apply_output",
-        execute: async (evt) => {
+        execute: async (evt, wait_deps) => {
+          await wait_deps();
           content.root.set(evt.output as RootEnt);
         },
       },
@@ -132,7 +135,8 @@ export function regist_core_behaviors(core: MixEditor) {
     create_PipeStage_chain([
       {
         id: "load_serialized_to_tdo",
-        execute: async (evt) => {
+        execute: async (evt, wait_deps) => {
+          await wait_deps();
           evt.output = (await tdo_serialize.deserialize(
             evt.format,
             evt.input,
@@ -142,7 +146,8 @@ export function regist_core_behaviors(core: MixEditor) {
       },
       {
         id: "load_tdo_to_content",
-        execute: async (evt) => {
+        execute: async (evt, wait_deps) => {
+          await wait_deps();
           await pipe.execute({
             pipe_id: "load_tdo_to_content",
             input: evt.output,
@@ -157,13 +162,15 @@ export function regist_core_behaviors(core: MixEditor) {
     create_PipeStage_chain([
       {
         id: "get_input",
-        execute: async (evt) => {
+        execute: async (evt, wait_deps) => {
+          await wait_deps();
           evt.root_ent = content.root.get() as RootEnt;
         },
       },
       {
         id: "convert_ent_to_tdo",
-        execute: async (evt) => {
+        execute: async (evt, wait_deps) => {
+          await wait_deps();
           evt.root_ent_tdo = (await ent.exec_behavior(
             evt.root_ent,
             "to_tdo",
@@ -173,7 +180,8 @@ export function regist_core_behaviors(core: MixEditor) {
       },
       {
         id: "convert_tdo_to_serialized",
-        execute: async (evt) => {
+        execute: async (evt, wait_deps) => {
+          await wait_deps();
           evt.output = await tdo_serialize.serialize(
             evt.format,
             evt.root_ent_tdo!,

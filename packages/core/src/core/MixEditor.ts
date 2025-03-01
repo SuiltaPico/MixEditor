@@ -1,7 +1,7 @@
 import { ContentCtx } from "../content/content_ctx";
 import { Ent } from "../ent";
 import { EntBehaviorHandler, EntBehaviorMap } from "../ent/ent_behavior";
-import { EntCtx, EntMap } from "../ent/ent_ctx";
+import { DomainCtxMap, EntCtx, EntMap } from "../ent/ent_ctx";
 import { EntTDO } from "../ent/tdo/tdo";
 import {
   EntTDOBehaviorHandler,
@@ -9,15 +9,15 @@ import {
 } from "../ent/tdo/tdo_behavior";
 import { EntTDOCtx, EntTDOMap } from "../ent/tdo/tdo_ctx";
 import { OpBehaviorHandler, OpBehaviorMap, OpCtx, OpMap } from "../op";
-import { PipeCtx, PipeEventMap } from "../pipe";
+import { IPipeEvent, IPipeStageHandler, PipeCtx, PipeEventMap } from "../pipe";
 import { PluginCtx } from "../plugin";
-import { SelectionCtx } from "../selection/selection";
+import { SelectionCtx, SelectionMap } from "../selection/selection";
 import {
   TDODeserializerMap,
   TDOSerializeCtx,
   TDOSerializerMap,
 } from "../tdo/serialize/serialize_ctx";
-import { ICoreCtx, InitParams, SelectionMap } from "./core_ctx";
+import { ICoreCtx, InitParams } from "./core_ctx";
 import { RootEnt, RootEntTDO } from "./ent/root_ent";
 import {
   DestroyEvent,
@@ -42,6 +42,12 @@ export type MEOpBehaviorHandler<
   TResult
 > = OpBehaviorHandler<TParams, TResult, MixEditor>;
 
+export type MEEvent = IPipeEvent<MixEditor>;
+export type MEPipeStageHandler<TEvent extends MEEvent> = IPipeStageHandler<
+  TEvent,
+  MixEditor
+>;
+
 /** MixEditor 的实体行为映射表，供插件扩展 */
 export interface MEEntBehaviorMap extends EntBehaviorMap<any> {
   to_tdo: MEEntBehaviorHandler<{}, EntTDO>;
@@ -50,6 +56,8 @@ export interface MEEntBehaviorMap extends EntBehaviorMap<any> {
 export interface MEEntMap extends EntMap {
   root: RootEnt;
 }
+/** MixEditor 的领域上下文表，供插件扩展 */
+export interface MEEntDomainCtxMap extends DomainCtxMap {}
 
 /** MixEditor 的实体TDO表，供插件扩展 */
 export interface MEEntTDOMap extends EntTDOMap {
@@ -87,7 +95,7 @@ export interface MEPipeEventMap extends PipeEventMap<any> {
 
 /** MixEditor 的上下文。 */
 export class MixEditor implements ICoreCtx {
-  ent: EntCtx<MEEntMap, MEEntBehaviorMap, this>;
+  ent: EntCtx<MEEntMap, MEEntBehaviorMap, MEEntDomainCtxMap, this>;
   ent_tdo: EntTDOCtx<MEEntTDOMap, MEEntTDOBehaviorMap, this>;
   content: ContentCtx<this["ent"]>;
 

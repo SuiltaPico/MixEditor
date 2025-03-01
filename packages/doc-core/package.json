@@ -1,5 +1,5 @@
 {
-	"name": "@mixeditor/core",
+	"name": "@mixeditor/doc-core",
 	"version": "0.0.1",
 	"scripts": {
 		"build": "concurrently \"node esbuild.mjs\" \"rollup -c rollup.config.mjs\"",
@@ -11,19 +11,13 @@
 		".": "./dist/index.js"
 	},
 	"dependencies": {
-		"@mixeditor/common": "workspace:*"
+		"@mixeditor/common": "workspace:*",
+		"@mixeditor/core": "workspace:*"
 	},
 	"devDependencies": {
-		"@babel/core": "^7.26.9",
-		"@babel/preset-env": "^7.26.9",
-		"@babel/preset-typescript": "^7.26.0",
-		"@jest/globals": "^29.7.0",
-		"babel-jest": "^29.7.0",
 		"concurrently": "^9.1.2",
 		"esbuild": "^0.25.0",
-		"jest": "^29.7.0",
 		"rollup": "^4.34.8",
-		"rollup-plugin-dts": "^6.1.1",
-		"ts-node": "^10.9.2"
+		"rollup-plugin-dts": "^6.1.1"
 	}
 }

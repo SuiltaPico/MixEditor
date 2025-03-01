@@ -8,7 +8,6 @@ import { PluginCtx } from "../plugin";
 import { SelectionCtx } from "../selection/selection";
 import { TDOSerializeCtx } from "../tdo/serialize/serialize_ctx";
 import { RootEntTDO } from "./ent/root_ent";
-export type SelectionMap = Record<string, any>;
 
 export interface InitParams {
   root_ent_tdo?: RootEntTDO;

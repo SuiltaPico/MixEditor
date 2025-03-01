@@ -1,4 +1,3 @@
-import { ICoreCtx } from "../core/core_ctx";
 
 export type ParametersExceptFirst<F> = F extends (
   arg0: any,

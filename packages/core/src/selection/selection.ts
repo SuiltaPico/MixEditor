@@ -1,8 +1,12 @@
 import { createSignal } from "@mixeditor/common";
 
+export type SelectionMap = {}
+
 /** 选择上下文。 */
-export class SelectionCtx<TSelectionMap extends Record<string, any>> {
-  selected = createSignal<TSelectionMap[string] | undefined>(undefined);
+export class SelectionCtx<TSelectionMap extends SelectionMap> {
+  selected = createSignal<TSelectionMap[keyof TSelectionMap] | undefined>(
+    undefined
+  );
 
   /** 获取选区。 */
   get_selected() {
@@ -10,8 +14,8 @@ export class SelectionCtx<TSelectionMap extends Record<string, any>> {
   }
 
   /** 设置选区。 */
-  set_selected(selected: TSelectionMap[string] | undefined) {
-    this.selected.set(selected);
+  set_selected(selected: TSelectionMap[keyof TSelectionMap] | undefined) {
+    this.selected.set(selected as any);
   }
 
   /** 清除选区。 */
