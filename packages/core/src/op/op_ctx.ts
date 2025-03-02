@@ -7,6 +7,8 @@ import {
 import { bind_methods } from "../common/object";
 import { Op } from "./op";
 import { OpBehaviorMap } from "./op_behavior";
+import { OpExecutor } from "./op_executor";
+import { RingBuffer } from "../common/data_struct/ring_buffer";
 
 /** 操作上下文接口 */
 export interface IOpCtx<
@@ -32,6 +34,7 @@ export class OpCtx<
   ex_ctx: TExCtx;
   private behavior: BehaviorHandlerManager<TBehaviorMap, Op, TOpMap, TExCtx>;
   private id_generator = new UlidIdGenerator();
+  private executor: OpExecutor<RingBuffer<Op>>;
 
   gen_id() {
     return this.id_generator.next();
@@ -51,6 +54,10 @@ export class OpCtx<
       TOpMap,
       TExCtx
     >(ex_ctx);
+    this.executor = new OpExecutor<RingBuffer<Op>>(
+      this as any,
+      new RingBuffer<Op>(100)
+    );
     bind_methods(this, this.behavior, IBehaviorHandlerManager_methods);
   }
 }

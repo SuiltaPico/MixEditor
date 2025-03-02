@@ -13,7 +13,7 @@ import {
 } from "../selection";
 
 /** 驱使删除的来源。 */
-export enum DeleteDirectedSource {
+export enum DeleteFromCaretSource {
   /** 父节点。 */
   Parent = "parent",
   /** 子节点。 */
@@ -21,7 +21,7 @@ export enum DeleteDirectedSource {
 }
 
 /** 删除方向。 */
-export enum DeleteDirection {
+export enum DeleteFromCaretDirection {
   /** 向前删除。 */
   Next = 1,
   /** 向后删除。 */
@@ -29,12 +29,12 @@ export enum DeleteDirection {
 }
 
 /** 节点对删除点的决策。 */
-export const DeleteDirectedDecision = {
+export const DeleteFromCaretDecision = {
   /** 跳过删除。删除将会交给自身的父节点处理。
    *
    * 例如，如果在 Text:0 上执行前向删除，Text 可以让删除移交给父节点进行处理。
    */
-  Skip: { type: "skip" } satisfies DeleteDirectedDecision,
+  Skip: { type: "skip" } satisfies DeleteFromCaretDecision,
   /** 让删除移交给自身子节点处理。
    *
    * 例如，如果在 Paragraph:2 上执行前向删除，Paragraph 可以让删除移交给 Paragraph[2] 的子节点进行处理。
@@ -43,34 +43,33 @@ export const DeleteDirectedDecision = {
     ({
       type: "child",
       index,
-    } satisfies DeleteDirectedDecision),
+    } satisfies DeleteFromCaretDecision),
   /** 自身节点不处理删除，直接选中自己后进入 `delete_range` 流程。
    *
    * 例如，如果 Image 被选中后删除，则 Image 可以让删除移交给父节点对自己进行删除。
    */
-  DeleteSelf: { type: "delete_self" } satisfies DeleteDirectedDecision,
+  DeleteSelf: { type: "delete_self" } satisfies DeleteFromCaretDecision,
   /** 自身节点已经处理了删除，并产生了要执行的操作。 */
-  Done: (props: { operation?: Operation; selected?: Selected }) =>
+  Done: (props: { selected?: Selected }) =>
     ({
       type: "done",
-      operation: props.operation,
       selected: props.selected,
-    } satisfies DeleteDirectedDecision),
+    } satisfies DeleteFromCaretDecision),
 };
 
 /** 删除决策。 */
-export type DeleteDirectedDecision =
+export type DeleteFromCaretDecision =
   | { type: "skip" } // 跳过当前节点
   | { type: "child"; index: number } // 进入子节点
   | { type: "delete_self" } // 删除自身
-  | { type: "done"; operation?: Operation; selected?: Selected }; // 已处理完成
+  | { type: "done"; selected?: Selected }; // 已处理完成
 
 /** 删除策略上下文。 */
-export interface DeleteDirectedContext {
+export interface DeleteFromCaretContext {
   /** 要删除的方向。 */
-  direction: DeleteDirection;
+  direction: DeleteFromCaretDirection;
   /** 请求删除的来源。 */
-  src?: DeleteDirectedSource;
+  src?: DeleteFromCaretSource;
   /** 删除的起点。 */
   from: number;
 }
@@ -79,22 +78,21 @@ export interface DeleteDirectedContext {
 export async function execute_delete_directed(
   editor: MixEditor,
   selected_data: SelectedData,
-  direction: DeleteDirection,
-  src?: DeleteDirectedSource
+  direction: DeleteFromCaretDirection,
+  src?: DeleteFromCaretSource
 ): Promise<
   | {
-      operation?: Operation;
       selected?: Selected;
     }
   | undefined
 > {
   const ent_ctx = editor.ent;
-  const to_prev = direction === DeleteDirection.Prev;
+  const to_prev = direction === DeleteFromCaretDirection.Prev;
 
   // 执行当前节点的删除处理
   const decision = await ent_ctx.exec_behavior(
     selected_data.node,
-    "doc:handle_delete_directed",
+    "doc:handle_delete_from_caret",
     {
       direction,
       src,
@@ -149,7 +147,7 @@ export async function execute_delete_directed(
         child_path: to_prev ? index_in_parent! - 1 : index_in_parent!,
       },
       direction,
-      DeleteDirectedSource.Child
+      DeleteFromCaretSource.Child
     );
   } else if (decision.type === "child") {
     // 处理 Child 决策：将删除操作交给指定子节点处理
@@ -171,14 +169,14 @@ export async function execute_delete_directed(
         child_path: to_prev ? Number.MAX_SAFE_INTEGER : 0,
       },
       direction,
-      DeleteDirectedSource.Parent
+      DeleteFromCaretSource.Parent
     );
   }
 }
 
 export interface DeleteDirectedEvent extends MEEvent {
   type: "doc:delete_directed";
-  direction: DeleteDirection;
+  direction: DeleteFromCaretDirection;
 
   new_selection: Selected;
 }

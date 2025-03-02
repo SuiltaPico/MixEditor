@@ -1,4 +1,4 @@
-import { BiRelationMap } from "./BiRelationMap";
+import { BiRelationMap } from "./bi_relation_map";
 
 export class Graph<T> extends BiRelationMap<T> {
   /** 节点。 */

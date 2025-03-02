@@ -1,5 +1,6 @@
 import { Ent } from "../ent";
 import { EntTDO } from "../ent/tdo/tdo";
+import { register_TransOp_behavior } from "../op/transaction";
 import { create_PipeStage_chain, IPipeEvent, Pipe } from "../pipe";
 import { TDO } from "../tdo";
 import {
@@ -74,6 +75,8 @@ export function regist_core_behaviors(core: MixEditor) {
       });
     },
   });
+
+  register_TransOp_behavior(op);
 
   // === 生命周期管道 ===
   pipe.set_pipe("init", [

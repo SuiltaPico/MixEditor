@@ -71,9 +71,7 @@ export interface MEEntTDOBehaviorMap extends EntTDOBehaviorMap<any> {
 /** MixEditor 的操作表，供插件扩展 */
 export interface MEOpMap extends OpMap {}
 /** MixEditor 的操作行为映射表，供插件扩展 */
-export interface MEOpBehaviorMap extends OpBehaviorMap<any> {
-  to_ent: MEOpBehaviorHandler<{}, Ent>;
-}
+export interface MEOpBehaviorMap extends OpBehaviorMap<any> {}
 
 /** MixEditor 的选区表，供插件扩展 */
 export interface MESelectionMap extends SelectionMap {}
@@ -100,7 +98,6 @@ export class MixEditor implements ICoreCtx {
   content: ContentCtx<this["ent"]>;
 
   op: OpCtx<MEOpMap, MEOpBehaviorMap, this>;
-  // history: HistoryCtx;
 
   pipe: PipeCtx<MEPipeEventMap, this>;
 
