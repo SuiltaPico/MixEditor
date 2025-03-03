@@ -4,6 +4,7 @@ import { PipeEventMapExtend } from "./pipe";
 import { SelectionMapExtend } from "./selection";
 
 export * from "./ent";
+export * from "./pipe";
 export * from "./plugin";
 export * from "./selection";
 

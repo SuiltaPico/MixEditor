@@ -6,10 +6,14 @@ import {
   Op,
   Transaction,
 } from "@mixeditor/core";
-import { DocNodeCaret } from "../selection";
-import { get_common_ancestor_from_ent } from "../common/path";
+import { DocCaret } from "../selection";
+import { get_common_ancestor_from_ent, get_parent } from "../common/path";
+import {
+  execute_diff_ent_pure_delete_range,
+  execute_same_ent_pure_delete_range,
+} from "./delete/delete_range";
 
-/** 节点对合并的决策。 */
+/** 实体对合并的决策。 */
 export const MergeEntDecision = {
   /** 拒绝合并。 */
   Reject: {
@@ -32,9 +36,9 @@ export type MergeEntDecision =
       execute_merge: (tx: Transaction) => Promise<void>;
     };
 
-export interface MergeNodeContext {
+export interface MergeEntContext {
   /** 要合并的目标节点。 */
-  target: Ent;
+  source: Ent;
 }
 
 /** 执行简单节点合并。 */
@@ -116,69 +120,50 @@ export async function execute_merge_ent(
   const full_ancestors_chain1 = ancestors1.concat(host);
   const full_ancestors_chain2 = ancestors2.concat(source);
 
-  // 从公共祖先开始，尝试逐层合并
+  const execute_merges: ((tx: Transaction) => Promise<void>)[] = [];
+
+  // 从公共祖先下层开始，尝试逐层确认合并
   for (let i = ancestor_index + 1; i < full_ancestors_chain1.length; i++) {
     const host = full_ancestors_chain1[i];
     const source = full_ancestors_chain2[i];
 
     const decision = await ent_ctx.exec_behavior(host, "doc:merge_ent", {
-      target: source,
+      source,
     });
 
     if (decision?.type === "done") {
-      await decision.execute_merge(tx);
-
-      // 删除 source 节点
-      const source_parent = get_parent(ent_ctx, source);
-      if (source_parent) {
-        const source_index = await ent_ctx.exec_behavior(
-          source_parent,
-          "doc:index_of_child",
-          { child: source }
-        )!;
-      }
-
-      // 让最内部的节点的 operation 先执行，外部的节点后执行
-      operations.unshift(...this_step_operations);
+      execute_merges.push(decision.execute_merge);
     } else {
-      operations.unshift(...this_step_operations);
       break;
     }
   }
-  return operations;
-}
 
-/** 合并实体事件接口。 */
-export interface MergeEntEvent extends MEEvent {
-  type: "doc:merge_ent";
-  host: Ent;
-  source: Ent;
-  src?: MergeEntSource;
-}
-
-/** 合并实体的管道处理程序。 */
-export const merge_ent_pipe_handler: MEPipeStageHandler<MergeEntEvent> = async (
-  event,
-  wait_deps
-) => {
-  const { editor } = wait_deps;
-  const { host, source, src } = event;
-
-  const tx = editor.operation_manager.begin_transaction();
-  try {
-    await execute_merge_ent(editor, host, source, src);
-    await tx.commit();
-  } catch (e) {
-    await tx.abort();
-    throw e;
+  // 从最内层开始执行合并，并删除 source 节点
+  for (
+    let i = ancestor_index + execute_merges.length;
+    i >= ancestor_index + 1;
+    i--
+  ) {
+    const source = full_ancestors_chain2[i];
+    await execute_merges[i](tx);
+    // 删除 source 节点
+    const source_parent = get_parent(ent_ctx, source);
+    if (source_parent) {
+      const source_index = await ent_ctx.exec_behavior(
+        source_parent,
+        "doc:index_of_child",
+        { child: source }
+      )!;
+      await execute_same_ent_pure_delete_range(
+        editor,
+        tx,
+        source_parent,
+        source_index,
+        source_index
+      );
+    }
   }
 
-  return {
-    should_continue: true,
-  };
-};
-
-/** 注册合并实体的管道。 */
-export const register_merge_ent_pipe = (editor: MixEditor) => {
-  editor.pipe_manager.register_handler("doc:merge_ent", merge_ent_pipe_handler);
-};
+  // 删除 source 节点
+  await ent_ctx.exec_behavior(source, "doc:delete_ent", {});
+}

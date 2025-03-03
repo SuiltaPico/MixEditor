@@ -8,7 +8,7 @@ import {
   DeleteFromCaretDecision,
 } from "./pipe/delete/delete_from_caret";
 import { DeleteRangeDecision, DeleteRangeContext } from "./pipe/delete/delete_range";
-import { MergeEntDecision, MergeNodeContext } from "./pipe/merge_ent";
+import { MergeEntDecision, MergeEntContext } from "./pipe/merge_ent";
 
 export interface EntBehaviorMapExtend {
   /** 获取子实体 */
@@ -60,5 +60,5 @@ export interface EntBehaviorMapExtend {
     DeleteRangeDecision
   >;
   /** 处理合并实体 */
-  "doc:merge_ent": MEEntBehaviorHandler<MergeNodeContext, MergeEntDecision>;
+  "doc:merge_ent": MEEntBehaviorHandler<MergeEntContext, MergeEntDecision>;
 }

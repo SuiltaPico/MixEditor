@@ -1,6 +1,7 @@
 import { Ent, MixEditor, Op, Transaction } from "@mixeditor/core";
-import { DocNodeCaret } from "../../selection";
+import { DocCaret } from "../../selection";
 import { get_common_ancestor_from_ent, get_parent } from "../../common/path";
+import { execute_merge_ent } from "../merge_ent";
 
 /** 节点对删除范围的决策。 */
 export const DeleteRangeDecision = {
@@ -11,7 +12,7 @@ export const DeleteRangeDecision = {
     type: "delete_self",
   },
   /** 自身节点已经处理了删除，并产生了要执行的操作。 */
-  Done: (props: { operation?: Op; selected?: DocNodeCaret }) => {
+  Done: (props: { operation?: Op; selected?: DocCaret }) => {
     const result = props as DeleteRangeDecision & { type: "done" };
     result.type = "done";
     return result;
@@ -25,7 +26,7 @@ export type DeleteRangeDecision =
   | {
       type: "done";
       operation?: Op;
-      selected?: DocNodeCaret;
+      selected?: DocCaret;
     };
 
 export interface DeleteRangeContext {
@@ -87,7 +88,7 @@ export async function execute_same_ent_pure_delete_range(
 export async function execute_diff_ent_pure_delete_start_part(
   editor: MixEditor,
   tx: Transaction,
-  start: DocNodeCaret,
+  start: DocCaret,
   common_ancestor: Ent
 ) {
   const ent_ctx = editor.ent;
@@ -137,7 +138,7 @@ export async function execute_diff_ent_pure_delete_start_part(
 export async function execute_diff_ent_pure_delete_end_part(
   editor: MixEditor,
   tx: Transaction,
-  end: DocNodeCaret,
+  end: DocCaret,
   common_ancestor: Ent
 ) {
   const ent_ctx = editor.ent;
@@ -238,8 +239,8 @@ export async function execute_diff_ent_pure_delete_common_ancestor_range(
 export async function execute_diff_ent_pure_delete_range(
   editor: MixEditor,
   tx: Transaction,
-  start: DocNodeCaret,
-  end: DocNodeCaret
+  start: DocCaret,
+  end: DocCaret
 ) {
   const ent_ctx = editor.ent;
   const common_ancestor_data = await get_common_ancestor_from_ent(
@@ -270,8 +271,8 @@ export async function execute_diff_ent_pure_delete_range(
 export async function execute_delete_range(
   editor: MixEditor,
   tx: Transaction,
-  start: DocNodeCaret,
-  end: DocNodeCaret
+  start: DocCaret,
+  end: DocCaret
 ) {
   // 执行删除逻辑
   if (start.ent === end.ent) {
@@ -287,5 +288,5 @@ export async function execute_delete_range(
   }
 
   // 执行合并逻辑
-  await execute_merge_node(editor, tx, start.ent, end.ent);
+  await execute_merge_ent(editor, tx, start.ent, end.ent);
 }

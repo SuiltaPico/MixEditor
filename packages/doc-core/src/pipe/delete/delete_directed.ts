@@ -1,14 +1,28 @@
-import { IPipeEvent, IPipeStage, IPipeStageHandler, MEEvent, MixEditor, Transaction } from "@mixeditor/core";
-import { DeleteFromCaretDirection, execute_delete_from_caret } from "./delete_from_caret";
+import {
+  IPipeEvent,
+  IPipeStage,
+  IPipeStageHandler,
+  MEEvent,
+  MixEditor,
+  Transaction,
+} from "@mixeditor/core";
 import { DocSelection } from "../../selection";
+import {
+  DeleteFromCaretDirection,
+  execute_delete_from_caret,
+} from "./delete_from_caret";
 import { execute_delete_range } from "./delete_range";
 
+/** 带方向删除事件。 */
 export interface DeleteDirectedEvent extends MEEvent {
   type: "doc:delete_directed";
+  /** 删除方向。 */
   direction: DeleteFromCaretDirection;
+  /** 新的选区。 */
   new_selection: DocSelection;
 }
 
+/** 带方向删除事件流水线处理器。 */
 export const delete_directed_pipe_handler: IPipeStageHandler<
   DeleteDirectedEvent,
   MixEditor

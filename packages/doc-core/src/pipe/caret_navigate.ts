@@ -1,7 +1,7 @@
 import { MEEvent, MEPipeStageHandler, MixEditor } from "@mixeditor/core";
 import {
   create_CollapsedSelection,
-  DocNodeCaret,
+  DocCaret,
   DocSelection,
 } from "../selection";
 
@@ -55,10 +55,10 @@ export interface CaretNavigateContext {
 /** 从光标位置执行光标移动。 */
 export async function execute_caret_navigate_from_caret(
   editor: MixEditor,
-  caret: DocNodeCaret,
+  caret: DocCaret,
   direction: CaretDirection,
   src?: CaretNavigateSource
-): Promise<DocNodeCaret | undefined> {
+): Promise<DocCaret | undefined> {
   const ent_ctx = editor.ent;
 
   let decision: CaretNavigateDecision | undefined;
@@ -136,7 +136,7 @@ export const caret_navigate_pipe_handler: MEPipeStageHandler<
   const selected = editor.selection.get_selected();
   if (!selected) return;
 
-  let caret: DocNodeCaret | undefined;
+  let caret: DocCaret | undefined;
   if (selected.type === "doc:collapsed") {
     // 折叠选区光标移动，调用决策链执行器获取光标位置
     try {

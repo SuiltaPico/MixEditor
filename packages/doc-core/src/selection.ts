@@ -1,7 +1,7 @@
 import { Ent } from "@mixeditor/core";
 
 /** 文档节点选区的光标位置。 */
-export interface DocNodeCaret {
+export interface DocCaret {
   /** 选区实体 */
   ent: Ent;
   /** 选区偏移量 */
@@ -12,16 +12,16 @@ export interface DocNodeCaret {
 export interface CollapsedDocSelection {
   type: "doc:collapsed";
   /** 选区位置。 */
-  caret: DocNodeCaret;
+  caret: DocCaret;
 }
 
 /** 文档扩展选区。 */
 export interface ExtendedDocSelection {
   type: "doc:extended";
   /** 选区开始位置。 */
-  start: DocNodeCaret;
+  start: DocCaret;
   /** 选区结束位置。 */
-  end: DocNodeCaret;
+  end: DocCaret;
 }
 
 /** 文档选区。 */
@@ -35,7 +35,7 @@ export interface SelectionMapExtend {
 
 /** 创建文档折叠选区。 */
 export function create_CollapsedSelection(
-  caret: DocNodeCaret
+  caret: DocCaret
 ): CollapsedDocSelection {
   return {
     type: "doc:collapsed",
@@ -45,8 +45,8 @@ export function create_CollapsedSelection(
 
 /** 创建文档扩展选区。 */
 export function create_ExtendedSelection(
-  start: DocNodeCaret,
-  end: DocNodeCaret
+  start: DocCaret,
+  end: DocCaret
 ): ExtendedDocSelection {
   return {
     type: "doc:extended",

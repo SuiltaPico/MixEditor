@@ -9,7 +9,7 @@ import {
 } from "@mixeditor/core";
 import { get_parent } from "../../common/path";
 import {
-  DocNodeCaret,
+  DocCaret,
   DocSelection
 } from "../../selection";
 import { execute_delete_range } from "./delete_range";
@@ -81,7 +81,7 @@ export interface DeleteFromCaretContext {
 export async function execute_delete_from_caret(
   editor: MixEditor,
   tx: Transaction,
-  caret: DocNodeCaret,
+  caret: DocCaret,
   direction: DeleteFromCaretDirection,
   src?: DeleteFromCaretSource
 ): Promise<
