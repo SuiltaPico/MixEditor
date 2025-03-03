@@ -1,4 +1,5 @@
 import { create_BaseOp, Op } from "./op";
+import { OpBehaviorMap } from "./op_behavior";
 import { OpCtx } from "./op_ctx";
 import {
   ArrayOpExecutorBuffer,
@@ -8,13 +9,28 @@ import {
   OpExecutor,
 } from "./op_executor";
 
+/** 事务接口。 */
 export interface ITransaction extends IOpExecutor<ArrayOpExecutorBuffer> {
-  /** 回滚事务。 */
+  /** 回滚事务。将状态回滚到事务开始之前。
+   * - 错误处理：如果在这个过程中发生了任何的错误，不可将状态回滚到事务开始之前，则抛出错误。
+   */
   rollback(): Promise<void>;
-  /** 等待事务提交。 */
+  /** 等待事务提交。
+   * - 错误处理：如果事务提交时出错，则抛出错误。
+   */
   wait_for_commited(): Promise<void>;
 }
 
+/** 事务。
+ *
+ * 可用于将多个操作组合在一起，作为一个整体执行。
+ *
+ * 事务的执行过程：
+ * 1. 执行事务中的所有操作。
+ * 2. 如果执行过程中没有发生错误，则提交事务。
+ * 3. 如果执行过程中发生错误，则回滚事务。
+ *
+ */
 export class Transaction
   extends OpExecutor<ArrayOpExecutorBuffer>
   implements ITransaction
@@ -35,8 +51,8 @@ export class Transaction
       try {
         await this.undo();
       } catch (e) {
-        if (!(e instanceof OpExecError) || !e.recovery_err) throw e;
-        // 如果错误已经被恢复，则不抛出错误
+        // 无法恢复状态，抛出错误。
+        throw e;
       }
     }
   }
@@ -63,7 +79,7 @@ export function register_TransOp_behavior(
     {
       transaction: TransOp;
     },
-    any,
+    OpBehaviorMap<any>,
     any
   >
 ) {
@@ -78,14 +94,16 @@ export function register_TransOp_behavior(
     },
     error_recovery: async (params) => {
       const err = params.err;
-      if (!(err instanceof OpExecError)) return;
-      if (!err.recovery_err && err.exec_type === OpExecType.Execute) {
-        try {
-          await params.item.tr.rollback();
-        } catch (e) {
-          console.error(e);
-        }
-      }
+      // 如果错误未知、不可恢复、或者 undo 时出错，则不可处理
+      if (
+        !(err instanceof OpExecError) ||
+        err.recovery_err ||
+        err.exec_type === OpExecType.Undo
+      )
+        return;
+      // 否则，处于执行（execute）或重做（redo）情况，则尝试回滚事务。
+      await params.item.tr.rollback();
+      return true;
     },
   });
 }

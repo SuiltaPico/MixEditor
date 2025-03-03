@@ -153,7 +153,6 @@ export class OpExecutor<TBuffer extends IOpExecutorBuffer>
       promise: op_exec_done_pwr.promise,
     };
 
-    let exec_err: any;
     let error_result: OpExecError | undefined;
 
     try {
@@ -161,7 +160,6 @@ export class OpExecutor<TBuffer extends IOpExecutorBuffer>
       this.history_buffer.push(op);
       this.undo_stack.length = 0; // 清空撤销栈
     } catch (e) {
-      exec_err = e;
       error_result = await this.handle_op_error(op, OpExecType.Execute, e);
     } finally {
       this.curr_op_exec = undefined;
@@ -172,7 +170,7 @@ export class OpExecutor<TBuffer extends IOpExecutorBuffer>
   }
 
   /** 撤销操作。
-   * - 错误处理：撤销出错可能会导致状态异常，所有历史会被抛弃。
+   * - 错误处理：撤销出错所有历史会被抛弃。
    */
   async undo(): Promise<void> {
     await this.wait_for_idle();
