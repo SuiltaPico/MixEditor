@@ -3,6 +3,7 @@ import {
   CaretNavigateEvent,
   register_caret_navigate_pipe,
 } from "./caret_navigate";
+import { DeleteRangeDecision } from "./delete/delete_range";
 
 export interface PipeEventMapExtend {
   "doc:caret_navigate": CaretNavigateEvent;

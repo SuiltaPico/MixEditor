@@ -34,7 +34,7 @@ export class OpCtx<
   ex_ctx: TExCtx;
   private behavior: BehaviorHandlerManager<TBehaviorMap, Op, TOpMap, TExCtx>;
   private id_generator = new UlidIdGenerator();
-  private executor: OpExecutor<RingBuffer<Op>>;
+  executor: OpExecutor<RingBuffer<Op>>;
 
   gen_id() {
     return this.id_generator.next();
