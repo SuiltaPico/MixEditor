@@ -211,6 +211,9 @@ importers:
       '@mixeditor/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@mixeditor/doc-core':
+        specifier: workspace:*
+        version: link:../../packages/doc-core
       solid-js:
         specifier: ^1.9.4
         version: 1.9.4

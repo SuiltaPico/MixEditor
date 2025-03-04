@@ -1,34 +1,41 @@
-import { MEEvent, MEPipeStageHandler, MixEditor } from "@mixeditor/core";
-import {
-  create_CollapsedSelection,
-  DocCaret,
-  DocSelection,
-} from "../selection";
+import { MixEditor } from "@mixeditor/core";
+import { DocCaret } from "../../selection";
 
-/** 驱使光标移动的来源。 */
+/** 光标导航来源，表示触发导航操作的上下文位置 */
 export enum CaretNavigateSource {
-  /** 父节点。 */
+  /** 当从父节点进入当前节点时触发（例如从父节点移动到第一个子节点） */
   Parent = "parent",
-  /** 子节点。 */
+  /** 当从子节点返回当前节点时触发（例如从子节点移回父节点） */
   Child = "child",
 }
 
-/** 光标移动方向。 */
+/** 光标移动方向，定义在文档结构中的导航方向 */
 export enum CaretDirection {
-  /** 向前移动。 */
+  /** 向文档后部移动（通常对应右方向键或下方向键） */
   Next = 1,
-  /** 向后移动。 */
+  /** 向文档前部移动（通常对应左方向键或上方向键） */
   Prev = -1,
 }
 
-/** 光标移动决策。 */
+/** 光标导航决策工厂方法，用于创建不同类型的导航决策 */
 export const CaretNavigateDecision = {
-  /** 不接受进入，跳过当前节点。 */
+  /**
+   * 跳过当前节点，继续在父级上下文中寻找下一个可导航位置
+   * 典型使用场景：当当前节点不允许光标停留时
+   */
   Skip: { type: "skip" } satisfies CaretNavigateDecision,
-  /** 接受进入，并把光标移动到指定位置。 */
+
+  /**
+   * 停留在当前节点，并指定具体的光标位置
+   * @param pos 光标在节点内容中的偏移位置（默认为0）
+   */
   Self: (pos: number = 0) =>
     ({ type: "self", pos } satisfies CaretNavigateDecision),
-  /** 接受进入，交给此节点内部的指定节点处理。 */
+
+  /**
+   * 进入指定索引的子节点进行导航
+   * @param index 要进入的子节点索引（默认为第一个子节点）
+   */
   Child: (index: number = 0) =>
     ({
       type: "child",
@@ -44,16 +51,31 @@ export type CaretNavigateDecision =
 
 /** 光标移动策略上下文。 */
 export interface CaretNavigateContext {
-  /** 要移动的方向。 */
+  /** 当前导航方向 */
   direction: CaretDirection;
-  /** 请求移动的来源。 */
+  /** 触发导航的来源上下文 */
   src?: CaretNavigateSource;
-  /** 要移动到的位置。 */
+  /** 导航起始位置（在节点内容中的偏移量） */
   from: number;
 }
 
-/** 从光标位置执行光标移动。 */
-export async function execute_caret_navigate_from_caret(
+/**
+ * 从指定光标位置执行导航操作
+ * @param editor 编辑器实例
+ * @param caret 当前光标位置
+ * @param direction 导航方向
+ * @param src 导航来源上下文
+ * @returns 新的光标位置，如果导航不可行则返回 undefined
+ *
+ * 算法流程：
+ * 1. 请求当前实体处理导航决策
+ * 2. 根据返回的决策类型处理：
+ *    - Skip: 回溯到父节点继续导航
+ *    - Self: 停留在当前节点并调整位置
+ *    - Child: 进入子节点继续导航
+ * 3. 递归处理直到找到有效位置或遍历完所有可能路径
+ */
+export async function execute_navigate_caret_from_pos(
   editor: MixEditor,
   caret: DocCaret,
   direction: CaretDirection,
@@ -86,7 +108,7 @@ export async function execute_caret_navigate_from_caret(
       ent
     )!;
 
-    return await execute_caret_navigate_from_caret(
+    return await execute_navigate_caret_from_pos(
       editor,
       {
         ent: parent!,
@@ -106,7 +128,7 @@ export async function execute_caret_navigate_from_caret(
       index: decision.index,
     });
     // 按照进入方向进行判断。
-    return await execute_caret_navigate_from_caret(
+    return await execute_navigate_caret_from_pos(
       editor,
       // 如果是 next 进入的子节点，则尝试移动到子节点的头部。
       // 如果是 prev 进入的子节点，则尝试移动到子节点的尾部。
@@ -119,55 +141,3 @@ export async function execute_caret_navigate_from_caret(
     );
   }
 }
-
-export interface CaretNavigateEvent extends MEEvent {
-  type: "doc:caret_navigate";
-  direction: CaretDirection;
-
-  new_selection: DocSelection;
-}
-
-export const caret_navigate_pipe_handler: MEPipeStageHandler<
-  CaretNavigateEvent
-> = async (event, wait_deps) => {
-  await wait_deps();
-  const editor = event.ex_ctx;
-
-  const selected = editor.selection.get_selected();
-  if (!selected) return;
-
-  let caret: DocCaret | undefined;
-  if (selected.type === "doc:collapsed") {
-    // 折叠选区光标移动，调用决策链执行器获取光标位置
-    try {
-      caret = await execute_caret_navigate_from_caret(
-        editor,
-        selected.caret,
-        event.direction
-      );
-      if (!caret) return;
-    } catch (e) {
-      // 决策失败，取消移动
-      return;
-    }
-  } else if (selected.type === "doc:extended") {
-    // 扩展选区光标移动，则退化成 collapsed 类型
-    if (event.direction === CaretDirection.Prev) {
-      caret = selected.start;
-    } else {
-      caret = selected.end;
-    }
-  }
-  if (!caret) return;
-
-  editor.selection.set_selected(create_CollapsedSelection(caret));
-};
-
-export const register_caret_navigate_pipe = (editor: MixEditor) => {
-  editor.pipe.set_pipe("doc:caret_navigate", [
-    {
-      id: "handle_navigate",
-      execute: caret_navigate_pipe_handler,
-    },
-  ]);
-};

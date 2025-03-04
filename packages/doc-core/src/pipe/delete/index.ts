@@ -1,3 +1,3 @@
-export * from "./delete_directed";
-export * from "./delete_from_caret";
-export * from "./delete_range";
+export * from "./pipe_handler";
+export * from "./caret_delete";
+export * from "./range_delete";

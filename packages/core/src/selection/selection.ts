@@ -4,23 +4,23 @@ export type SelectionMap = {}
 
 /** 选择上下文。 */
 export class SelectionCtx<TSelectionMap extends SelectionMap> {
-  selected = createSignal<TSelectionMap[keyof TSelectionMap] | undefined>(
+  selection = createSignal<TSelectionMap[keyof TSelectionMap] | undefined>(
     undefined
   );
 
   /** 获取选区。 */
-  get_selected() {
-    return this.selected.get();
+  get_selection() {
+    return this.selection.get();
   }
 
   /** 设置选区。 */
-  set_selected(selected: TSelectionMap[keyof TSelectionMap] | undefined) {
-    this.selected.set(selected as any);
+  set_selection(selection: TSelectionMap[keyof TSelectionMap] | undefined) {
+    this.selection.set(selection as any);
   }
 
   /** 清除选区。 */
   clear() {
-    this.selected.set(undefined);
+    this.selection.set(undefined);
   }
 
   constructor() {}

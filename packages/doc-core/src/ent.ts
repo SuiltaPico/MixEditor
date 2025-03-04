@@ -2,14 +2,22 @@ import { Ent, MEEntBehaviorHandler } from "@mixeditor/core";
 import {
   CaretNavigateContext,
   CaretNavigateDecision,
-} from "./pipe/caret_navigate";
+} from "./pipe/caret_navigate/";
 import {
-  DeleteFromCaretContext,
-  DeleteFromCaretDecision,
-} from "./pipe/delete/delete_from_caret";
-import { DeleteRangeDecision, DeleteRangeContext } from "./pipe/delete/delete_range";
-import { MergeEntDecision, MergeEntContext } from "./pipe/merge_ent";
+  CaretDeleteContext,
+  CaretDeleteDecision,
+} from "./pipe/delete/caret_delete";
+import {
+  RangeDeleteContext,
+  RangeDeleteDecision,
+} from "./pipe/delete/range_delete";
+import { MergeEntContext, MergeEntDecision } from "./pipe/merge_ent";
 
+/**
+ * 扩展实体行为类型定义
+ * 
+ * 定义文档编辑器特有的实体行为接口
+ */
 export interface EntBehaviorMapExtend {
   /** 获取子实体 */
   "doc:get_child": MEEntBehaviorHandler<{ index: number }, Ent>;
@@ -25,7 +33,7 @@ export interface EntBehaviorMapExtend {
     number
   >;
   /** 获取子实体数量 */
-  "doc:get_children_count": MEEntBehaviorHandler<{}, number>;
+  "doc:get_length": MEEntBehaviorHandler<{}, number>;
 
   /** 插入子实体 */
   "doc:insert_children": MEEntBehaviorHandler<
@@ -51,14 +59,14 @@ export interface EntBehaviorMapExtend {
   >;
   /** 处理从光标位置删除 */
   "doc:handle_delete_from_caret": MEEntBehaviorHandler<
-    DeleteFromCaretContext,
-    DeleteFromCaretDecision
+    CaretDeleteContext,
+    CaretDeleteDecision
   >;
-  /** 处理从光标位置删除 */
+  /** 处理范围删除行为 */
   "doc:handle_delete_range": MEEntBehaviorHandler<
-    DeleteRangeContext,
-    DeleteRangeDecision
+    RangeDeleteContext,
+    RangeDeleteDecision
   >;
-  /** 处理合并实体 */
+  /** 处理实体合并行为 */
   "doc:merge_ent": MEEntBehaviorHandler<MergeEntContext, MergeEntDecision>;
 }

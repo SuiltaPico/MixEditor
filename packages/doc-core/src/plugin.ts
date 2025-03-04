@@ -1,12 +1,12 @@
-import { Plugin } from "@mixeditor/core";
+import { MEPlugin } from "@mixeditor/core";
 import { register_pipes } from "./pipe";
 
-export const DocCorePlugin: Plugin = {
+export const DocCorePlugin: MEPlugin = {
   id: "doc-core",
   version: "0.0.1",
   meta: {
-    name: "document core",
-    description: "core of document",
+    name: "Document Core",
+    description: "提供文档模型的核心功能，包括光标导航、内容删除等基础操作。",
     author: "Mixeditor",
   },
   init(editor) {
@@ -15,5 +15,8 @@ export const DocCorePlugin: Plugin = {
   },
   dispose(editor) {
     editor.ent.unregister_domain("doc");
+    // 清理管道注册（假设框架支持管道注销）
+    editor.pipe.delete_pipe("doc:caret_navigate");
+    editor.pipe.delete_pipe("doc:directed_delete");
   },
 };

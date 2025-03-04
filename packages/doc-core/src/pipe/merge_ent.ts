@@ -1,17 +1,6 @@
-import {
-  Ent,
-  MEEvent,
-  MEPipeStageHandler,
-  MixEditor,
-  Op,
-  Transaction,
-} from "@mixeditor/core";
-import { DocCaret } from "../selection";
+import { Ent, MixEditor, Transaction } from "@mixeditor/core";
 import { get_common_ancestor_from_ent, get_parent } from "../common/path";
-import {
-  execute_diff_ent_pure_delete_range,
-  execute_same_ent_pure_delete_range,
-} from "./delete/delete_range";
+import { delete_range_in_same_ent } from "./delete";
 
 /** 实体对合并的决策。 */
 export const MergeEntDecision = {
@@ -154,7 +143,7 @@ export async function execute_merge_ent(
         "doc:index_of_child",
         { child: source }
       )!;
-      await execute_same_ent_pure_delete_range(
+      await delete_range_in_same_ent(
         editor,
         tx,
         source_parent,

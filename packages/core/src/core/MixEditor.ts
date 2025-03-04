@@ -10,7 +10,7 @@ import {
 import { EntTDOCtx, EntTDOMap } from "../ent/tdo/tdo_ctx";
 import { OpBehaviorHandler, OpBehaviorMap, OpCtx, OpMap } from "../op";
 import { IPipeEvent, IPipeStageHandler, PipeCtx, PipeEventMap } from "../pipe";
-import { PluginCtx } from "../plugin";
+import { Plugin, PluginCtx } from "../plugin";
 import { SelectionCtx, SelectionMap } from "../selection/selection";
 import {
   TDODeserializerMap,
@@ -90,6 +90,8 @@ export interface MEPipeEventMap extends PipeEventMap<any> {
   load_serialized_to_content: LoadSerializedToContentEvent;
   save_content_to_serialized: SaveContentToSerializedEvent;
 }
+
+export type MEPlugin = Plugin<MixEditor>;
 
 /** MixEditor 的上下文。 */
 export class MixEditor implements ICoreCtx {

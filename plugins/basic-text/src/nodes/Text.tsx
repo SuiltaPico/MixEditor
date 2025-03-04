@@ -7,31 +7,7 @@ import {
   WithMixEditorNode,
 } from "@mixeditor/browser-view";
 import { createSignal, WrappedSignal } from "@mixeditor/common";
-import {
-  CaretNavigateDecision,
-  create_DeferredOperation,
-  create_DeleteRangeOperation,
-  create_DynamicStrategy,
-  create_InsertChildrenOperation,
-  create_Node,
-  DeleteFromPointDecision,
-  DeleteRangeDecision,
-  get_node_path,
-  InsertNodesDecision,
-  is_Node,
-  load_mark_map,
-  mark_map_is_equal,
-  MarkMap,
-  MarkTDOMap,
-  MergeNodeDecision,
-  MixEditorPluginContext,
-  NavigateDirection,
-  Node,
-  NodeTDO,
-  path_compare,
-  save_mark_map,
-  TransferDataObject,
-} from "@mixeditor/core";
+import { handle_non_enterable_children_and_non_boundary_caret_navigate } from "@mixeditor/doc-core";
 import { onMount } from "solid-js";
 
 declare module "@mixeditor/core" {
@@ -291,6 +267,9 @@ export function text() {
             };
           }
         },
+
+        "doc:handle_caret_navigate":
+          handle_non_enterable_children_and_non_boundary_caret_navigate,
       });
 
       node_manager.register_strategies("text", {
