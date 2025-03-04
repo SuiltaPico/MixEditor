@@ -15,7 +15,7 @@ import { MergeEntContext, MergeEntDecision } from "./pipe/merge_ent";
 
 /**
  * 扩展实体行为类型定义
- * 
+ *
  * 定义文档编辑器特有的实体行为接口
  */
 export interface EntBehaviorMapExtend {
@@ -69,4 +69,15 @@ export interface EntBehaviorMapExtend {
   >;
   /** 处理实体合并行为 */
   "doc:merge_ent": MEEntBehaviorHandler<MergeEntContext, MergeEntDecision>;
+}
+
+/**
+ * 扩展实体行为类型定义
+ *
+ * 定义文档编辑器特有的实体行为接口
+ */
+export interface EntDomainCtxMapExtend {
+  doc: {
+    parent: Ent;
+  };
 }

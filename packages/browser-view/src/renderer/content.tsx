@@ -1,4 +1,4 @@
-import { MixEditor, Node } from "@mixeditor/core";
+import { MixEditor } from "@mixeditor/core";
 import {
   Component,
   createContext,
@@ -52,7 +52,7 @@ export const NodeRendererWrapper: Component<{
   }
 
   const cached = doc_renderer_state.get(props.node);
-  const renderer = props.renderer_manager.get(props.node.type);
+  const renderer = props.renderer_manager.get(props.node);
 
   if (cached && cached.renderer === renderer) {
     // 使用缓存节点，避免重复渲染。

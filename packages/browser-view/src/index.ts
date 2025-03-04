@@ -1,7 +1,10 @@
-export * from "./common/dom";
+import { EntDomainCtxMapExtend } from "./ent";
+import { PipeEventMapExtend } from "./pipe";
+
 export * from "./plugin";
-export * from "./renderer/EditorRenderer";
-export * from "./renderer/NodeRenderer";
-export * from "./renderer/NodeRendererManager";
-export * from "./resp_chain/Pointer";
-export * from "./resp_chain/Selection";
+export * from "./pipe";
+
+declare module "@mixeditor/core" {
+  interface MEEntDomainCtxMap extends EntDomainCtxMapExtend {}
+  interface MEPipeEventMap extends PipeEventMapExtend {}
+}

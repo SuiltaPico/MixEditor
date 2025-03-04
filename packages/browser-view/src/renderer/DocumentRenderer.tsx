@@ -1,6 +1,6 @@
 import { DocumentNode } from "@mixeditor/core";
 import { NodeRenderer } from "./NodeRenderer";
-import { NodeRendererWrapper } from "./ContentRenderer";
+import { NodeRendererWrapper } from "./content";
 
 /** 文档渲染器。
  * 负责渲染文档节点。

@@ -14,10 +14,10 @@ import {
   Node,
 } from "@mixeditor/core";
 import { NodeRendererManager } from "./NodeRendererManager";
-import { BvSelection } from "../BvSelection";
+import { BvSelectionContext } from "../selection";
 import "./SelectionRenderer.css";
 import { createSignal, Rect } from "@mixeditor/common";
-import { BvDrawSelectedMaskDecisionRender } from "../resp_chain/Selection";
+import { BvDrawSelectedMaskDecisionRender } from "../pipe/selection_render";
 
 /** 选区渲染器。
  * 负责渲染选区。
@@ -25,7 +25,7 @@ import { BvDrawSelectedMaskDecisionRender } from "../resp_chain/Selection";
 export const SelectionRenderer: Component<{
   editor: MixEditor;
   renderer_manager: NodeRendererManager;
-  bv_selection: BvSelection;
+  bv_selection: BvSelectionContext;
 }> = (props) => {
   // TODO: 添加多选区范围渲染
   return (
@@ -262,7 +262,7 @@ async function get_rect_of_extended_selected(
 export const RangeRenderer: Component<{
   editor: MixEditor;
   renderer_manager: NodeRendererManager;
-  bv_selection: BvSelection;
+  bv_selection: BvSelectionContext;
 }> = (props) => {
   const { editor, renderer_manager, bv_selection } = props;
 
