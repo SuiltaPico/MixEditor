@@ -1,101 +1,63 @@
-import { MixEditor } from "@mixeditor/core";
+import { Ent, MixEditor } from "@mixeditor/core";
 import {
   Component,
   createContext,
+  createEffect,
   createRoot,
   JSX,
+  on,
   onMount,
   useContext,
 } from "solid-js";
-import { NodeRenderer } from "./NodeRenderer";
-import { NodeRendererManager } from "./NodeRendererManager";
+import { BvContext, BvDomainContext } from "../context";
+import { Rendered, RenderedDomNode } from "./node_renderer";
 
-/** 文档渲染器的状态。 */
-export class ContentRendererState {
-  /** 节点渲染器的缓存映射表。每次 NodeRendererWrapper 被调用，都会查询该表以确定是否使用缓存。 */
-  node_renderer_map = new WeakMap<
-    Node,
-    { renderer: NodeRenderer; rendered: JSX.Element; disposer: () => void }
-  >();
-
-  get(node: Node) {
-    return this.node_renderer_map.get(node);
-  }
-
-  set(
-    node: Node,
-    value: {
-      renderer: NodeRenderer;
-      rendered: JSX.Element;
-      disposer: () => void;
-    }
-  ) {
-    this.node_renderer_map.set(node, value);
-  }
-}
-
-/** 内容渲染器上下文。
- * 提供内容渲染器相关的功能。
- */
-export const ContentRendererContext = createContext<
-  ContentRendererState | undefined
->(undefined);
+export const default_renderer = () => {
+  let dispose!: Rendered["dispose"];
+  let el!: Rendered["node"];
+  createRoot((d) => {
+    dispose = d;
+    el = (<div>未知节点</div>) as RenderedDomNode;
+  });
+  return {
+    dispose,
+    node: el,
+  } satisfies Rendered;
+};
 
 export const NodeRendererWrapper: Component<{
-  node: Node;
-  renderer_manager: NodeRendererManager;
-  editor: MixEditor;
+  ent: Ent;
+  bv_ctx: BvContext;
 }> = (props) => {
-  const doc_renderer_state = useContext(ContentRendererContext);
-  if (!doc_renderer_state) {
-    throw new Error("ContentRendererContext is not provided");
-  }
+  const { ent, bv_ctx } = props;
+  const { editor } = bv_ctx;
 
-  const cached = doc_renderer_state.get(props.node);
-  const renderer = props.renderer_manager.get(props.node);
-
-  if (cached && cached.renderer === renderer) {
-    // 使用缓存节点，避免重复渲染。
-    return cached.rendered;
+  let bv_domain_ctx = editor.ent.get_domain_ctx(ent, "bv");
+  if (!bv_domain_ctx) {
+    bv_domain_ctx = {} as BvDomainContext;
   }
 
   // 使用节点渲染器渲染节点
-  let rendered: JSX.Element;
-  let disposer: () => void;
+  let rendered: Rendered =
+    (editor.ent.exec_behavior(ent, "bv:renderer", {
+      bv_ctx,
+    }) as Rendered) ?? default_renderer();
 
-  createRoot((dispose) => {
-    rendered = renderer(props);
-    disposer = dispose;
-  });
+  bv_domain_ctx.node = rendered.node;
+  bv_domain_ctx.dispose = rendered.dispose;
 
-  // 将节点写入缓存
-  doc_renderer_state.set(props.node, {
-    renderer,
-    rendered,
-    disposer: disposer!,
-  });
-
-  return rendered;
+  return rendered.node;
 };
 
-export const ContentRenderer: Component<{
-  editor: MixEditor;
-  renderer_manager: NodeRendererManager;
-}> = (props) => {
-  const doc_renderer_state = new ContentRendererState();
-  const document = props.editor.document;
+export const ContentRenderer: Component<{ bv_ctx: BvContext }> = (props) => {
+  const { bv_ctx } = props;
+  const content = bv_ctx.editor.content;
 
-  onMount(() => {
-    props.editor.event_manager.add_handler("init", () => {});
-  });
-
-  return (
-    <ContentRendererContext.Provider value={doc_renderer_state}>
-      <NodeRendererWrapper
-        node={document.get()}
-        renderer_manager={props.renderer_manager}
-        editor={props.editor}
-      />
-    </ContentRendererContext.Provider>
+  createEffect(
+    on(content.root.get, (ent) => {
+      bv_ctx.editor_node.innerHTML = "";
+    })
   );
+
+  return <NodeRendererWrapper ent={content.root.get()} bv_ctx={bv_ctx} />;
 };

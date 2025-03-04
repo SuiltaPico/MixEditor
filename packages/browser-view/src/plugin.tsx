@@ -1,12 +1,14 @@
 import { MEPlugin } from "@mixeditor/core";
-import { BvSelectionContext } from "./selection";
+import { RootRenderer } from "./renderer/root";
+import { create_solidjs_rendered } from "./renderer/node_renderer";
+import { BvContext } from "./context";
 
 export type BrowserViewExposed = ReturnType<
   ReturnType<typeof browser_view>["init"]
 >;
 
 export const browser_view = () => {
-  let bv_selection_ctx!: BvSelectionContext;
+  let bv_ctx;
 
   return {
     id: "browser_view",
@@ -17,12 +19,19 @@ export const browser_view = () => {
       author: "Mixeditor",
     },
     init(editor) {
-      bv_selection_ctx = new BvSelectionContext(editor);
+      let bv_ctx = {
+        editor,
+      } as BvContext;
+
       editor.ent.register_domain("bv");
 
-      return {
-        bv_selection_ctx,
-      };
+      editor.ent.register_handler(
+        "root",
+        "bv:renderer",
+        create_solidjs_rendered(RootRenderer)
+      );
+
+      return {};
     },
     dispose(editor) {
       editor.ent.unregister_domain("bv");

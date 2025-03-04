@@ -1,8 +1,9 @@
 import { BvKeyBoardPipeEventMapExtend } from "./key_board";
-import { BvPointerPipeEventMapExtend } from "./Pointer";
+import { BvPointerPipeEventMapExtend } from "./pointer";
 
 export * from "./key_board";
-export * from "./Pointer";
+export * from "./pointer";
+export * from "./render_selection";
 
 export interface PipeEventMapExtend
   extends BvKeyBoardPipeEventMapExtend,

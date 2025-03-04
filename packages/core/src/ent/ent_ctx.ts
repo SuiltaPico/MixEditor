@@ -40,7 +40,12 @@ export class EntCtx<
 > implements IEntCtx<TEntMap, TBehaviorMap, TExCtx>
 {
   ex_ctx: TExCtx;
-  protected behavior: BehaviorHandlerManager<TBehaviorMap, Ent, TEntMap, TExCtx>;
+  protected behavior: BehaviorHandlerManager<
+    TBehaviorMap,
+    Ent,
+    TEntMap,
+    TExCtx
+  >;
   /** 实体标签集。 */
   private tag_manager: TagManager<keyof TEntMap>;
   /** 实体ID生成器。 */
@@ -48,7 +53,7 @@ export class EntCtx<
   /** 领域上下文。 */
   private domains = new Map<
     string,
-    WeakMap<Ent, TDomainCtxMap[keyof TDomainCtxMap]>
+    Map<Ent, TDomainCtxMap[keyof TDomainCtxMap]>
   >();
 
   /** 生成新的实体ID。 */
@@ -64,7 +69,7 @@ export class EntCtx<
 
   /** 注册领域。 */
   register_domain(domain: string) {
-    this.domains.set(domain, new WeakMap());
+    this.domains.set(domain, new Map());
   }
   /** 注销领域。 */
   unregister_domain(domain: string) {
@@ -72,8 +77,8 @@ export class EntCtx<
   }
   /** 设置领域上下文。 */
   set_domain_ctx<TDomainId extends Extract<keyof TDomainCtxMap, string>>(
-    domain: TDomainId,
     ent: Ent,
+    domain: TDomainId,
     ctx: TDomainCtxMap[TDomainId]
   ) {
     const domain_ctx = this.domains.get(domain);
@@ -81,8 +86,8 @@ export class EntCtx<
   }
   /** 获取领域上下文。 */
   get_domain_ctx<TDomainId extends Extract<keyof TDomainCtxMap, string>>(
-    domain: TDomainId,
-    ent: Ent
+    ent: Ent,
+    domain: TDomainId
   ) {
     const domain_ctx = this.domains.get(domain);
     return domain_ctx!.get(ent) as TDomainCtxMap[TDomainId] | undefined;

@@ -1,6 +1,11 @@
-import { MixEditor, Op, Transaction } from "@mixeditor/core";
-import { get_parent } from "../../common/path";
-import { DocCaret, DocSelection } from "../../selection";
+import {
+  MESelection,
+  MixEditor,
+  Op,
+  Transaction,
+  TreeCaret,
+  get_parent
+} from "@mixeditor/core";
 import { execute_range_deletion } from "./range_delete";
 
 /** 驱使删除的来源。 */
@@ -41,7 +46,7 @@ export const CaretDeleteDecision = {
    */
   DeleteSelf: { type: "delete_self" } satisfies CaretDeleteDecision,
   /** 自身节点已经处理了删除，并产生了要执行的操作。 */
-  Done: (props: { operation: Op; selected?: DocSelection }) =>
+  Done: (props: { operation: Op; selected?: MESelection }) =>
     ({
       type: "done",
       selected: props.selected,
@@ -54,7 +59,7 @@ export type CaretDeleteDecision =
   | { type: "skip" } // 跳过当前节点
   | { type: "child"; index: number } // 进入子节点
   | { type: "delete_self" } // 删除自身
-  | { type: "done"; operation: Op; selected?: DocSelection }; // 已处理完成
+  | { type: "done"; operation: Op; selected?: MESelection }; // 已处理完成
 
 /** 删除策略上下文。 */
 export interface CaretDeleteContext {
@@ -70,12 +75,12 @@ export interface CaretDeleteContext {
 export async function execute_caret_deletion(
   editor: MixEditor,
   tx: Transaction,
-  caret: DocCaret,
+  caret: TreeCaret,
   direction: CaretDeleteDirection,
   src?: CaretDeleteSource
 ): Promise<
   | {
-      selected?: DocSelection;
+      selected?: MESelection;
     }
   | undefined
 > {

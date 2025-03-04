@@ -1,5 +1,10 @@
-import { Ent, MixEditor, Transaction } from "@mixeditor/core";
-import { get_common_ancestor_from_ent, get_parent } from "../common/path";
+import {
+  Ent,
+  MixEditor,
+  Transaction,
+  get_common_ancestor_from_ent,
+  get_parent,
+} from "@mixeditor/core";
 import { delete_range_in_same_ent } from "./delete";
 
 /** 实体对合并的决策。 */

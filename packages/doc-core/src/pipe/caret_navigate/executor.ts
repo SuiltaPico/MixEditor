@@ -1,5 +1,4 @@
-import { MixEditor } from "@mixeditor/core";
-import { DocCaret } from "../../selection";
+import { MixEditor, TreeCaret } from "@mixeditor/core";
 
 /** 光标导航来源，表示触发导航操作的上下文位置 */
 export enum CaretNavigateSource {
@@ -77,10 +76,10 @@ export interface CaretNavigateContext {
  */
 export async function execute_navigate_caret_from_pos(
   editor: MixEditor,
-  caret: DocCaret,
+  caret: TreeCaret,
   direction: CaretDirection,
   src?: CaretNavigateSource
-): Promise<DocCaret | undefined> {
+): Promise<TreeCaret | undefined> {
   const ent_ctx = editor.ent;
 
   let decision: CaretNavigateDecision | undefined;
@@ -98,7 +97,7 @@ export async function execute_navigate_caret_from_pos(
   if (!decision || decision.type === "skip") {
     // 跳过当前节点，往下一个节点移动
     const ent = caret.ent;
-    const parent = ent_ctx.get_domain_ctx("doc", ent)?.parent;
+    const parent = ent_ctx.get_domain_ctx(ent, "doc")?.parent;
 
     if (!parent) return;
 

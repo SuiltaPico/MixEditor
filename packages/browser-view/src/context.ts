@@ -1,12 +1,12 @@
 import { MixEditor } from "@mixeditor/core";
-import { BvSelectionContext } from "./selection";
 
-export type BvContext = {
+export interface BvContext {
   editor: MixEditor;
-  /** 浏览器视图的 Selection。 */
-  selection_ctx: BvSelectionContext;
   /** 根节点。 */
-  root_node: HTMLElement;
-  /** 内容节点。 */
-  content_node: HTMLElement;
-};
+  editor_node: HTMLElement;
+}
+
+export interface BvDomainContext {
+  node: HTMLElement;
+  dispose: () => void;
+}

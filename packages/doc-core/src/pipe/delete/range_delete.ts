@@ -1,6 +1,4 @@
-import { Ent, MixEditor, Op, Transaction } from "@mixeditor/core";
-import { DocCaret } from "../../selection";
-import { get_common_ancestor_from_ent, get_parent } from "../../common/path";
+import { Ent, MixEditor, Op, Transaction, TreeCaret, get_common_ancestor_from_ent, get_parent } from "@mixeditor/core";
 import { execute_merge_ent } from "../merge_ent";
 
 /** 节点对删除范围的决策。 */
@@ -12,7 +10,7 @@ export const RangeDeleteDecision = {
     type: "delete_self",
   },
   /** 自身节点已经处理了删除，并产生了要执行的操作。 */
-  Done: (props: { operation?: Op; selected?: DocCaret }) => {
+  Done: (props: { operation?: Op; selected?: TreeCaret }) => {
     const result = props as RangeDeleteDecision & { type: "done" };
     result.type = "done";
     return result;
@@ -26,7 +24,7 @@ export type RangeDeleteDecision =
   | {
       type: "done";
       operation?: Op;
-      selected?: DocCaret;
+      selected?: TreeCaret;
     };
 
 export interface RangeDeleteContext {
@@ -101,8 +99,8 @@ export async function delete_range_in_same_ent(
 export async function delete_between_ents(
   editor: MixEditor,
   tx: Transaction,
-  start: DocCaret,
-  end: DocCaret
+  start: TreeCaret,
+  end: TreeCaret
 ) {
   const ent_ctx = editor.ent;
   const common_ancestor_data = await get_common_ancestor_from_ent(
@@ -132,13 +130,13 @@ export async function delete_between_ents(
  * @param tx 事务对象
  * @param start 起始光标位置（包含实体和偏移量）
  * @param common_ancestor 公共祖先实体
- * 
+ *
  * 处理从起始位置到公共祖先路径右侧的所有可删除内容
  */
 export async function delete_start_to_ancestor(
   editor: MixEditor,
   tx: Transaction,
-  start: DocCaret,
+  start: TreeCaret,
   common_ancestor: Ent
 ) {
   const ent_ctx = editor.ent;
@@ -191,13 +189,13 @@ export async function delete_start_to_ancestor(
  * @param tx 事务对象
  * @param end 结束光标位置（包含实体和偏移量）
  * @param common_ancestor 公共祖先实体
- * 
+ *
  * 处理从结束位置到公共祖先路径左侧的所有可删除内容
  */
 export async function delete_end_to_ancestor(
   editor: MixEditor,
   tx: Transaction,
-  end: DocCaret,
+  end: TreeCaret,
   common_ancestor: Ent
 ) {
   const ent_ctx = editor.ent;
@@ -251,7 +249,7 @@ export async function delete_end_to_ancestor(
  * @param start_offset 在公共祖先中的起始偏移量
  * @param end_offset 在公共祖先中的结束偏移量
  * @param common_ancestor 公共祖先实体
- * 
+ *
  * 处理公共祖先实体内部指定范围的直接删除操作
  */
 export async function delete_ancestor_range(
@@ -308,8 +306,8 @@ export async function delete_ancestor_range(
 export async function execute_range_deletion(
   editor: MixEditor,
   tx: Transaction,
-  start: DocCaret,
-  end: DocCaret
+  start: TreeCaret,
+  end: TreeCaret
 ) {
   // 执行删除逻辑
   if (start.ent === end.ent) {

@@ -1,7 +1,7 @@
-import { Ent, EntCtx, MixEditor } from "@mixeditor/core";
+import { Ent, MixEditor } from "@mixeditor/core";
 
 export function get_parent(ent_ctx: MixEditor["ent"], ent: Ent) {
-  return ent_ctx.get_domain_ctx("doc", ent)?.parent;
+  return ent_ctx.get_domain_ctx(ent, "tree")?.parent;
 }
 
 /** 获取节点路径 */
@@ -10,7 +10,7 @@ export async function get_ent_path(ent_ctx: MixEditor["ent"], ent: Ent) {
   let current_child = ent;
   let current = get_parent(ent_ctx, ent);
   while (current) {
-    const index = await ent_ctx.exec_behavior(current, "doc:index_of_child", {
+    const index = await ent_ctx.exec_behavior(current, "tree:index_of_child", {
       child: current_child,
     });
     result.push(index ?? 0);
@@ -30,7 +30,7 @@ export async function get_ent_path_and_ancestors(
   let current_child = ent;
   let current = get_parent(ent_ctx, ent);
   while (current) {
-    const index = await ent_ctx.exec_behavior(current, "get_index_of_child", {
+    const index = await ent_ctx.exec_behavior(current, "tree:index_of_child", {
       child: current_child,
     });
     path.push(index ?? 0);
@@ -61,7 +61,7 @@ export async function get_common_ancestor_from_ent(
   let current = get_parent(ent_ctx, ent2);
   // 后-先的遍历
   while (current) {
-    const index = await ent_ctx.exec_behavior(current, "doc:index_of_child", {
+    const index = await ent_ctx.exec_behavior(current, "tree:index_of_child", {
       child: current_child,
     });
     path2.push(index ?? 0);

@@ -1,2 +1,2 @@
-export * from "./nodes/Text";
-export * from "./nodes/Paragraph";
+export * from "./ent/Text";
+export * from "./ent/Paragraph";

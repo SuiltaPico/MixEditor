@@ -7,105 +7,50 @@ import {
   onMount,
   Show,
 } from "solid-js";
-import {
-  ExtendedSelected,
-  get_common_ancestor_from_node,
-  MixEditor,
-  Node,
-} from "@mixeditor/core";
-import { NodeRendererManager } from "./NodeRendererManager";
-import { BvSelectionContext } from "../selection";
-import "./SelectionRenderer.css";
 import { createSignal, Rect } from "@mixeditor/common";
-import { BvDrawSelectedMaskDecisionRender } from "../pipe/selection_render";
+import { BvContext } from "../context";
+import {
+  Ent,
+  get_common_ancestor_from_ent,
+  MixEditor,
+  TreeExtendedSelection,
+} from "@mixeditor/core";
+import { execute_render_selection } from "../pipe";
 
 /** 选区渲染器。
+ *
  * 负责渲染选区。
  */
 export const SelectionRenderer: Component<{
-  editor: MixEditor;
-  renderer_manager: NodeRendererManager;
-  bv_selection: BvSelectionContext;
+  bv_ctx: BvContext;
 }> = (props) => {
   // TODO: 添加多选区范围渲染
   return (
     <div class="_mixeditor_selection">
-      <RangeRenderer
-        editor={props.editor}
-        renderer_manager={props.renderer_manager}
-        bv_selection={props.bv_selection}
-      />
+      <TreeRangeRenderer bv_ctx={props.bv_ctx} />
     </div>
   );
 };
 
-async function execute_selected_mask_respo_chain(
-  editor: MixEditor,
-  node: Node,
-  from: number,
-  to: number,
-  rects: Rect[]
-) {
-  const result = await editor.node_manager.get_decision(
-    "bv:draw_selected_mask",
-    node as any,
-    {
-      from,
-      to,
-    }
-  );
-  const type = result?.type ?? "skip";
-  if (type === "skip") return;
-  else if (type === "enter") {
-    const length = await editor.node_manager.execute_handler(
-      "get_children_count",
-      node
-    )!;
-    if (to > length) {
-      to = length - 1;
-    }
-    let promises: Promise<void>[] = [];
-    for (let i = from; i <= to; i++) {
-      // 全选子节点
-      promises.push(
-        execute_selected_mask_respo_chain(
-          editor,
-          (await editor.node_manager.execute_handler(
-            "get_child",
-            node,
-            i
-          )) as Node,
-          0,
-          Number.MAX_SAFE_INTEGER,
-          rects
-        )
-      );
-    }
-    await Promise.all(promises);
-  } else if (type === "render") {
-    rects.push(...(result as BvDrawSelectedMaskDecisionRender).rects);
-  }
-}
-
 async function get_rect_of_extended_selected(
   editor: MixEditor,
-  selected: ExtendedSelected
+  selection: TreeExtendedSelection
 ) {
-  const node_manager = editor.node_manager;
+  const ent_ctx = editor.ent;
   let rects: Rect[] = [];
 
-  const start_node = selected.start.node;
-  const start_child_path = selected.start.child_path;
-  const end_node = selected.end.node;
-  const end_child_path = selected.end.child_path;
+  const start_ent = selection.start.ent;
+  const start_offset = selection.start.offset;
+  const end_ent = selection.end.ent;
+  const end_offset = selection.end.offset;
 
-  if (start_node === end_node) {
+  if (start_ent === end_ent) {
     // 如果起始和结束节点是同一个节点，则直接在该节点上进行选择
-    await execute_selected_mask_respo_chain(
+    await execute_render_selection(
       editor,
-      start_node,
-      start_child_path,
-      end_child_path,
+      start_ent,
+      start_offset,
+      end_offset,
       rects
     );
     return rects;
@@ -118,10 +63,10 @@ async function get_rect_of_extended_selected(
   // 3. 从起始节点在共同祖先的子节点下一位开始，到结束节点在共同祖先的子节点上一位结束，期间选择所有子节点的选区
 
   // 获取起始和结束节点的共同祖先
-  const result = await get_common_ancestor_from_node(
-    node_manager,
-    start_node,
-    end_node
+  const result = await get_common_ancestor_from_ent(
+    ent_ctx,
+    start_ent,
+    end_ent
   );
   // 如果找不到共同祖先。则代表并不在同一棵树上，则因为无法选中而流程结束，返回空数组
   if (!result) return rects;
@@ -135,23 +80,17 @@ async function get_rect_of_extended_selected(
 
   const promises: Promise<void>[] = [
     // 先选中起始节点和结束节点
-    execute_selected_mask_respo_chain(
+    execute_render_selection(
       editor,
-      start_node,
-      start_child_path,
+      start_ent,
+      start_offset,
       Number.MAX_SAFE_INTEGER,
       rects
     ),
-    execute_selected_mask_respo_chain(
-      editor,
-      end_node,
-      0,
-      end_child_path,
-      rects
-    ),
+    execute_render_selection(editor, end_ent, 0, end_offset, rects),
   ];
 
-  let current: Node | undefined;
+  let current: Ent | undefined;
   const reversed_start_ancestors = start_ancestors
     .slice(ancestor_index + 1)
     .toReversed();
@@ -160,31 +99,32 @@ async function get_rect_of_extended_selected(
     .toReversed();
 
   // 从起始节点向上遍历，直到共同祖先
-  current = start_node;
+  current = start_ent;
   for (let i = 0; i < reversed_start_ancestors.length; i++) {
     const current_parent = reversed_start_ancestors[i];
-    const parent_length = await node_manager.execute_handler(
-      "get_children_count",
-      current_parent
+    const parent_length = await ent_ctx.exec_behavior(
+      current_parent,
+      "tree:length",
+      {}
     )!;
 
     // 获取当前节点在父节点中的索引
-    const current_index = await node_manager.execute_handler(
-      "get_index_of_child",
+    const current_index = await ent_ctx.exec_behavior(
       current_parent,
-      current as any
+      "tree:index_of_child",
+      {
+        child: current as any,
+      }
     )!;
 
     // 处理后侧兄弟节点的选区
     for (let i = current_index + 1; i < parent_length; i++) {
       promises.push(
-        execute_selected_mask_respo_chain(
+        execute_render_selection(
           editor,
-          (await node_manager.execute_handler(
-            "get_child",
-            current_parent,
-            i
-          )) as Node,
+          (await ent_ctx.exec_behavior(current_parent, "tree:child_at", {
+            index: i,
+          })) as Ent,
           0,
           Number.MAX_SAFE_INTEGER,
           rects
@@ -195,26 +135,26 @@ async function get_rect_of_extended_selected(
   }
 
   // 从结束节点向上遍历，直到共同祖先
-  current = end_node;
+  current = end_ent;
   for (let i = 0; i < reversed_end_ancestors.length; i++) {
     const current_parent = reversed_end_ancestors[i];
     // 获取当前节点在父节点中的索引
-    const current_index = await node_manager.execute_handler(
-      "get_index_of_child",
+    const current_index = await ent_ctx.exec_behavior(
       current_parent,
-      current as any
+      "tree:index_of_child",
+      {
+        child: current as any,
+      }
     )!;
 
     // 处理前侧兄弟节点的选区
     for (let i = current_index - 1; i >= 0; i--) {
       promises.push(
-        execute_selected_mask_respo_chain(
+        execute_render_selection(
           editor,
-          (await node_manager.execute_handler(
-            "get_child",
-            current_parent,
-            i
-          )) as Node,
+          (await ent_ctx.exec_behavior(current_parent, "tree:child_at", {
+            index: i,
+          })) as Ent,
           0,
           Number.MAX_SAFE_INTEGER,
           rects
@@ -225,28 +165,30 @@ async function get_rect_of_extended_selected(
   }
 
   // 起始节点在共同祖先的子节点索引
-  const start_ancestor_index = await node_manager.execute_handler(
-    "get_index_of_child",
+  const start_ancestor_index = await ent_ctx.exec_behavior(
     common_ancestor,
-    start_ancestors[ancestor_index + 1] as any
+    "tree:index_of_child",
+    {
+      child: start_ancestors[ancestor_index + 1] as any,
+    }
   )!;
 
   // 结束节点在共同祖先的子节点索引
-  const end_ancestor_index = await node_manager.execute_handler(
-    "get_index_of_child",
+  const end_ancestor_index = await ent_ctx.exec_behavior(
     common_ancestor,
-    end_ancestors[ancestor_index + 1] as any
+    "tree:index_of_child",
+    {
+      child: end_ancestors[ancestor_index + 1] as any,
+    }
   )!;
 
   for (let i = start_ancestor_index + 1; i < end_ancestor_index; i++) {
     promises.push(
-      execute_selected_mask_respo_chain(
+      execute_render_selection(
         editor,
-        (await node_manager.execute_handler(
-          "get_child",
-          common_ancestor,
-          i
-        )) as Node,
+        (await ent_ctx.exec_behavior(common_ancestor, "tree:child_at", {
+          index: i,
+        })) as Ent,
         0,
         Number.MAX_SAFE_INTEGER,
         rects
@@ -258,13 +200,13 @@ async function get_rect_of_extended_selected(
 
   return rects;
 }
-/** 选区范围渲染器 */
-export const RangeRenderer: Component<{
-  editor: MixEditor;
-  renderer_manager: NodeRendererManager;
-  bv_selection: BvSelectionContext;
+
+/** 文档选区范围渲染器。 */
+export const TreeRangeRenderer: Component<{
+  bv_ctx: BvContext;
 }> = (props) => {
-  const { editor, renderer_manager, bv_selection } = props;
+  const { bv_ctx } = props;
+  const { editor } = bv_ctx;
 
   const selection = editor.selection;
   /** 选区范围。 */
@@ -277,7 +219,7 @@ export const RangeRenderer: Component<{
       end: { x: number; y: number };
     }[]
   >([]);
-  const selected_type = createMemo(() => selection.selected.get()?.type);
+  const selected_type = createMemo(() => selection.get_selection()?.type);
 
   let caret: HTMLDivElement | null = null;
   /** 选区输入框。用于激活浏览器输入法。 */
@@ -297,35 +239,31 @@ export const RangeRenderer: Component<{
   }
 
   onMount(() => {
-    renderer_manager.editor_root.addEventListener("pointerup", focus_inputer);
+    bv_ctx.editor_node.addEventListener("pointerup", focus_inputer);
     resize_observer = new ResizeObserver((entries) => {
       for (const entry of entries) {
-        
       }
     });
-    resize_observer.observe(renderer_manager.editor_root);
+    resize_observer.observe(bv_ctx.editor_node);
   });
 
   onCleanup(() => {
-    renderer_manager.editor_root.removeEventListener(
-      "pointerup",
-      focus_inputer
-    );
+    bv_ctx.editor_node.removeEventListener("pointerup", focus_inputer);
     resize_observer?.disconnect();
   });
 
   // 自动更新选区位置
   createEffect(
-    on(selection.selected.get, async (selected) => {
+    on(selection.get_selection, async (selected) => {
       if (selected) {
         const info =
-          selected.type === "collapsed"
-            ? selected.start
-            : selected[selected.anchor];
-        const result = await editor.node_manager.execute_handler(
+          selected.type === "tree:collapsed" ? selected.caret : selected.start;
+        const result = await editor.ent.exec_behavior(
+          info.ent,
           "bv:get_child_caret",
-          info.node,
-          info.child_path
+          {
+            index: info.offset,
+          }
         );
         if (!result) return;
         caret!.style.left = `${result.x}px`;
@@ -333,7 +271,7 @@ export const RangeRenderer: Component<{
         caret!.style.height = `${result.height}px`;
       }
 
-      if (selected && selected.type === "extended") {
+      if (selected && selected.type === "tree:extended") {
         const rects = await get_rect_of_extended_selected(editor, selected);
         // 更新选区范围
         ranges.set(
@@ -351,7 +289,10 @@ export const RangeRenderer: Component<{
   return (
     <>
       <Show
-        when={selected_type() === "collapsed" || selected_type() === "extended"}
+        when={
+          selected_type() === "tree:collapsed" ||
+          selected_type() === "tree:extended"
+        }
       >
         <div class="__caret" ref={(it) => (caret = it)}>
           <div

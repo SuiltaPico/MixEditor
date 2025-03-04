@@ -1,8 +1,10 @@
-import { MEEvent, MEPipeStageHandler, MixEditor } from "@mixeditor/core";
 import {
-  create_CollapsedSelection,
-  DocCaret
-} from "../../selection";
+  create_TreeCollapsedSelection,
+  MEEvent,
+  MEPipeStageHandler,
+  MixEditor,
+  TreeCaret,
+} from "@mixeditor/core";
 import { CaretDirection, execute_navigate_caret_from_pos } from "./executor";
 
 export interface CaretNavigateEvent extends MEEvent {
@@ -29,8 +31,8 @@ export const caret_navigate_pipe_handler: MEPipeStageHandler<
   const selection = editor.selection.get_selection();
   if (!selection) return;
 
-  let caret: DocCaret | undefined;
-  if (selection.type === "doc:collapsed") {
+  let caret: TreeCaret | undefined;
+  if (selection.type === "tree:collapsed") {
     // 折叠选区光标移动，调用决策链执行器获取光标位置
     try {
       caret = await execute_navigate_caret_from_pos(
@@ -43,7 +45,7 @@ export const caret_navigate_pipe_handler: MEPipeStageHandler<
       // 决策失败，取消移动
       return;
     }
-  } else if (selection.type === "doc:extended") {
+  } else if (selection.type === "tree:extended") {
     // 处理扩展选区的情况：根据方向退化为折叠选区
     // 当向左导航时取选区起点，向右导航时取选区终点
     if (event.direction === CaretDirection.Prev) {
@@ -54,7 +56,7 @@ export const caret_navigate_pipe_handler: MEPipeStageHandler<
   }
   if (!caret) return;
 
-  editor.selection.set_selection(create_CollapsedSelection(caret));
+  editor.selection.set_selection(create_TreeCollapsedSelection(caret));
 };
 
 /**
