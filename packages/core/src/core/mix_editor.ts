@@ -8,6 +8,14 @@ import {
   EntTDOBehaviorMap,
 } from "../ent/tdo/tdo_behavior";
 import { EntTDOCtx, EntTDOMap } from "../ent/tdo/tdo_ctx";
+import {
+  MarkBehaviorMap,
+  MarkCtx,
+  MarkMap,
+  MarkTDOBehaviorMap,
+  MarkTDOCtx,
+  MarkTDOMap,
+} from "../mark";
 import { OpBehaviorHandler, OpBehaviorMap, OpCtx, OpMap } from "../op";
 import { IPipeEvent, IPipeStageHandler, PipeCtx } from "../pipe";
 import { Plugin, PluginCtx } from "../plugin";
@@ -66,6 +74,16 @@ export interface MEEntTDOBehaviorMap extends EntTDOBehaviorMap<any> {
   to_ent: MEEntTDOBehaviorHandler<{}, Ent>;
 }
 
+/** MixEditor 的标记表，供插件扩展 */
+export interface MEMarkMap extends MarkMap {}
+/** MixEditor 的标记记录，供插件扩展 */
+export interface MEMarkBehaviorMap extends MarkBehaviorMap<any> {}
+
+/** MixEditor 的标记TDO表，供插件扩展 */
+export interface MEMarkTDOMap extends MarkTDOMap {}
+/** MixEditor 的标记TDO行为映射表，供插件扩展 */
+export interface MEMarkTDOBehaviorMap extends MarkTDOBehaviorMap<any> {}
+
 /** MixEditor 的操作表，供插件扩展 */
 export interface MEOpMap extends OpMap {}
 /** MixEditor 的操作行为映射表，供插件扩展 */
@@ -89,6 +107,10 @@ export type MEPlugin = Plugin<MixEditor>;
 export class MixEditor implements ICoreCtx {
   ent: EntCtx<MEEntMap, MEEntBehaviorMap, MEEntDomainCtxMap, this>;
   ent_tdo: EntTDOCtx<MEEntTDOMap, MEEntTDOBehaviorMap, this>;
+
+  mark: MarkCtx<MEMarkMap, MEMarkBehaviorMap, this>;
+  mark_tdo: MarkTDOCtx<MEMarkTDOMap, MEMarkTDOBehaviorMap, this>;
+
   content: ContentCtx<this["ent"]>;
 
   op: OpCtx<MEOpMap, MEOpBehaviorMap, this>;
@@ -125,6 +147,8 @@ export class MixEditor implements ICoreCtx {
   constructor() {
     this.ent = new EntCtx(this);
     this.ent_tdo = new EntTDOCtx(this);
+    this.mark = new MarkCtx(this);
+    this.mark_tdo = new MarkTDOCtx(this);
     this.content = new ContentCtx(this.ent);
     this.op = new OpCtx(this);
     this.pipe = new PipeCtx<MEPipeEventMap, this>(this);

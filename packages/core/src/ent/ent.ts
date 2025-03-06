@@ -1,4 +1,4 @@
-import { TDO } from "../tdo/tdo";
+import { MarkRecord } from "../mark/mark";
 
 /** 实体。编辑器的最小内容单元。 */
 export interface Ent {
@@ -6,4 +6,6 @@ export interface Ent {
   id: string;
   /** 实体的类型。 */
   type: string;
+  /** 实体的标记。 */
+  marks: MarkRecord;
 }

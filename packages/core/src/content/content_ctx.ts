@@ -19,6 +19,7 @@ export class ContentCtx<TEntCtx extends IEntCtx<any, any, any>>
     this.root = createSignal(
       create_RootEnt(this.ent_ctx.gen_id(), {
         children: [],
+        marks: new Map(),
       }) as any as EntMapOfIEntCtx<TEntCtx>["root"]
     );
   }

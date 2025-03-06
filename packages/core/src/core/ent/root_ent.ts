@@ -42,6 +42,7 @@ export function register_root_ent_behavior(editor: MixEditor) {
   editor.ent.register_handlers("root", {
     to_tdo: async ({ item }) => {
       return create_RootEntTDO(item.id, {
+        marks: new Map(),
         children: await Promise.all(
           item.children.get().map((child) => {
             return editor.ent.exec_behavior(child, "to_tdo", {})!;

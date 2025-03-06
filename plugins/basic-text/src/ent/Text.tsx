@@ -1,12 +1,5 @@
-import {
-  BrowserViewPluginResult,
-  BvDrawSelectedMaskDecision,
-  BvPointerEventDecision,
-  get_caret_pos_from_point,
-  NodeRenderer,
-  WithMixEditorNode,
-} from "@mixeditor/browser-view";
 import { createSignal, WrappedSignal } from "@mixeditor/common";
+import { EntTDO } from "@mixeditor/core";
 import { handle_non_enterable_children_and_non_boundary_caret_navigate } from "@mixeditor/doc-core";
 import { onMount } from "solid-js";
 
@@ -19,16 +12,16 @@ declare module "@mixeditor/core" {
   }
 }
 
-export interface TextNodeTDO extends TransferDataObject {
+export interface TextNodeTDO extends EntTDO {
   type: "text";
   content: string;
-  marks: MarkTDOMap;
+  marks: MarkTDO;
 }
 
 export function create_TextTDO(
   id: string,
   content: string,
-  marks?: MarkTDOMap
+  marks?: MarkTDO;
 ) {
   return {
     id,
