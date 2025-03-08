@@ -14,9 +14,18 @@ export class WrappedSignal<T> {
   }
 }
 
-export function createSignal<T>(
+export function create_Signal<T>(
   ...args: Parameters<typeof solid_createSignal<T>>
 ) {
+  if (args[1]) {
+    if (args[1].equals === undefined) {
+      args[1].equals = false;
+    }
+  } else {
+    args[1] = {
+      equals: false,
+    };
+  }
   const [get_signal, set_signal] = solid_createSignal(...args);
   return new WrappedSignal([get_signal, set_signal]);
 }
@@ -34,6 +43,6 @@ export class EmitterSignal {
   constructor() {}
 }
 
-export function createEmitterSignal() {
+export function create_EmitterSignal() {
   return new EmitterSignal();
 }

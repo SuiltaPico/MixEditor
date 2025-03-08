@@ -1,10 +1,10 @@
-import { createSignal } from "@mixeditor/common";
+import { create_Signal } from "@mixeditor/common";
 
-export type SelectionMap = {}
+export type SelectionMap = {};
 
 /** 选择上下文。 */
 export class SelectionCtx<TSelectionMap extends SelectionMap> {
-  selection = createSignal<TSelectionMap[keyof TSelectionMap] | undefined>(
+  selection = create_Signal<TSelectionMap[keyof TSelectionMap] | undefined>(
     undefined
   );
 

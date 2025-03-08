@@ -61,12 +61,15 @@ export interface IBehaviorHandlerManager<
 > {
   /** 注册行为处理器。 */
   register_handler<
-    TItemType extends TItem["type"],
+    TItemType extends Extract<keyof TItemMap, string>,
     TBehaviorId extends Extract<keyof TBehaviorMap, string>
   >(
     item_type: TItemType,
     behavior_id: TBehaviorId,
-    handler: TypeSpecifiedBehaviorHandler<TItem, TBehaviorMap[TBehaviorId]>
+    handler: TypeSpecifiedBehaviorHandler<
+      TItemMap[TItemType],
+      TBehaviorMap[TBehaviorId]
+    >
   ): void;
   /** 注册多个行为处理器。 */
   register_handlers<TItemType extends Extract<keyof TItemMap, string>>(
@@ -120,12 +123,18 @@ export class BehaviorHandlerManager<
   >();
 
   /** 设置项目处理器。如果项目类型为默认类型，则设置为默认处理器。 */
-  register_handler<TBehaviorId extends Extract<keyof TBehaviorMap, string>>(
-    item_type: string,
+  register_handler<
+    TItemType extends Extract<keyof TItemMap, string>,
+    TBehaviorId extends Extract<keyof TBehaviorMap, string>
+  >(
+    item_type: TItemType,
     behavior_id: TBehaviorId,
-    handler: TBehaviorMap[TBehaviorId]
+    handler: TypeSpecifiedBehaviorHandler<
+      TItemMap[TItemType],
+      TBehaviorMap[TBehaviorId]
+    >
   ) {
-    this.behavior_map.set(behavior_id as any, item_type, handler);
+    this.behavior_map.set(behavior_id as any, item_type, handler as any);
   }
 
   /** 为所有项目注册处理器。如果项目类型为默认类型，则设置为默认处理器。 */

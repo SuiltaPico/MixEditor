@@ -31,7 +31,7 @@ export class EntTDOCtx<
 > implements IEntTDOCtx<TEntTDOMap, TBehaviorMap, TExCtx>
 {
   ex_ctx: TExCtx;
-  private behavior: BehaviorHandlerManager<
+  behavior: BehaviorHandlerManager<
     TBehaviorMap,
     EntTDO,
     TEntTDOMap,

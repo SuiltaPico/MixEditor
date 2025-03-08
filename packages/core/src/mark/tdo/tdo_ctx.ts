@@ -31,7 +31,7 @@ export class MarkTDOCtx<
 > implements IMarkTDOCtx<TMarkTDOMap, TBehaviorMap, TExCtx>
 {
   ex_ctx: TExCtx;
-  private behavior: BehaviorHandlerManager<
+  behavior: BehaviorHandlerManager<
     TBehaviorMap,
     MarkTDO,
     TMarkTDOMap,

@@ -1,113 +1,23 @@
-import {
-  create_BaseEntTDO,
-  Ent,
-  EntTDO,
-  EntTDOCreateParams,
-} from "@mixeditor/core";
-import { handle_non_enterable_children_and_non_boundary_caret_navigate } from "@mixeditor/doc-core";
-import { onMount } from "solid-js";
-
-export interface TextFilterMergingNodeEvent {
-  type: "text:filter_merging_node";
-  target: Node[];
-}
-
-// export async function filter_merging_node_schema_check(
-//   params: Parameters<
-//     EventHandler<TextFilterMergingNodeEvent, MixEditorEventManagerContext>
-//   >[0]
-// ) {
-//   const { event, wait_dependencies, manager_context } = params;
-//   await wait_dependencies();
-//   const { target } = event;
-//   const { node_manager } = manager_context.editor;
-//   return target.filter((node) => {
-//     return node_manager.is_allow_to_merge("text", node.type);
-//   });
-// }
-
-// export async function filter_merging_node_marks_check(
-//   params: Parameters<
-//     EventHandler<TextFilterMergingNodeEvent, MixEditorEventManagerContext>
-//   >[0]
-// ) {
-//   const { event, wait_dependencies, manager_context } = params;
-// }
-
-export const TextRenderer: NodeRenderer<TextEnt> = (props) => {
-  const { node, editor } = props;
-
-  let container!: WithMixEditorNode<HTMLElement>;
-  onMount(() => {
-    container.mixed_node = node;
-    const context = editor.node_manager.get_context(node);
-    if (context) {
-      context["bv:html_node"] = container;
-    }
-  });
-
-  return (
-    <span class="_text" ref={container}>
-      {node.text.get()}
-    </span>
-  );
-};
+import { BrowserViewExposed } from "@mixeditor/browser-view";
+import { MEPlugin } from "@mixeditor/core";
+import { create_TextEnt } from "./model";
 
 export function text() {
   return {
     id: "text",
-    async init(ctx: MixEditorPluginContext) {
-      const { editor } = ctx;
-      const {
-        node_manager,
-        node_tdo_manager,
-        mark_manager,
-        mark_tdo_manager,
-        plugin_manager,
-        selection,
-        operation_manager,
-        event_manager,
-      } = editor;
+    async init(editor) {
+      const { ent: ent_ctx, ent_tdo: ent_tdo_ctx, plugin } = editor;
 
       const browser_view_plugin =
-        await plugin_manager.wait_plugin_inited<BrowserViewPluginResult>(
-          "browser-view"
-        );
-      const { renderer_manager } = browser_view_plugin;
+        await plugin.wait_plugin_inited<BrowserViewExposed>("browser-view");
 
-      async function is_mergeable(self_marks: MarkMap, tdo: NodeTDO) {
-        if (!node_manager.is_allow_to_merge("text", tdo.type)) return false;
-        const node_marks = await load_mark_map(
-          mark_tdo_manager,
-          await node_tdo_manager.execute_handler("get_marks", tdo)!
-        );
-        return mark_map_is_equal(mark_manager, self_marks, node_marks);
-      }
-
-      // event_manager.add_handler(
-      //   "text:filter_merging_node",
-      //   filter_merging_node_schema_check,
-      //   {
-      //     dependencies: [],
-      //     tags: ["text:node_schema_check"],
-      //   }
-      // );
-      // event_manager.add_handler(
-      //   "text:filter_merging_node",
-      //   filter_merging_node_marks_check,
-      //   {
-      //     dependencies: [filter_merging_node_schema_check as any],
-      //     tags: ["text:node_marks_check"],
-      //   }
-      // );
-
-      node_tdo_manager.register_handler("text", "to_node", async (_, tdo) => {
-        const ttdo = tdo as TextNodeTDO;
-        const node = create_TextNode(
-          ttdo.id,
-          ttdo.content,
-          await load_mark_map(node_tdo_manager, ttdo.marks)
-        );
+      ent_tdo_ctx.register_handler("text", "to_ent", async (params) => {
+        const { item } = params;
+        const node = create_TextEnt({
+          id: item.id,
+          content: item.content,
+          marks: await load_mark_map(node_tdo_manager, item.marks),
+        });
         node_manager.record_node(node);
         return node;
       });
@@ -137,7 +47,7 @@ export function text() {
           const result = [];
           for (const index of indexes) {
             result.push(
-              create_TextNode(node_manager.gen_id(), text.slice(index))
+              create_TextEnt(node_manager.gen_id(), text.slice(index))
             );
           }
           return result;
@@ -578,5 +488,5 @@ export function text() {
       renderer_manager.register("text", TextRenderer);
     },
     dispose() {},
-  };
+  } satisfies MEPlugin;
 }

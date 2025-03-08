@@ -31,3 +31,8 @@ type ReplaceParameterHelper<
   : TIndex extends 0
   ? [TNewType, ...TParameters]
   : [...TParameters[0 & TIndex], TNewType, ...TParameters[TIndex & 0]];
+
+// export type OptionalKeys<T, K extends keyof T> = {
+//   [P in keyof T]: P extends K ? T[P] | undefined : T[P];
+// };
+

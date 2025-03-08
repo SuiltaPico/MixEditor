@@ -25,7 +25,7 @@ import {
   TDOSerializeCtx,
   TDOSerializerMap,
 } from "../tdo/serialize/serialize_ctx";
-import { ICoreCtx, InitParams } from "./core_ctx";
+// import { ICoreCtx, InitParams } from "./core_ctx";
 import { TreeEntBehaviorMap } from "./ent";
 import { RootEnt, RootEntTDO } from "./ent/root_ent";
 import { MECorePipeEventMap } from "./pipe";
@@ -103,8 +103,12 @@ export interface MEPipeEventMap extends MECorePipeEventMap {}
 
 export type MEPlugin = Plugin<MixEditor>;
 
+export interface InitParams {
+  root_ent_tdo?: RootEntTDO;
+}
+
 /** MixEditor 的上下文。 */
-export class MixEditor implements ICoreCtx {
+export class MixEditor {
   ent: EntCtx<MEEntMap, MEEntBehaviorMap, MEEntDomainCtxMap, this>;
   ent_tdo: EntTDOCtx<MEEntTDOMap, MEEntTDOBehaviorMap, this>;
 

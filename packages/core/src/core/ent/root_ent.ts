@@ -1,6 +1,10 @@
-import { createSignal, WrappedSignal } from "@mixeditor/common";
-import { Ent } from "../../ent/ent";
-import { EntTDO } from "../../ent/tdo/tdo";
+import { create_Signal, WrappedSignal } from "@mixeditor/common";
+import { create_BaseEnt, Ent, EntCreateParams } from "../../ent/ent";
+import {
+  create_BaseEntTDO,
+  EntTDO,
+  EntTDOCreateParams,
+} from "../../ent/tdo/tdo";
 import { MixEditor } from "../mix_editor";
 
 export interface RootEnt extends Ent {
@@ -9,15 +13,10 @@ export interface RootEnt extends Ent {
 
 /** 创建根实体。 */
 export function create_RootEnt(
-  id: string,
-  params: Omit<RootEnt, "id" | "type" | "children"> & {
-    children?: Ent[];
-  }
+  params: EntCreateParams<RootEnt, "type" | "children", "children">
 ): RootEnt {
-  const result = params as unknown as RootEnt;
-  result.id = id;
-  result.type = "root";
-  result.children = createSignal(params.children ?? [], {
+  const result = create_BaseEnt<RootEnt>("root", params);
+  result.children = create_Signal(params.children ?? [], {
     equals: false,
   });
   return result;
@@ -29,20 +28,18 @@ export interface RootEntTDO extends EntTDO {
 
 /** 创建根实体TDO。 */
 export function create_RootEntTDO(
-  id: string,
-  params: Omit<RootEntTDO, "id" | "type">
+  params: EntTDOCreateParams<RootEntTDO, "type" | "children">
 ): RootEntTDO {
-  const result = params as RootEntTDO;
-  result.id = id;
-  result.type = "root";
+  const result = create_BaseEntTDO<RootEntTDO>("root", params);
+  result.children = params.children ?? [];
   return result;
 }
 
 export function register_root_ent_behavior(editor: MixEditor) {
   editor.ent.register_handlers("root", {
     to_tdo: async ({ item }) => {
-      return create_RootEntTDO(item.id, {
-        marks: new Map(),
+      return create_RootEntTDO({
+        id: item.id,
         children: await Promise.all(
           item.children.get().map((child) => {
             return editor.ent.exec_behavior(child, "to_tdo", {})!;
@@ -75,7 +72,8 @@ export function register_root_ent_behavior(editor: MixEditor) {
 
   editor.ent_tdo.register_handlers("root", {
     to_ent: async ({ item }) => {
-      return create_RootEnt(item.id, {
+      return create_RootEnt({
+        id: item.id,
         children: await Promise.all(
           item.children.map(async (child) => {
             return editor.ent_tdo.exec_behavior(child, "to_ent", {})!;

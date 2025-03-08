@@ -19,17 +19,17 @@ export type DomainCtxMap = {
 };
 
 /** 实体上下文。 */
-export interface IEntCtx<
-  TEntMap extends EntMap,
-  TBehaviorMap extends EntBehaviorMap<TExCtx>,
-  TExCtx extends any
-> extends IBehaviorHandlerManager<Ent, TBehaviorMap, TEntMap, TExCtx> {
-  ex_ctx: TExCtx;
-  gen_id: () => string;
-}
+// export interface IEntCtx<
+//   TEntMap extends EntMap,
+//   TBehaviorMap extends EntBehaviorMap<TExCtx>,
+//   TExCtx extends any
+// > extends IBehaviorHandlerManager<Ent, TBehaviorMap, TEntMap, TExCtx> {
+//   ex_ctx: TExCtx;
+//   gen_id: () => string;
+// }
 
-export type EntMapOfIEntCtx<T extends IEntCtx<any, any, any>> =
-  T extends IEntCtx<infer TEntMap, any, any> ? TEntMap : never;
+export type EntMapOfEntCtx<T extends EntCtx<any, any, any, any>> =
+  T extends EntCtx<infer TEntMap, any, any, any> ? TEntMap : never;
 
 /** 实体上下文。 */
 export class EntCtx<
@@ -37,8 +37,8 @@ export class EntCtx<
   TBehaviorMap extends EntBehaviorMap<TExCtx>,
   TDomainCtxMap extends DomainCtxMap,
   TExCtx extends any
-> implements IEntCtx<TEntMap, TBehaviorMap, TExCtx>
-{
+> {
+  //  implements IEntCtx<TEntMap, TBehaviorMap, TExCtx>
   ex_ctx: TExCtx;
   protected behavior: BehaviorHandlerManager<
     TBehaviorMap,

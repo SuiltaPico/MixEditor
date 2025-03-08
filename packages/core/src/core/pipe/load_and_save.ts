@@ -14,7 +14,7 @@ export interface SaveEvent extends IPipeEvent<MixEditor> {
 }
 
 export function register_load_and_save_pipe(editor: MixEditor) {
-  const { pipe, ent_tdo, content } = editor;
+  const { pipe, ent, ent_tdo, content } = editor;
 
   pipe.set_pipe(
     "load",
@@ -24,7 +24,8 @@ export function register_load_and_save_pipe(editor: MixEditor) {
         execute: async (evt, wait_deps) => {
           await wait_deps();
           if (!evt.input.type || evt.input.type !== "root") {
-            evt.input = create_RootEntTDO(evt.input.id || "root", {
+            evt.input = create_RootEntTDO({
+              id: evt.input.id,
               children: evt.input.children,
             });
           }
@@ -58,7 +59,7 @@ export function register_load_and_save_pipe(editor: MixEditor) {
         id: "load_from_content",
         execute: async (evt, wait_deps) => {
           await wait_deps();
-          evt.output = (await ent_tdo.exec_behavior(
+          evt.output = (await ent.exec_behavior(
             content.root.get(),
             "to_tdo",
             {}
