@@ -1,12 +1,18 @@
 import { BrowserViewExposed } from "@mixeditor/browser-view";
-import { MEPlugin } from "@mixeditor/core";
-import { create_TextEnt } from "./model";
+import { load_mark_record, MEPlugin, save_mark_record } from "@mixeditor/core";
+import { create_TextEnt, TextEntTDO } from "./model";
 
 export function text() {
   return {
     id: "text",
     async init(editor) {
-      const { ent: ent_ctx, ent_tdo: ent_tdo_ctx, plugin } = editor;
+      const {
+        ent: ent_ctx,
+        ent_tdo: ent_tdo_ctx,
+        mark: mark_ctx,
+        mark_tdo: mark_tdo_ctx,
+        plugin,
+      } = editor;
 
       const browser_view_plugin =
         await plugin.wait_plugin_inited<BrowserViewExposed>("browser-view");
@@ -16,41 +22,29 @@ export function text() {
         const node = create_TextEnt({
           id: item.id,
           content: item.content,
-          marks: await load_mark_map(node_tdo_manager, item.marks),
+          marks: await load_mark_record(mark_tdo_ctx, item.marks),
         });
-        node_manager.record_node(node);
         return node;
       });
 
-      node_manager.set_tag("text", ["inline", "text_container"]);
-      node_manager.set_mergeable_into_tags("text", [
+      ent_ctx.set_tag("text", ["inline", "text_container"]);
+      ent_ctx.set_mergeable_into_tags("text", [
         "inline_container",
         "text_container",
       ]);
 
-      node_manager.register_handlers("text", {
-        to_tdo: async (_, node) => {
+      ent_ctx.register_handlers("text", {
+        to_tdo: async ({ item }) => {
           return {
-            id: node.id,
+            id: item.id,
             type: "text",
-            content: node.text.get(),
-            marks: await save_mark_map(mark_manager, node.marks.get()),
-          } satisfies TextNodeTDO;
+            content: item.content.get(),
+            marks: await save_mark_record(mark_ctx, item.marks.get()),
+          } satisfies TextEntTDO;
         },
 
-        get_children_count: (_, node) => {
-          return node.text.get().length;
-        },
-
-        split(_, node, indexes) {
-          const text = node.text.get();
-          const result = [];
-          for (const index of indexes) {
-            result.push(
-              create_TextEnt(node_manager.gen_id(), text.slice(index))
-            );
-          }
-          return result;
+        "tree:length": ({ item }) => {
+          return item.content.get().length;
         },
 
         insert_children: async (_, node, to, children) => {

@@ -5,18 +5,17 @@ import {
   Ent,
   EntCreateParams,
   EntTDO,
-  EntTDOCreateParams,
-  MarkMap,
+  EntTDOCreateParams
 } from "@mixeditor/core";
 
 /** 文本节点传输对象。 */
-export interface TextNodeTDO extends EntTDO {
+export interface TextEntTDO extends EntTDO {
   type: "text";
   content: string;
 }
 
-export function create_TextTDO(params: EntTDOCreateParams<TextNodeTDO>) {
-  const result = create_BaseEntTDO<TextNodeTDO>("text", params);
+export function create_TextTDO(params: EntTDOCreateParams<TextEntTDO>) {
+  const result = create_BaseEntTDO<TextEntTDO>("text", params);
   result.content = params.content;
   return result;
 }

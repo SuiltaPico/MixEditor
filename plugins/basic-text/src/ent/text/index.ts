@@ -1,4 +1,4 @@
-import { TextEnt, TextNodeTDO } from "./model";
+import { TextEnt, TextEntTDO } from "./model";
 
 export * from "./model";
 
@@ -7,6 +7,6 @@ declare module "@mixeditor/core" {
     text: TextEnt;
   }
   interface MEEntTDOMap {
-    text: TextNodeTDO;
+    text: TextEntTDO;
   }
 }
