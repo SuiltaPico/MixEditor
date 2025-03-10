@@ -1,13 +1,13 @@
 import { ContentCtx } from "../content/content_ctx";
-import { Ent } from "../ent";
-import { EntBehaviorHandler, EntBehaviorMap } from "../ent/ent_behavior";
-import { DomainCtxMap, EntCtx, EntMap } from "../ent/ent_ctx";
-import { EntTDO } from "../ent/tdo/tdo";
+import { Ent } from "../entity";
+import { EntBehaviorHandler, EntBehaviorMap } from "../entity/ent_behavior";
+import { DomainCtxMap, EntCtx, EntMap } from "../entity/ent_ctx";
+import { EntTDO } from "../entity/tdo/tdo";
 import {
   EntTDOBehaviorHandler,
   EntTDOBehaviorMap,
-} from "../ent/tdo/tdo_behavior";
-import { EntTDOCtx, EntTDOMap } from "../ent/tdo/tdo_ctx";
+} from "../entity/tdo/tdo_behavior";
+import { EntTDOCtx, EntTDOMap } from "../entity/tdo/tdo_ctx";
 import {
   MarkBehaviorMap,
   MarkCtx,
@@ -15,7 +15,7 @@ import {
   MarkTDOBehaviorMap,
   MarkTDOCtx,
   MarkTDOMap,
-} from "../mark";
+} from "../trait";
 import { OpBehaviorHandler, OpBehaviorMap, OpCtx, OpMap } from "../op";
 import { IPipeEvent, IPipeStageHandler, PipeCtx } from "../pipe";
 import { Plugin, PluginCtx } from "../plugin";

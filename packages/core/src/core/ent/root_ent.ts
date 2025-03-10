@@ -1,10 +1,10 @@
 import { create_Signal, WrappedSignal } from "@mixeditor/common";
-import { create_BaseEnt, Ent, EntCreateParams } from "../../ent/ent";
+import { create_BaseEnt, Ent, EntCreateParams } from "../../entity/ent";
 import {
   create_BaseEntTDO,
   EntTDO,
   EntTDOCreateParams,
-} from "../../ent/tdo/tdo";
+} from "../../entity/tdo/tdo";
 import { MixEditor } from "../mix_editor";
 
 export interface RootEnt extends Ent {
