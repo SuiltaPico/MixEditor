@@ -19,7 +19,10 @@ export class TwoLevelTypeMap<
     }
     this.map.get(master_type)?.set(segment_type, value);
   }
-  remove(master_type: TMasterKey, segment_type: TSegmentKey) {
+  delete(master_type: TMasterKey, segment_type: TSegmentKey) {
     this.map.get(master_type)?.delete(segment_type);
+  }
+  delete_master(master_type: TMasterKey) {
+    this.map.delete(master_type);
   }
 }

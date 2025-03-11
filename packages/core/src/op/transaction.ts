@@ -106,11 +106,11 @@ export function register_TransOp_behavior(
   op_ctx.register_handlers("transaction", {
     execute: async (params) => {
       // 如果出错，走 error_recovery 流程
-      await params.item.tr.wait_for_commited();
+      await params.it.tr.wait_for_commited();
     },
     undo: async (params) => {
       // 事务回滚出错如果不可恢复，则抛出错误
-      await params.item.tr.rollback();
+      await params.it.tr.rollback();
     },
     error_recovery: async (params) => {
       const err = params.err;
@@ -122,7 +122,7 @@ export function register_TransOp_behavior(
       )
         return;
       // 否则，处于执行（execute）或重做（redo）情况，则尝试回滚事务。
-      await params.item.tr.rollback();
+      await params.it.tr.rollback();
       return true;
     },
   });

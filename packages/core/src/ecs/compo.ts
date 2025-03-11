@@ -2,8 +2,10 @@ import { TDO } from "../tdo";
 
 /** 组件接口。 */
 export interface Compo {
-  get_type(): string;
+  type: string;
 }
 
-/** 组件数据传输对象。 */
+export type CompoTDORecord = Record<string, CompoTDO>;
+
+/** 组件的数据传输对象。 */
 export interface CompoTDO extends TDO {}

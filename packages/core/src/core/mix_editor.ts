@@ -1,21 +1,12 @@
 import { ContentCtx } from "../content/content_ctx";
-import { Ent } from "../entity";
-import { EntBehaviorHandler, EntBehaviorMap } from "../entity/ent_behavior";
-import { DomainCtxMap, EntCtx, EntMap } from "../entity/ent_ctx";
-import { EntTDO } from "../entity/tdo/tdo";
 import {
-  EntTDOBehaviorHandler,
-  EntTDOBehaviorMap,
-} from "../entity/tdo/tdo_behavior";
-import { EntTDOCtx, EntTDOMap } from "../entity/tdo/tdo_ctx";
-import {
-  MarkBehaviorMap,
-  MarkCtx,
-  MarkMap,
-  MarkTDOBehaviorMap,
-  MarkTDOCtx,
-  MarkTDOMap,
-} from "../trait";
+  Compo,
+  CompoBehaviorHandler,
+  CompoBehaviorMap,
+  ECSCtx,
+  EntBehaviorHandler,
+  EntBehaviorMap
+} from "../ecs";
 import { OpBehaviorHandler, OpBehaviorMap, OpCtx, OpMap } from "../op";
 import { IPipeEvent, IPipeStageHandler, PipeCtx } from "../pipe";
 import { Plugin, PluginCtx } from "../plugin";
@@ -26,8 +17,7 @@ import {
   TDOSerializerMap,
 } from "../tdo/serialize/serialize_ctx";
 // import { ICoreCtx, InitParams } from "./core_ctx";
-import { TreeEntBehaviorMap } from "./ent";
-import { RootEnt, RootEntTDO } from "./ent/root_ent";
+import { RootEntTDO } from "./ent/root_ent";
 import { MECorePipeEventMap } from "./pipe";
 import { regist_core_behaviors } from "./regist_core_behaviors";
 import { TreeSelectionMapExtend } from "./selection";
@@ -36,10 +26,10 @@ export type MEEntBehaviorHandler<
   TParams extends object,
   TResult
 > = EntBehaviorHandler<TParams, TResult, MixEditor>;
-export type MEEntTDOBehaviorHandler<
+export type MECompoBehaviorHandler<
   TParams extends object,
   TResult
-> = EntTDOBehaviorHandler<TParams, TResult, MixEditor>;
+> = CompoBehaviorHandler<TParams, TResult, MixEditor>;
 export type MEOpBehaviorHandler<
   TParams extends object,
   TResult
@@ -51,38 +41,12 @@ export type MEPipeStageHandler<TEvent extends MEEvent> = IPipeStageHandler<
   MixEditor
 >;
 
+/** MixEditor 的组件表，供插件扩展 */
+export interface MECompoMap extends Record<string, Compo> {}
 /** MixEditor 的实体行为映射表，供插件扩展 */
-export interface MEEntBehaviorMap
-  extends EntBehaviorMap<any>,
-    TreeEntBehaviorMap {
-  to_tdo: MEEntBehaviorHandler<{}, EntTDO>;
-}
-
-/** MixEditor 的实体表，供插件扩展 */
-export interface MEEntMap extends EntMap {
-  root: RootEnt;
-}
-/** MixEditor 的领域上下文表，供插件扩展 */
-export interface MEEntDomainCtxMap extends DomainCtxMap {}
-
-/** MixEditor 的实体TDO表，供插件扩展 */
-export interface MEEntTDOMap extends EntTDOMap {
-  root: RootEntTDO;
-}
-/** MixEditor 的实体TDO行为映射表，供插件扩展 */
-export interface MEEntTDOBehaviorMap extends EntTDOBehaviorMap<any> {
-  to_ent: MEEntTDOBehaviorHandler<{}, Ent>;
-}
-
-/** MixEditor 的标记表，供插件扩展 */
-export interface MEMarkMap extends MarkMap {}
-/** MixEditor 的标记记录，供插件扩展 */
-export interface MEMarkBehaviorMap extends MarkBehaviorMap<any> {}
-
-/** MixEditor 的标记TDO表，供插件扩展 */
-export interface MEMarkTDOMap extends MarkTDOMap {}
-/** MixEditor 的标记TDO行为映射表，供插件扩展 */
-export interface MEMarkTDOBehaviorMap extends MarkTDOBehaviorMap<any> {}
+export interface MEEntBehaviorMap extends EntBehaviorMap<MixEditor> {}
+/** MixEditor 的组件行为映射表，供插件扩展 */
+export interface MECompoBehaviorMap extends CompoBehaviorMap<MixEditor> {}
 
 /** MixEditor 的操作表，供插件扩展 */
 export interface MEOpMap extends OpMap {}
@@ -109,13 +73,9 @@ export interface InitParams {
 
 /** MixEditor 的上下文。 */
 export class MixEditor {
-  ent: EntCtx<MEEntMap, MEEntBehaviorMap, MEEntDomainCtxMap, this>;
-  ent_tdo: EntTDOCtx<MEEntTDOMap, MEEntTDOBehaviorMap, this>;
+  ecs: ECSCtx<MECompoMap, MECompoBehaviorMap, MEEntBehaviorMap, this>;
 
-  mark: MarkCtx<MEMarkMap, MEMarkBehaviorMap, this>;
-  mark_tdo: MarkTDOCtx<MEMarkTDOMap, MEMarkTDOBehaviorMap, this>;
-
-  content: ContentCtx<this["ent"]>;
+  content: ContentCtx<this["ecs"]>;
 
   op: OpCtx<MEOpMap, MEOpBehaviorMap, this>;
 
@@ -149,11 +109,8 @@ export class MixEditor {
   }
 
   constructor() {
-    this.ent = new EntCtx(this);
-    this.ent_tdo = new EntTDOCtx(this);
-    this.mark = new MarkCtx(this);
-    this.mark_tdo = new MarkTDOCtx(this);
-    this.content = new ContentCtx(this.ent);
+    this.ecs = new ECSCtx(this);
+    this.content = new ContentCtx(this.ecs);
     this.op = new OpCtx(this);
     this.pipe = new PipeCtx<MEPipeEventMap, this>(this);
     this.selection = new SelectionCtx();

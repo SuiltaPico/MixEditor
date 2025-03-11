@@ -1,10 +1,4 @@
 import { create_Signal, WrappedSignal } from "@mixeditor/common";
-import { create_BaseEnt, Ent, EntCreateParams } from "../../entity/ent";
-import {
-  create_BaseEntTDO,
-  EntTDO,
-  EntTDOCreateParams,
-} from "../../entity/tdo/tdo";
 import { MixEditor } from "../mix_editor";
 
 export interface RootEnt extends Ent {
@@ -36,13 +30,13 @@ export function create_RootEntTDO(
 }
 
 export function register_root_ent_behavior(editor: MixEditor) {
-  editor.ent.register_handlers("root", {
+  editor.ecs.register_handlers("root", {
     to_tdo: async ({ item }) => {
       return create_RootEntTDO({
         id: item.id,
         children: await Promise.all(
           item.children.get().map((child) => {
-            return editor.ent.exec_behavior(child, "to_tdo", {})!;
+            return editor.ecs.exec_behavior(child, "to_tdo", {})!;
           })
         ),
       });

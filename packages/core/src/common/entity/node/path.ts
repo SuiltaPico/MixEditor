@@ -1,6 +1,6 @@
-import { Node } from "../../../entity/node/node";
-import { NodeManager } from "../../../entity/node/manager";
-import { NodeManagerHandlerMap } from "../../../entity/node/maps";
+import { Node } from "../../../ecs/node/node";
+import { NodeManager } from "../../../ecs/node/manager";
+import { NodeManagerHandlerMap } from "../../../ecs/node/maps";
 import { MixEditorNodeManager } from "../../../core/core_ctx";
 
 /** 获取节点路径 */

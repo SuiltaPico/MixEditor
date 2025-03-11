@@ -1,4 +1,4 @@
-import { Ent } from "../../entity";
+import { Ent } from "../../ecs";
 import { MEEntBehaviorHandler } from "../mix_editor";
 
 export interface TreeEntBehaviorMap {

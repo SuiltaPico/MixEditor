@@ -14,7 +14,7 @@ export interface SaveEvent extends IPipeEvent<MixEditor> {
 }
 
 export function register_load_and_save_pipe(editor: MixEditor) {
-  const { pipe, ent, ent_tdo, content } = editor;
+  const { pipe, ecs: ent, ent_tdo, content } = editor;
 
   pipe.set_pipe(
     "load",

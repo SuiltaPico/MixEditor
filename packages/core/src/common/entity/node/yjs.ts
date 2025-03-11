@@ -1,5 +1,5 @@
 import * as Y from "yjs";
-import { Node } from "../../../entity/node";
+import { Node } from "../../../ecs/node";
 
 export function get_node_children(node: Node) {
   const children: Node[] = [];

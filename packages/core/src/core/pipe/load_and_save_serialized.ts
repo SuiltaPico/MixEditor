@@ -38,7 +38,7 @@ export interface SaveSerializedEvent extends IPipeEvent<MixEditor> {
 }
 
 export function register_load_and_save_serialized_pipe(editor: MixEditor) {
-  const { pipe, ent, content, tdo_serialize } = editor;
+  const { pipe, ecs: ent, content, tdo_serialize } = editor;
 
   pipe.set_pipe(
     "load_serialized",

@@ -12,9 +12,7 @@ export type BehaviorHandler<
   TParams extends object,
   TResult,
   TExCtx
-> = (
-  params: { item: TItem; ex_ctx: TExCtx } & TParams
-) => MaybePromise<TResult>;
+> = (params: { it: TItem; ex_ctx: TExCtx } & TParams) => MaybePromise<TResult>;
 
 type ParamsOfBehaviorHandler<
   THandler extends BehaviorHandler<any, any, any, any>
@@ -104,8 +102,9 @@ export const IBehaviorHandlerManager_methods = [
 /** 行为处理器的管理器。
  *
  * 负责管理行为处理器的注册、查询和执行。
- * @template TItem 项目类型。
  * @template TBehaviorMap 行为映射表。
+ * @template TItem 项目类型。
+ * @template TItemMap 项目映射表。
  * @template TExCtx 外部上下文类型。
  */
 export class BehaviorHandlerManager<
@@ -176,17 +175,17 @@ export class BehaviorHandlerManager<
   exec_behavior<TBehaviorId extends Extract<keyof TBehaviorMap, string>>(
     item: TItem,
     behavior_id: TBehaviorId,
-    params: Omit<Parameters<TBehaviorMap[TBehaviorId]>[0], "item" | "ex_ctx">
+    params: Omit<Parameters<TBehaviorMap[TBehaviorId]>[0], "it" | "ex_ctx">
   ) {
     const params_with_ctx = params as Parameters<TBehaviorMap[TBehaviorId]>[0];
     // 注入上下文
-    params_with_ctx.item = item;
-    params_with_ctx.ex_ctx = this.exec_ctx;
+    params_with_ctx.it = item;
+    params_with_ctx.ex_ctx = this.ex_ctx;
 
     let handler = this.get_handler(item.type, behavior_id);
     if (handler === undefined) return undefined;
     return handler(params_with_ctx) as ReturnType<TBehaviorMap[TBehaviorId]>;
   }
-
-  constructor(public exec_ctx: TExCtx) {}
+  
+  constructor(public ex_ctx: TExCtx) {}
 }
