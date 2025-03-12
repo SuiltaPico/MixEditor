@@ -13,6 +13,9 @@ export class TwoLevelTypeMap<
   get(master_type: TMasterKey, segment_type: TSegmentKey) {
     return this.map.get(master_type)?.get(segment_type);
   }
+  get_master(master_type: TMasterKey) {
+    return this.map.get(master_type);
+  }
   set(master_type: TMasterKey, segment_type: TSegmentKey, value: TValue) {
     if (!this.map.has(master_type)) {
       this.map.set(master_type, new Map());

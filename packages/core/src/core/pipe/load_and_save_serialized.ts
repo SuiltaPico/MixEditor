@@ -1,6 +1,7 @@
+import { Ent, EntTDO } from "../../ecs";
 import { create_PipeStage_chain, IPipeEvent } from "../../pipe";
-import { RootEnt, RootEntTDO } from "../ent";
 import { MixEditor } from "../mix_editor";
+import { SavedData } from "./load_and_save";
 
 export interface LoadSerializedEvent extends IPipeEvent<MixEditor> {
   pipe_id: "load_serialized";
@@ -14,19 +15,19 @@ export interface LoadSerializedEvent extends IPipeEvent<MixEditor> {
   config: any;
 
   /** 反序列化后的根实体TDO */
-  tdo: RootEntTDO;
+  saved_data: SavedData;
 
   /** 最终被加载到内容中的根实体 */
-  ent?: RootEnt;
+  ent?: Ent;
 }
 export interface SaveSerializedEvent extends IPipeEvent<MixEditor> {
   pipe_id: "save_serialized";
 
   /** 要被序列化的根实体 */
-  root_ent: RootEnt;
+  root_ent: Ent;
 
   /** 序列化后的根实体TDO */
-  root_ent_tdo?: RootEntTDO;
+  saved_data?: SavedData;
 
   /** 要被序列化的格式 */
   format: string;
@@ -38,20 +39,20 @@ export interface SaveSerializedEvent extends IPipeEvent<MixEditor> {
 }
 
 export function register_load_and_save_serialized_pipe(editor: MixEditor) {
-  const { pipe, ecs: ent, content, tdo_serialize } = editor;
+  const { pipe, tdo_serialize } = editor;
 
   pipe.set_pipe(
     "load_serialized",
     create_PipeStage_chain([
       {
-        id: "load_serialized_to_tdo",
+        id: "deserialize_to_tdo",
         execute: async (evt, wait_deps) => {
           await wait_deps();
-          evt.tdo = (await tdo_serialize.deserialize(
+          evt.saved_data = await tdo_serialize.deserialize(
             evt.format,
             evt.serialized,
             evt.config
-          )) as RootEntTDO;
+          );
         },
       },
       {
@@ -60,7 +61,7 @@ export function register_load_and_save_serialized_pipe(editor: MixEditor) {
           await wait_deps();
           await pipe.execute({
             pipe_id: "load",
-            input: evt.tdo,
+            input: evt.saved_data,
           });
         },
       },
@@ -71,30 +72,23 @@ export function register_load_and_save_serialized_pipe(editor: MixEditor) {
     "save_serialized",
     create_PipeStage_chain([
       {
-        id: "get_input",
+        id: "save_to_tdo",
         execute: async (evt, wait_deps) => {
           await wait_deps();
-          evt.root_ent = content.root.get() as RootEnt;
+          const saved = await pipe.execute({
+            pipe_id: "save",
+            input: evt.root_ent,
+          });
+          evt.saved_data = saved?.output;
         },
       },
       {
-        id: "convert_ent_to_tdo",
-        execute: async (evt, wait_deps) => {
-          await wait_deps();
-          evt.root_ent_tdo = (await ent.exec_behavior(
-            evt.root_ent,
-            "to_tdo",
-            {}
-          )) as RootEntTDO;
-        },
-      },
-      {
-        id: "convert_tdo_to_serialized",
+        id: "serialize_from_tdo",
         execute: async (evt, wait_deps) => {
           await wait_deps();
           evt.serialized = await tdo_serialize.serialize(
             evt.format,
-            evt.root_ent_tdo!,
+            evt.saved_data!,
             evt.config
           );
         },

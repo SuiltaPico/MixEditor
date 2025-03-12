@@ -1,23 +1,12 @@
 import { create_Signal, WrappedSignal } from "@mixeditor/common";
-import { create_RootEnt } from "../core/ent/root_ent";
-import { ECSCtx, EntMapOfEntCtx } from "../ecs";
-// import { EntMapOfIEntCtx, IEntCtx } from "../ent/ent_ctx";
+import { ECSCtx, Ent } from "../ecs";
 
-/** 内容上下文接口 */
-// export interface IContentCtx<TEnt extends Ent> {
-//   root: WrappedSignal<TEnt>;
-// }
-
-/** 内容上下文实现 */
-export class ContentCtx<TEntCtx extends ECSCtx<any, any, any, any>> {
+/** 内容上下文 */
+export class ContentCtx {
   // implements IContentCtx<TEntCtx["ent_map"]["root"]>
-  root: WrappedSignal<EntMapOfEntCtx<TEntCtx>["root"]>;
+  root: WrappedSignal<Ent | undefined>;
 
-  constructor(private ent_ctx: TEntCtx) {
-    this.root = create_Signal(
-      create_RootEnt({
-        id: this.ent_ctx.gen_ent_id(),
-      })
-    );
+  constructor(root_ent?: Ent) {
+    this.root = create_Signal(root_ent);
   }
 }

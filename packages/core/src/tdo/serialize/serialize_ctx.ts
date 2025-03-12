@@ -1,15 +1,17 @@
+import { MaybePromise } from "@mixeditor/common";
 import { TDO } from "../tdo";
+import { SavedData } from "../../core";
 
 export type SerializerHandler<TConfig, TOutput, TExCtx> = (params: {
-  input: TDO;
+  input: SavedData;
   config?: TConfig;
   ex_ctx: TExCtx;
-}) => TOutput;
+}) => MaybePromise<TOutput>;
 export type DeserializerHandler<TConfig, TInput, TExCtx> = (params: {
   input: TInput;
   config?: TConfig;
   ex_ctx: TExCtx;
-}) => TDO;
+}) => MaybePromise<SavedData>;
 
 export type TDOSerializerMap<TExCtx> = Record<
   string,
@@ -71,7 +73,7 @@ export class TDOSerializeCtx<
 
   serialize<TType extends Extract<keyof TTDOSerializerMap, string>>(
     type: TType,
-    input: TDO,
+    input: SavedData,
     config?: TTDOSerializerMap[TType]["config"]
   ) {
     const serializer = this.serializers.get(type);
