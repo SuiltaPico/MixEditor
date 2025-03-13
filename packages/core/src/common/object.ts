@@ -15,8 +15,20 @@ type MergeInstances<T extends any[]> = T extends [infer First, ...infer Rest]
 
 /** 数组接口。若满足此接口，则可以作为数组使用。 */
 export interface IArrayLike<T> {
-  size(): number;
+  /** 获取数组元素个数。*/
+  count(): number;
+  /** 获取指定索引的元素。*/
   at(index: number): T | undefined;
+  /** 获取指定元素的索引。*/
+  index_of?(item: T): number;
+  // /** 插入元素。*/
+  // insert(index: number, items: T[]): void;
+  // /** 删除元素。删除从start到end（包含end）的元素，返回删除的元素。
+  //  * @param start 开始索引
+  //  * @param end 结束索引
+  //  * @returns 删除的元素
+  //  */
+  // delete(start: number, end: number): T[];
 }
 
 export function compose<T extends Constructor[]>(...classes: T) {

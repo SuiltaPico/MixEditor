@@ -26,7 +26,6 @@ export const browser_view = (params: { mount_to: HTMLElement }) => {
         editor,
       } as BvContext;
 
-      editor.ent.register_domain("bv");
 
       editor.ent.register_handler(
         "root",
@@ -44,7 +43,6 @@ export const browser_view = (params: { mount_to: HTMLElement }) => {
       };
     },
     dispose(editor) {
-      editor.ent.unregister_domain("bv");
       dispose_render_root?.();
     },
   } satisfies MEPlugin;

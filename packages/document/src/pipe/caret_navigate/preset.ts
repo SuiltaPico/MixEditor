@@ -1,4 +1,4 @@
-import { MEEntBehaviorMap } from "@mixeditor/core";
+import { get_child_ent_count, MEEntBehaviorMap } from "@mixeditor/core";
 import {
   CaretDirection,
   CaretNavigateDecision,
@@ -18,11 +18,10 @@ import {
  */
 export const handle_non_enterable_children_and_non_boundary_caret_navigate: MEEntBehaviorMap["doc:handle_caret_navigate"] =
   async (params) => {
-    let { item: ent, from, direction, ex_ctx: editor } = params;
+    let { it: ent, from, direction, ex_ctx: editor } = params;
 
     // 获取子节点虚拟长度（如文本字符数）
-    const children_length =
-      (await editor.ent.exec_behavior(ent, "doc:get_length", {})!) ?? 0;
+    const children_length = get_child_ent_count(editor.ecs, ent.id);
 
     // 根据移动方向预计算新位置
     from += direction;
@@ -55,9 +54,8 @@ export const handle_non_enterable_children_and_non_boundary_caret_navigate: MEEn
  * - 具有明确子节点边界的实体
  */
 export const handle_enterable_children_caret_navigation: MEEntBehaviorMap["doc:handle_caret_navigate"] =
-  async ({ item: ent, from, direction, ex_ctx: editor, src }) => {
-    const children_length =
-      (await editor.ent.exec_behavior(ent, "doc:get_length", {})!) ?? 0;
+  async ({ it: ent, from, direction, ex_ctx: editor, src }) => {
+    const children_length = get_child_ent_count(editor.ecs, ent.id);
 
     const to_prev = direction === CaretDirection.Prev;
 

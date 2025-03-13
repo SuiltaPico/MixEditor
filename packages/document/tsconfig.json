@@ -21,6 +21,6 @@
   },
   "include": [
     "src/**/*.ts",
-    "__tests__/**/*.ts", "../core/src/common/tree/path.ts",
+    "__tests__/**/*.ts",
   ],
 }

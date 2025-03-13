@@ -1,4 +1,11 @@
-import { MixEditor, TreeCaret } from "@mixeditor/core";
+import {
+  get_child_ent_id,
+  get_index_in_parent_ent,
+  get_parent_ent_id,
+  MixEditor,
+  TreeCaret
+} from "@mixeditor/core";
+import { DocCaretNavigate } from ".";
 
 /** 光标导航来源，表示触发导航操作的上下文位置 */
 export enum CaretNavigateSource {
@@ -80,13 +87,16 @@ export async function execute_navigate_caret_from_pos(
   direction: CaretDirection,
   src?: CaretNavigateSource
 ): Promise<TreeCaret | undefined> {
-  const ent_ctx = editor.ent;
+  const ecs_ctx = editor.ecs;
+  const caret_ent_id = caret.ent_id;
+  const caret_ent = ecs_ctx.get_ent(caret_ent_id);
+  if (!caret_ent) return;
 
   let decision: CaretNavigateDecision | undefined;
 
-  decision = await ent_ctx.exec_behavior(
-    caret.ent,
-    "doc:handle_caret_navigate",
+  decision = await ecs_ctx.run_ent_behavior(
+    caret_ent,
+    DocCaretNavigate,
     {
       direction,
       src,
@@ -96,21 +106,16 @@ export async function execute_navigate_caret_from_pos(
 
   if (!decision || decision.type === "skip") {
     // 跳过当前节点，往下一个节点移动
-    const ent = caret.ent;
-    const parent = ent_ctx.get_domain_ctx(ent, "doc")?.parent;
+    const parent_id = get_parent_ent_id(ecs_ctx, caret_ent_id);
 
-    if (!parent) return;
+    if (!parent_id) return;
 
-    const index_in_parent = await ent_ctx.exec_behavior(
-      parent,
-      "doc:get_index_of_child",
-      ent
-    )!;
+    const index_in_parent = get_index_in_parent_ent(ecs_ctx, caret_ent_id);
 
     return await execute_navigate_caret_from_pos(
       editor,
       {
-        ent: parent!,
+        ent_id: parent_id!,
         offset: index_in_parent,
       },
       direction,
@@ -118,21 +123,25 @@ export async function execute_navigate_caret_from_pos(
     );
   } else if (decision.type === "self") {
     return {
-      ent: caret.ent,
+      ent_id: caret_ent_id,
       offset: decision.pos,
     };
   } else if (decision.type === "child") {
     // 继续访问子节点
-    const child = await ent_ctx.exec_behavior(caret.ent, "doc:get_child", {
-      index: decision.index,
-    });
+    const child_ent_id = get_child_ent_id(
+      ecs_ctx,
+      caret_ent_id,
+      decision.index
+    );
+    if (!child_ent_id) return;
+
     // 按照进入方向进行判断。
     return await execute_navigate_caret_from_pos(
       editor,
       // 如果是 next 进入的子节点，则尝试移动到子节点的头部。
       // 如果是 prev 进入的子节点，则尝试移动到子节点的尾部。
       {
-        ent: child!,
+        ent_id: child_ent_id!,
         offset: direction === CaretDirection.Next ? 0 : Number.MAX_SAFE_INTEGER,
       },
       direction,

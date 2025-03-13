@@ -1,5 +1,5 @@
 import { Op } from "./op";
-import { IOpCtx } from "./op_ctx";
+import { OpCtx } from "./op_ctx";
 
 export interface IOpExecutorBuffer {
   push(op: Op): void;
@@ -242,7 +242,7 @@ export class OpExecutor<TBuffer extends IOpExecutorBuffer>
   }
 
   constructor(
-    public readonly op_ctx: IOpCtx<any, any, any>,
+    public readonly op_ctx: OpCtx<any, any, any>,
     public readonly history_buffer: TBuffer
   ) {}
 }

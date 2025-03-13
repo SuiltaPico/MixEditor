@@ -3,7 +3,8 @@ import {
   MixEditor,
   Transaction,
   get_common_ancestor_from_ent,
-  get_parent,
+  get_index_of_child_ent,
+  get_parent_ent_id,
 } from "@mixeditor/core";
 import { delete_range_in_same_ent } from "./delete";
 
@@ -32,7 +33,7 @@ export type MergeEntDecision =
 
 export interface MergeEntContext {
   /** 要合并的目标节点。 */
-  source: Ent;
+  src_id: string;
 }
 
 /** 执行简单节点合并。 */
@@ -96,34 +97,41 @@ export interface MergeEntContext {
 export async function execute_merge_ent(
   editor: MixEditor,
   tx: Transaction,
-  host: Ent,
-  source: Ent
+  host_id: string,
+  source_id: string
 ) {
-  const ent_ctx = editor.ent;
+  const ecs_ctx = editor.ecs;
 
   // 获取公共祖先，从公共祖先的子节点开始，尝试逐层合并，直到有一层不接受合并为止。
   const common_ancestor_info = await get_common_ancestor_from_ent(
-    ent_ctx,
-    host,
-    source
+    ecs_ctx,
+    host_id,
+    source_id
   );
   if (!common_ancestor_info) return;
 
   const { ancestors1, ancestors2, ancestor_index } = common_ancestor_info;
 
-  const full_ancestors_chain1 = ancestors1.concat(host);
-  const full_ancestors_chain2 = ancestors2.concat(source);
+  const full_ancestors_chain1 = ancestors1.concat(host_id);
+  const full_ancestors_chain2 = ancestors2.concat(source_id);
 
   const execute_merges: ((tx: Transaction) => Promise<void>)[] = [];
 
   // 从公共祖先下层开始，尝试逐层确认合并
   for (let i = ancestor_index + 1; i < full_ancestors_chain1.length; i++) {
-    const host = full_ancestors_chain1[i];
-    const source = full_ancestors_chain2[i];
+    const curr_host_id = full_ancestors_chain1[i];
+    const curr_host = ecs_ctx.get_ent(curr_host_id);
+    if (!curr_host) break;
 
-    const decision = await ent_ctx.exec_behavior(host, "doc:merge_ent", {
-      source,
-    });
+    const curr_source_id = full_ancestors_chain2[i];
+
+    const decision = await ecs_ctx.run_ent_behavior(
+      curr_host,
+      "doc:merge_ent",
+      {
+        src_id: curr_source_id,
+      }
+    );
 
     if (decision?.type === "done") {
       execute_merges.push(decision.execute_merge);
@@ -138,20 +146,20 @@ export async function execute_merge_ent(
     i >= ancestor_index + 1;
     i--
   ) {
-    const source = full_ancestors_chain2[i];
+    const src_id = full_ancestors_chain2[i];
     await execute_merges[i](tx);
     // 删除 source 节点
-    const source_parent = get_parent(ent_ctx, source);
-    if (source_parent) {
-      const source_index = await ent_ctx.exec_behavior(
-        source_parent,
-        "doc:index_of_child",
-        { child: source }
-      )!;
+    const source_parent_id = get_parent_ent_id(ecs_ctx, src_id);
+    if (source_parent_id) {
+      const source_index = get_index_of_child_ent(
+        ecs_ctx,
+        source_parent_id,
+        src_id
+      );
       await delete_range_in_same_ent(
         editor,
         tx,
-        source_parent,
+        source_parent_id,
         source_index,
         source_index
       );
@@ -159,5 +167,5 @@ export async function execute_merge_ent(
   }
 
   // 删除 source 节点
-  await ent_ctx.exec_behavior(source, "doc:delete_ent", {});
+  ecs_ctx.delete_ent(source_id);
 }

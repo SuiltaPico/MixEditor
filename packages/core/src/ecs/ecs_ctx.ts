@@ -16,16 +16,20 @@ export type EntBehaviorHandler<
   TExCtx
 > = BehaviorHandler<Ent, TParams, TResult, TExCtx>;
 
+export const EntInitBehavior = "init";
+export const EntBeforeSaveTdoBehavior = "before_save_tdo";
+export const EntAfterLoadTdoBehavior = "after_load_tdo";
+
 export type EntBehaviorMap<TExCtx> = Record<
   string,
   EntBehaviorHandler<any, any, TExCtx>
 > & {
   /** 实体初始化。 */
-  init: EntBehaviorHandler<{}, void, TExCtx>;
+  [EntInitBehavior]: EntBehaviorHandler<{}, void, TExCtx>;
   /** 实体保存为 TDO 前。 */
-  before_save_tdo: EntBehaviorHandler<{}, void, TExCtx>;
+  [EntBeforeSaveTdoBehavior]: EntBehaviorHandler<{}, void, TExCtx>;
   /** 实体从 TDO 加载后。 */
-  after_load_tdo: EntBehaviorHandler<{}, void, TExCtx>;
+  [EntAfterLoadTdoBehavior]: EntBehaviorHandler<{}, void, TExCtx>;
 };
 export type CompoBehaviorMap<TExCtx> = Record<
   string,
@@ -55,6 +59,9 @@ export class ECSCtx<
 
   /** 实体表。 */
   public ents = new Map<string, Ent>();
+
+  /** 实体默认组件表。`实体类型 -> 组件类型 -> 组件`。 */
+  public ent_default_compos = new Map<string, Map<string, Compo>>();
 
   /** 实体组件表。`实体ID -> 组件类型 -> 组件`。 */
   // 不使用 `组件类型 -> 实体ID -> 组件` 是因为增减实体ID时
@@ -201,15 +208,34 @@ export class ECSCtx<
     ent_id: string,
     compo_type: TCompoType
   ) {
-    return this.compos.get(
-      ent_id,
-      compo_type
-    ) as TCompoType extends keyof TCompoMap ? TCompoMap[TCompoType] : unknown;
+    let compo: TCompoType extends keyof TCompoMap
+      ? TCompoMap[TCompoType]
+      : unknown;
+    if (this.compos.get(ent_id, compo_type)) {
+      compo = this.compos.get(
+        ent_id,
+        compo_type
+      ) as TCompoType extends keyof TCompoMap ? TCompoMap[TCompoType] : unknown;
+    } else {
+      compo = this.ent_default_compos
+        .get(ent_id)
+        ?.get(compo_type) as TCompoType extends keyof TCompoMap
+        ? TCompoMap[TCompoType]
+        : unknown;
+    }
+    return compo;
   }
 
   /** 获取组件。 */
   get_compos(ent_id: string) {
-    return this.compos.get_master(ent_id);
+    const result = new Map<string, Compo>();
+    this.compos.get_master(ent_id)?.forEach((compo) => {
+      result.set(compo.type, compo);
+    });
+    this.ent_default_compos.get(ent_id)?.forEach((compo) => {
+      result.set(compo.type, compo);
+    });
+    return result;
   }
 
   /** 设置组件。 */
@@ -222,6 +248,16 @@ export class ECSCtx<
     compos.forEach((compo) => {
       this.compos.set(ent_id, compo.type, compo);
     });
+  }
+
+  /** 设置实体默认组件。实体默认组件的内容不会被记录到 TDO 中。 */
+  set_ent_default_compo(ent_type: string, compo: Compo) {
+    let compo_map = this.ent_default_compos.get(ent_type);
+    if (!compo_map) {
+      compo_map = new Map();
+      this.ent_default_compos.set(ent_type, compo_map);
+    }
+    compo_map.set(compo.type, compo);
   }
 
   /** 删除组件。 */
@@ -242,5 +278,32 @@ export class ECSCtx<
       Record<string, Ent>,
       TExCtx
     >(this.ex_ctx);
+
+    // 绑定行为方法
+    this.set_ent_behavior = this.ent_behaviors.register_handler.bind(
+      this.ent_behaviors
+    );
+    this.set_ent_behaviors = this.ent_behaviors.register_handlers.bind(
+      this.ent_behaviors
+    );
+    this.get_ent_behavior = this.ent_behaviors.get_handler.bind(
+      this.ent_behaviors
+    );
+    this.run_ent_behavior = this.ent_behaviors.exec_behavior.bind(
+      this.ent_behaviors
+    );
+
+    this.set_compo_behavior = this.compo_behaviors.register_handler.bind(
+      this.compo_behaviors
+    );
+    this.set_compo_behaviors = this.compo_behaviors.register_handlers.bind(
+      this.compo_behaviors
+    );
+    this.get_compo_behavior = this.compo_behaviors.get_handler.bind(
+      this.compo_behaviors
+    );
+    this.run_compo_behavior = this.compo_behaviors.exec_behavior.bind(
+      this.compo_behaviors
+    );
   }
 }

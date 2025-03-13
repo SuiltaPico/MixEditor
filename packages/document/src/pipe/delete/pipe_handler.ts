@@ -43,7 +43,7 @@ export const directed_delete_pipe_handler: IPipeStageHandler<
       result = await execute_caret_deletion(
         editor,
         tx,
-        { ent: selection.caret.ent, offset: selection.caret.offset },
+        { ent_id: selection.caret.ent_id, offset: selection.caret.offset },
         event.direction
       );
       await tx.commit();
@@ -59,8 +59,8 @@ export const directed_delete_pipe_handler: IPipeStageHandler<
       operation: await execute_range_deletion(
         editor,
         tx,
-        { ent: selection.start.ent, offset: selection.start.offset },
-        { ent: selection.end.ent, offset: selection.end.offset }
+        { ent_id: selection.start.ent_id, offset: selection.start.offset },
+        { ent_id: selection.end.ent_id, offset: selection.end.offset }
       ),
     };
     await tx.commit();
@@ -85,4 +85,8 @@ export const register_directed_delete_pipe = (editor: MixEditor) => {
       execute: directed_delete_pipe_handler,
     } as IPipeStage<IPipeEvent<any>, MixEditor>,
   ]);
+
+  return () => {
+    editor.pipe.delete_pipe("doc:directed_delete");
+  };
 };

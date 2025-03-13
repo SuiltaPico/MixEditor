@@ -1,5 +1,5 @@
-import { ChildEntCompo } from "../compo/child_ent";
-import { ChildEntArrayCompo } from "../compo/child_ent_arr";
+import { ChildCompo } from "../compo/tree/child";
+import { ArrayChildCompo } from "../compo/tree/child_ent_arr";
 import { MixEditor } from "../mix_editor";
 
 export function register_RootEnt(editor: MixEditor) {
@@ -7,8 +7,8 @@ export function register_RootEnt(editor: MixEditor) {
   ecs.set_ent_behaviors("root", {
     init: async ({ it }) => {
       ecs.set_compos(it.id, [
-        new ChildEntArrayCompo([]),
-        new ChildEntCompo(ChildEntArrayCompo.type),
+        new ArrayChildCompo([]),
+        new ChildCompo(ArrayChildCompo.type),
       ]);
     },
   });

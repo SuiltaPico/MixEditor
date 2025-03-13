@@ -1,7 +1,6 @@
 import { UlidIdGenerator } from "@mixeditor/common";
 import {
   BehaviorHandlerManager,
-  IBehaviorHandlerManager,
   IBehaviorHandlerManager_methods,
 } from "../common/behavior";
 import { bind_methods } from "../common/object";
@@ -9,16 +8,6 @@ import { Op } from "./op";
 import { OpBehaviorMap } from "./op_behavior";
 import { OpExecutor } from "./op_executor";
 import { RingBuffer } from "../common/data_struct/ring_buffer";
-
-/** 操作上下文接口 */
-export interface IOpCtx<
-  TOpMap extends OpMap,
-  TBehaviorMap extends OpBehaviorMap<TExCtx>,
-  TExCtx extends any
-> extends IBehaviorHandlerManager<Op, TBehaviorMap, TOpMap, TExCtx> {
-  ex_ctx: TExCtx;
-  gen_id: () => string;
-}
 
 export type OpMap = {
   [key: string]: Op;
@@ -29,8 +18,7 @@ export class OpCtx<
   TOpMap extends OpMap,
   TBehaviorMap extends OpBehaviorMap<TExCtx>,
   TExCtx extends any
-> implements IOpCtx<TOpMap, TBehaviorMap, TExCtx>
-{
+> {
   ex_ctx: TExCtx;
   private behavior: BehaviorHandlerManager<TBehaviorMap, Op, TOpMap, TExCtx>;
   private id_generator = new UlidIdGenerator();

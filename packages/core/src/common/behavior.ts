@@ -44,60 +44,12 @@ export interface IBehaviorMap<TItem extends IItem, TExCtx> {
   [key: string]: BehaviorHandler<TItem, any, any, TExCtx>;
 }
 
-/** 行为处理器的管理器。
- *
- * 负责管理行为处理器的注册、查询和执行。
- * @template TItem 项目类型。
- * @template TBehaviorMap 行为映射表。
- * @template TExCtx 外部上下文类型。
- */
-export interface IBehaviorHandlerManager<
-  TItem extends IItem,
-  TBehaviorMap extends IBehaviorMap<TItem, TExCtx>,
-  TItemMap extends Record<string, TItem>,
-  TExCtx
-> {
-  /** 注册行为处理器。 */
-  register_handler<
-    TItemType extends Extract<keyof TItemMap, string>,
-    TBehaviorId extends Extract<keyof TBehaviorMap, string>
-  >(
-    item_type: TItemType,
-    behavior_id: TBehaviorId,
-    handler: TypeSpecifiedBehaviorHandler<
-      TItemMap[TItemType],
-      TBehaviorMap[TBehaviorId]
-    >
-  ): void;
-  /** 注册多个行为处理器。 */
-  register_handlers<TItemType extends Extract<keyof TItemMap, string>>(
-    item_type: TItemType,
-    handlers: Partial<{
-      [key in keyof TBehaviorMap]: TypeSpecifiedBehaviorHandler<
-        TItemMap[TItemType],
-        TBehaviorMap[key]
-      >;
-    }>
-  ): void;
-  /** 获取行为。 */
-  get_handler<TType extends Extract<keyof TBehaviorMap, string>>(
-    item_type: string,
-    behavior_id: TType
-  ): TBehaviorMap[TType] | undefined;
-  /** 执行行为。 */
-  exec_behavior<TType extends Extract<keyof TBehaviorMap, string>>(
-    item: TItem,
-    behavior_id: TType,
-    params: Parameters<TBehaviorMap[TType]>[0]
-  ): ReturnType<TBehaviorMap[TType]> | undefined;
-}
-
 export const IBehaviorHandlerManager_methods = [
   "register_handler",
   "register_handlers",
   "get_handler",
   "exec_behavior",
-] satisfies (keyof IBehaviorHandlerManager<any, any, any, any>)[];
+] satisfies (keyof BehaviorHandlerManager<any, any, any, any>)[];
 
 /** 行为处理器的管理器。
  *
@@ -112,8 +64,7 @@ export class BehaviorHandlerManager<
   TItem extends IItem,
   TItemMap extends Record<string, TItem>,
   TExCtx
-> implements IBehaviorHandlerManager<TItem, TBehaviorMap, TItemMap, TExCtx>
-{
+> {
   /** 行为处理器 */
   private behavior_map = new TwoLevelTypeMap<
     TBehaviorMap,
@@ -186,6 +137,6 @@ export class BehaviorHandlerManager<
     if (handler === undefined) return undefined;
     return handler(params_with_ctx) as ReturnType<TBehaviorMap[TBehaviorId]>;
   }
-  
+
   constructor(public ex_ctx: TExCtx) {}
 }

@@ -182,7 +182,7 @@ importers:
         specifier: ^10.9.2
         version: 10.9.2(@types/node@22.13.4)(typescript@5.7.3)
 
-  packages/doc-core:
+  packages/document:
     dependencies:
       '@mixeditor/common':
         specifier: workspace:*
@@ -215,9 +215,9 @@ importers:
       '@mixeditor/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@mixeditor/doc-core':
+      '@mixeditor/document':
         specifier: workspace:*
-        version: link:../../packages/doc-core
+        version: link:../../packages/document
       solid-js:
         specifier: ^1.9.4
         version: 1.9.4

@@ -70,4 +70,8 @@ export const register_caret_navigate_pipe = (editor: MixEditor) => {
       execute: caret_navigate_pipe_handler,
     },
   ]);
+
+  return () => {
+    editor.pipe.delete_pipe("doc:caret_navigate");
+  };
 };

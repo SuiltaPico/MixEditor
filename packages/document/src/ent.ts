@@ -2,7 +2,7 @@ import { Ent, MEEntBehaviorHandler } from "@mixeditor/core";
 import {
   CaretNavigateContext,
   CaretNavigateDecision,
-} from "./pipe/caret_navigate/";
+} from "./pipe/caret_navigate";
 import {
   CaretDeleteContext,
   CaretDeleteDecision,

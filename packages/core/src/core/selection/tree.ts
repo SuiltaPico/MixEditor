@@ -1,9 +1,7 @@
-import { Ent } from "@mixeditor/core";
-
 /** 树形节点选区的光标位置。 */
 export interface TreeCaret {
   /** 选区实体 */
-  ent: Ent;
+  ent_id: string;
   /** 选区偏移量 */
   offset: number;
 }

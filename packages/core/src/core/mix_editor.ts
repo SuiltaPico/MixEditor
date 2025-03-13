@@ -17,10 +17,13 @@ import {
   TDOSerializeCtx,
   TDOSerializerMap,
 } from "../tdo/serialize/serialize_ctx";
-import { ChildEntArrayCompo, ChildEntCompo, TextContentCompo } from "./compo";
-import { ParentEntCompo } from "./compo/parent_ent";
-import { SingleParentEntCompo } from "./compo/single_parent_ent";
-// import { ICoreCtx, InitParams } from "./core_ctx";
+import {
+  ArrayChildCompo,
+  ChildCompo,
+  ChildCompoBehaviorMap,
+  ParentEntCompo,
+  TextChildCompo,
+} from "./compo";
 import { MECorePipeEventMap } from "./pipe";
 import { regist_core_behaviors } from "./regist_core_behaviors";
 import { TreeSelectionMapExtend } from "./selection";
@@ -46,16 +49,17 @@ export type MEPipeStageHandler<TEvent extends MEEvent> = IPipeStageHandler<
 
 /** MixEditor 的组件表，供插件扩展 */
 export interface MECompoMap extends Record<string, Compo> {
-  [ChildEntArrayCompo.type]: ChildEntArrayCompo;
-  [ChildEntCompo.type]: ChildEntCompo;
-  [TextContentCompo.type]: TextContentCompo;
+  [ArrayChildCompo.type]: ArrayChildCompo;
+  [ChildCompo.type]: ChildCompo;
+  [TextChildCompo.type]: TextChildCompo;
   [ParentEntCompo.type]: ParentEntCompo;
-  [SingleParentEntCompo.type]: SingleParentEntCompo;
 }
 /** MixEditor 的实体行为映射表，供插件扩展 */
 export interface MEEntBehaviorMap extends EntBehaviorMap<MixEditor> {}
 /** MixEditor 的组件行为映射表，供插件扩展 */
-export interface MECompoBehaviorMap extends CompoBehaviorMap<MixEditor> {}
+export interface MECompoBehaviorMap
+  extends CompoBehaviorMap<MixEditor>,
+    ChildCompoBehaviorMap {}
 
 /** MixEditor 的操作表，供插件扩展 */
 export interface MEOpMap extends OpMap {}

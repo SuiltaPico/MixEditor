@@ -1,5 +1,5 @@
 {
-	"name": "@mixeditor/doc-core",
+	"name": "@mixeditor/document",
 	"version": "0.0.1",
 	"scripts": {
 		"build": "concurrently \"node esbuild.mjs\" \"rollup -c rollup.config.mjs\"",

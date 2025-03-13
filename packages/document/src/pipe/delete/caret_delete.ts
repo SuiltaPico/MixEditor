@@ -1,10 +1,13 @@
 import {
+  get_child_ent_id,
+  get_index_in_parent_ent,
+  get_index_of_child_ent,
+  get_parent_ent_id,
   MESelection,
   MixEditor,
   Op,
   Transaction,
   TreeCaret,
-  get_parent
 } from "@mixeditor/core";
 import { execute_range_deletion } from "./range_delete";
 
@@ -84,12 +87,16 @@ export async function execute_caret_deletion(
     }
   | undefined
 > {
-  const ent_ctx = editor.ent;
+  const ecs_ctx = editor.ecs;
+  const caret_ent_id = caret.ent_id;
+  const caret_ent = ecs_ctx.get_ent(caret_ent_id);
+  if (!caret_ent) return;
+
   const to_prev = direction === CaretDeleteDirection.Prev;
 
   // 执行当前节点的删除处理
-  const decision = await ent_ctx.exec_behavior(
-    caret.ent,
+  const decision = await ecs_ctx.run_ent_behavior(
+    caret_ent,
     "doc:handle_delete_from_caret",
     {
       direction,
@@ -100,25 +107,21 @@ export async function execute_caret_deletion(
 
   if (!decision || decision.type === "delete_self") {
     // 获取父节点
-    const parent = get_parent(ent_ctx, caret.ent);
-    if (!parent) return; // 到达根节点，结束责任链
+    const parent_ent_id = get_parent_ent_id(ecs_ctx, caret_ent_id);
+    if (!parent_ent_id) return; // 到达根节点，结束责任链
 
     // 获取当前节点在父节点中的索引
-    const index_in_parent = await ent_ctx.exec_behavior(
-      parent,
-      "doc:get_index_of_child",
-      caret.ent
-    )!;
+    const index_in_parent = get_index_in_parent_ent(ecs_ctx, caret_ent_id);
 
     await execute_range_deletion(
       editor,
       tx,
       {
-        ent: parent,
+        ent_id: parent_ent_id,
         offset: index_in_parent! - 1,
       },
       {
-        ent: parent,
+        ent_id: parent_ent_id,
         offset: index_in_parent!,
       }
     );
@@ -127,22 +130,22 @@ export async function execute_caret_deletion(
     return { selected: decision.selected };
   } else if (decision.type === "skip") {
     // 处理 Skip 决策：将删除操作交给父节点处理
-    const parent = get_parent(ent_ctx, caret.ent);
-    if (!parent) return; // 到达根节点，结束责任链
+    const parent_ent_id = get_parent_ent_id(ecs_ctx, caret_ent_id);
+    if (!parent_ent_id) return; // 到达根节点，结束责任链
 
     // 获取当前节点在父节点中的索引
-    const index_in_parent = await ent_ctx.exec_behavior(
-      parent,
-      "doc:get_index_of_child",
-      caret.ent
-    )!;
+    const index_in_parent = get_index_of_child_ent(
+      ecs_ctx,
+      parent_ent_id,
+      caret_ent_id
+    );
 
     // 递归处理父节点的删除
     return await execute_caret_deletion(
       editor,
       tx,
       {
-        ent: parent,
+        ent_id: parent_ent_id,
         offset: to_prev ? index_in_parent! - 1 : index_in_parent!,
       },
       direction,
@@ -150,18 +153,20 @@ export async function execute_caret_deletion(
     );
   } else if (decision.type === "child") {
     // 处理 Child 决策：将删除操作交给指定子节点处理
-    const child_node = await ent_ctx.exec_behavior(caret.ent, "doc:get_child", {
-      index: decision.index,
-    });
+    const child_ent_id = get_child_ent_id(
+      ecs_ctx,
+      caret_ent_id,
+      decision.index
+    );
 
-    if (!child_node) return; // 子节点不存在时终止
+    if (!child_ent_id) return; // 子节点不存在时终止
 
     // 递归处理子节点的删除
     return await execute_caret_deletion(
       editor,
       tx,
       {
-        ent: child_node,
+        ent_id: child_ent_id,
         offset: to_prev ? Number.MAX_SAFE_INTEGER : 0,
       },
       direction,
