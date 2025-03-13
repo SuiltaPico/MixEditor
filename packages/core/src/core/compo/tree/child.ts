@@ -19,24 +19,24 @@ export class ChildCompo extends RouteCompo {
 /** 子实体组件传输对象结构定义 */
 export interface ChildCompoTDO extends CompoTDO {
   /** 来源组件的类型名称（如"children_ent_array"） */
-  source: string;
+  src: string;
 }
 
 /** 注册子实体组件到编辑器系统 */
-export function register_ChildEntCompo(editor: MixEditor) {
+export function register_ChildCompo(editor: MixEditor) {
   const { ecs } = editor;
   ecs.set_compo_behaviors(ChildCompo.type, {
     /** 序列化组件为传输对象 */
     async to_tdo({ it }) {
-      const from = it.src_compo_type.get();
+      const src = it.src.get();
       return {
         type: ChildCompo.type,
-        from,
+        src,
       };
     },
     /** 从传输对象反序列化组件 */
     from_tdo({ input }) {
-      return new ChildCompo((input as ChildCompoTDO).source);
+      return new ChildCompo((input as ChildCompoTDO).src);
     },
   });
 }

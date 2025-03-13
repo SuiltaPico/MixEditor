@@ -1,9 +1,9 @@
 import {
-  ChildEntCompo,
+  ChildCompo,
   EntInitBehavior,
   MixEditor,
   ParentEntCompo,
-  TextContentCompo
+  TextChildCompo,
 } from "@mixeditor/core";
 
 export function register_text_ent(editor: MixEditor) {
@@ -12,8 +12,8 @@ export function register_text_ent(editor: MixEditor) {
   ecs_ctx.set_ent_behavior("text", EntInitBehavior, ({ it, ex_ctx }) => {
     const ecs = ex_ctx.ecs;
     ecs.set_compos(it.id, [
-      new ChildEntCompo(TextContentCompo.type),
-      new TextContentCompo(""),
+      new ChildCompo(TextChildCompo.type),
+      new TextChildCompo(""),
       new ParentEntCompo(undefined),
     ]);
   });

@@ -34,9 +34,7 @@ export class ArrayChildCompo implements IChildCompo {
    * @param children 初始子实体ID数组
    */
   constructor(children: string[]) {
-    this.children = create_Signal(children, {
-      equals: false,
-    });
+    this.children = create_Signal(children);
   }
 }
 

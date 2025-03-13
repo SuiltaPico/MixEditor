@@ -1,6 +1,6 @@
 import {
-  ChildEntArrayCompo,
-  ChildEntCompo,
+  ArrayChildCompo,
+  ChildCompo,
   EntInitBehavior,
   MixEditor,
   ParentEntCompo,
@@ -9,12 +9,16 @@ import {
 export function register_text_ent(editor: MixEditor) {
   const ecs_ctx = editor.ecs;
 
-  ecs_ctx.set_ent_behavior("paragraph", EntInitBehavior, ({ it, ex_ctx }) => {
-    const ecs = ex_ctx.ecs;
-    ecs.set_compos(it.id, [
-      new ChildEntCompo(ChildEntArrayCompo.type),
-      new ChildEntArrayCompo([]),
-      new ParentEntCompo(undefined),
-    ]);
+  ecs_ctx.set_ent_behaviors("paragraph", {
+    [EntInitBehavior]({ it, ex_ctx }) {
+      // ex_ctx.pipe.set_pipe(it.id, "paragraph");
+
+      const ecs = ex_ctx.ecs;
+      ecs.set_compos(it.id, [
+        new ChildCompo(ArrayChildCompo.type),
+        new ArrayChildCompo([]),
+        new ParentEntCompo(undefined),
+      ]);
+    },
   });
 }

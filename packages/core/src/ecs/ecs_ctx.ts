@@ -16,6 +16,12 @@ export type EntBehaviorHandler<
   TExCtx
 > = BehaviorHandler<Ent, TParams, TResult, TExCtx>;
 
+export type GetEntBehaviorHandlerParams<
+  TEntBehaviorHandler extends EntBehaviorHandler<any, any, any>
+> = TEntBehaviorHandler extends BehaviorHandler<Ent, infer TParams, any, any>
+  ? TParams
+  : never;
+
 export const EntInitBehavior = "init";
 export const EntBeforeSaveTdoBehavior = "before_save_tdo";
 export const EntAfterLoadTdoBehavior = "after_load_tdo";

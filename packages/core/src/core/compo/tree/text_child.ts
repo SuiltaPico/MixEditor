@@ -1,11 +1,7 @@
 import { create_Signal, WrappedSignal } from "@mixeditor/common";
-import {
-  IChildCompo,
-  TreeChildDelete,
-  TreeChildInsert,
-} from "./tree/child";
-import { CompoTDO, Ent } from "../../ecs";
-import { MixEditor } from "../mix_editor";
+import { CompoTDO } from "../../../ecs";
+import { MixEditor } from "../../mix_editor";
+import { IChildCompo, TreeChildDelete, TreeChildInsert } from "./child";
 
 /**
  * 文本内容组件
@@ -32,9 +28,7 @@ export class TextChildCompo implements IChildCompo {
   }
 
   constructor(content: string) {
-    this.content = create_Signal(content, {
-      equals: false,
-    });
+    this.content = create_Signal(content);
   }
 }
 

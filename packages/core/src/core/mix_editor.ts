@@ -24,6 +24,7 @@ import {
   ParentEntCompo,
   TextChildCompo,
 } from "./compo";
+import { RootEntInitPipe, RootEntInitPipeEvent } from "./ent";
 import { MECorePipeEventMap } from "./pipe";
 import { regist_core_behaviors } from "./regist_core_behaviors";
 import { TreeSelectionMapExtend } from "./selection";
@@ -76,7 +77,9 @@ export interface METDOSerializeMap extends TDOSerializerMap<any> {}
 export interface METDODeSerializeMap extends TDODeserializerMap<any> {}
 
 /** MixEditor 的管道事件表，供插件扩展 */
-export interface MEPipeEventMap extends MECorePipeEventMap {}
+export interface MEPipeEventMap extends MECorePipeEventMap {
+  [RootEntInitPipe]: RootEntInitPipeEvent;
+}
 
 export type MEPlugin = Plugin<MixEditor>;
 

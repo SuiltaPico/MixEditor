@@ -20,7 +20,7 @@ export function get_actual_child_ent_compo(
   const child_ent_route = ecs_ctx.get_compo(target_ent_id, ChildCompo.type);
   if (!child_ent_route) return undefined;
 
-  const child_ent_src_compo_type = child_ent_route.src_compo_type.get();
+  const child_ent_src_compo_type = child_ent_route.src.get();
   if (!child_ent_src_compo_type) return undefined;
 
   // 获取父容器的实际子实体组件
