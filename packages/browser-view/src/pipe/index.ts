@@ -3,7 +3,7 @@ import { BvPointerPipeEventMapExtend } from "./pointer";
 
 export * from "./key_board";
 export * from "./pointer";
-export * from "./render_selection";
+export * from "./render_selection/executor";
 
 export interface PipeEventMapExtend
   extends BvKeyBoardPipeEventMapExtend,

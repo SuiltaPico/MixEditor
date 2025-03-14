@@ -116,7 +116,7 @@ export class MixEditor {
     await this.pipe.execute({ pipe_id: "init" }); // 初始化插件
 
     if (params.root_ent) {
-      this.content.root.set(params.root_ent);
+      this.content.root.set(params.root_ent.id);
     }
   }
 

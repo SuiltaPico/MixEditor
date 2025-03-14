@@ -4,9 +4,9 @@ import { ECSCtx, Ent } from "../ecs";
 /** 内容上下文 */
 export class ContentCtx {
   // implements IContentCtx<TEntCtx["ent_map"]["root"]>
-  root: WrappedSignal<Ent | undefined>;
+  root: WrappedSignal<string | undefined>;
 
-  constructor(root_ent?: Ent) {
-    this.root = create_Signal(root_ent);
+  constructor(root_ent_id?: string) {
+    this.root = create_Signal(root_ent_id);
   }
 }

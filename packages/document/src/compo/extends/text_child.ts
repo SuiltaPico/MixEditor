@@ -1,16 +1,12 @@
 import {
   MixEditor,
   TextChildCompo,
-  TreeCollapsedSelectionType,
-  TreeRangeDeleteOp,
+  TreeRangeDeleteOp
 } from "@mixeditor/core";
 import { TextEntType } from "../../ent";
 import {
-  CaretDeleteDecision,
-  CaretDeleteDirection,
-  DocCaretDeleteCb,
   DocRangeDeleteCb,
-  RangeDeleteDecision,
+  RangeDeleteDecision
 } from "../../pipe";
 
 export function register_TextChildCompo_doc_extend(editor: MixEditor) {

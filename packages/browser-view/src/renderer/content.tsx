@@ -11,6 +11,7 @@ import {
 } from "solid-js";
 import { BvContext, BvDomainContext } from "../context";
 import { Rendered, RenderedDomNode } from "./node_renderer";
+import { BvRenderableCompo } from "../compo/renderable";
 
 export const default_renderer = () => {
   let dispose!: Rendered["dispose"];
@@ -26,25 +27,27 @@ export const default_renderer = () => {
 };
 
 export const NodeRendererWrapper: Component<{
-  ent: Ent;
+  ent_id: string;
   bv_ctx: BvContext;
 }> = (props) => {
-  const { ent, bv_ctx } = props;
+  const { ent_id, bv_ctx } = props;
   const { editor } = bv_ctx;
+  const { ecs } = editor;
 
-  let bv_domain_ctx = editor.ent.get_domain_ctx(ent, "bv");
-  if (!bv_domain_ctx) {
-    bv_domain_ctx = {} as BvDomainContext;
-  }
+  const renderable = ecs.get_compo(ent_id, BvRenderableCompo.type) as
+    | BvRenderableCompo
+    | undefined;
 
-  // 使用节点渲染器渲染节点
-  let rendered: Rendered =
-    (editor.ent.exec_behavior(ent, "bv:renderer", {
+  if (!renderable) return null;
+
+  let rendered = renderable.rendered;
+
+  if (!rendered) {
+    rendered = renderable.render({
+      ent_id,
       bv_ctx,
-    }) as Rendered) ?? default_renderer();
-
-  bv_domain_ctx.node = rendered.node;
-  bv_domain_ctx.dispose = rendered.dispose;
+    });
+  }
 
   return rendered.node;
 };
@@ -59,5 +62,5 @@ export const ContentRenderer: Component<{ bv_ctx: BvContext }> = (props) => {
     })
   );
 
-  return <NodeRendererWrapper ent={content.root.get()} bv_ctx={bv_ctx} />;
+  return <NodeRendererWrapper ent_id={content.root.get()!} bv_ctx={bv_ctx} />;
 };

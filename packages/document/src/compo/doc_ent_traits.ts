@@ -4,6 +4,8 @@ import {
   CaretNavigateDecision,
   DocCaretDeleteCb,
   DocCaretNavigateCb,
+  DocRangeDeleteCb,
+  RangeDeleteDecision,
 } from "../pipe";
 import { Compo, MECompoBehaviorMap } from "@mixeditor/core";
 
@@ -49,22 +51,16 @@ export type DocEntTraitsParams = {
   /** 边界处理策略。 */
   border_policy: BorderPolicy;
   /** 自定义光标跳转处理逻辑。 */
-  custom_caret_navigate?:
-    | ((
-        params: Parameters<MECompoBehaviorMap[typeof DocCaretNavigateCb]>[0]
-      ) => CaretNavigateDecision)
-    | undefined;
+  custom_caret_navigate?: DocEntTraitsCompo["custom_caret_navigate"];
 
   /** 从光标删除时，自身删除的策略。 */
   self_delete_from_caret_policy: SelfDeletePolicy;
   /** 从光标删除时，自身子节点删除的策略。 */
   child_delete_from_caret_policy: ChildDeletePolicy;
   /** 自定义光标删除处理逻辑。 */
-  custom_caret_delete?:
-    | ((
-        params: Parameters<MECompoBehaviorMap[typeof DocCaretDeleteCb]>[0]
-      ) => CaretDeleteDecision)
-    | undefined;
+  custom_caret_delete?: DocEntTraitsCompo["custom_caret_delete"];
+  /** 自定义光标删除处理逻辑。 */
+  custom_range_delete?: DocEntTraitsCompo["custom_range_delete"];
 };
 
 /** 文档实体特性组件。
@@ -86,12 +82,17 @@ export class DocEntTraitsCompo implements Compo {
       ) => CaretNavigateDecision)
     | undefined;
 
-  self_delete_from_caret_policy: WrappedSignal<SelfDeletePolicy>;
-  child_delete_from_caret_policy: WrappedSignal<ChildDeletePolicy>;
+  self_delete_policy: WrappedSignal<SelfDeletePolicy>;
+  child_delete_policy: WrappedSignal<ChildDeletePolicy>;
   custom_caret_delete?:
     | ((
         params: Parameters<MECompoBehaviorMap[typeof DocCaretDeleteCb]>[0]
       ) => CaretDeleteDecision)
+    | undefined;
+  custom_range_delete?:
+    | ((
+        params: Parameters<MECompoBehaviorMap[typeof DocRangeDeleteCb]>[0]
+      ) => RangeDeleteDecision)
     | undefined;
 
   constructor(params: DocEntTraitsParams) {
@@ -100,11 +101,13 @@ export class DocEntTraitsCompo implements Compo {
     this.border_policy = create_Signal(params.border_policy);
     this.custom_caret_navigate = params.custom_caret_navigate;
 
-    this.self_delete_from_caret_policy = create_Signal(
+    this.self_delete_policy = create_Signal(
       params.self_delete_from_caret_policy
     );
-    this.child_delete_from_caret_policy = create_Signal(
+    this.child_delete_policy = create_Signal(
       params.child_delete_from_caret_policy
     );
+    this.custom_caret_delete = params.custom_caret_delete;
+    this.custom_range_delete = params.custom_range_delete;
   }
 }

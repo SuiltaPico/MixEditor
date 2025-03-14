@@ -46,8 +46,8 @@ export async function execute_render_selection(
   to: number,
   rects: Rect[]
 ) {
-  const ent_ctx = editor.ent;
-  const decision = await ent_ctx.exec_behavior(
+  const ent_ctx = editor.ecs;
+  const decision = await ent_ctx(
     ent,
     "bv:handle_render_selection",
     {

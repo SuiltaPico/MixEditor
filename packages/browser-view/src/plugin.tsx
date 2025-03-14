@@ -26,13 +26,6 @@ export const browser_view = (params: { mount_to: HTMLElement }) => {
         editor,
       } as BvContext;
 
-
-      editor.ent.register_handler(
-        "root",
-        "bv:renderer",
-        create_solidjs_rendered(RootRenderer)
-      );
-
       dispose_render_root = render(
         () => <EditorRenderer {...bv_ctx} />,
         params.mount_to

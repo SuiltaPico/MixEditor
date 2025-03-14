@@ -4,7 +4,7 @@ import { BvContext } from "./context";
 import {
   BvRenderSelectionContext,
   BvRenderSelectionDecision,
-} from "./pipe/render_selection";
+} from "./pipe/render_selection/executor";
 
 /** 扩展实体行为类型定义。 */
 export interface EntBehaviorMapExtend {

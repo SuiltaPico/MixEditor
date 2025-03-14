@@ -6,13 +6,13 @@ import { MixEditor } from "../mix_editor";
 export interface LoadEvent extends IPipeEvent<MixEditor> {
   pipe_id: "load";
   input: SavedData;
-  output?: Ent;
+  output?: string;
 }
 
 /** 保存事件。 */
 export interface SaveEvent extends IPipeEvent<MixEditor> {
   pipe_id: "save";
-  input?: Ent;
+  input?: string;
   output?: SavedData;
 }
 
@@ -49,7 +49,7 @@ export function register_load_and_save_pipe(editor: MixEditor) {
             );
           }
 
-          evt.output = entryEnt;
+          evt.output = entryEnt.id;
         },
       },
       {
@@ -70,7 +70,7 @@ export function register_load_and_save_pipe(editor: MixEditor) {
         id: "get_input",
         execute: async (evt, wait_deps) => {
           await wait_deps();
-          evt.input = content.root.get() as Ent;
+          evt.input = content.root.get()!;
           if (!evt.input) throw new Error("保存失败：未找到根实体。");
         },
       },
@@ -105,14 +105,14 @@ export function register_load_and_save_pipe(editor: MixEditor) {
             );
 
             // 区分入口实体和其他实体
-            if (ent_id === evt.input!.id) {
+            if (ent_id === evt.input) {
               entry_tdo = tdo;
             } else {
               tdos.push(tdo);
             }
           };
 
-          await save_entity(evt.input.id);
+          await save_entity(evt.input);
 
           if (!entry_tdo!) {
             throw new Error("入口实体TDO生成失败");

@@ -22,7 +22,7 @@ export interface DocCompoBehaviorMapExtend
   extends DocCaretNavigateCbMapExtend,
     DocDeleteCbMapExtend {}
 
-export interface PipeEventMapExtend {
+export interface DocPipeEventMapExtend {
   [DocCaretNavigatePipeId]: DocCaretNavigateEvent;
   [DocDirectedDeletePipeId]: DirectedDeleteEvent;
 }

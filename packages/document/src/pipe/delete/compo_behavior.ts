@@ -5,7 +5,10 @@ import {
   RangeDeleteContext,
   RangeDeleteDecision,
 } from ".";
-import { handle_default_caret_delete } from "../../common/helpers";
+import {
+  handle_default_caret_delete,
+  handle_default_range_delete,
+} from "../../common/helpers";
 
 export const DocCaretDeleteCb = "doc:caret_delete" as const;
 export const DocRangeDeleteCb = "doc:range_delete" as const;
@@ -28,5 +31,6 @@ export function register_DocCaretDelete(editor: MixEditor) {
   const { ecs } = editor;
   ecs.set_compo_behaviors("*", {
     [DocCaretDeleteCb]: handle_default_caret_delete,
+    [DocRangeDeleteCb]: handle_default_range_delete,
   });
 }

@@ -12,11 +12,16 @@ export type Rendered = {
   node: RenderedDomNode;
 };
 
+export type RenderedFactory = (props: {
+  ent_id: string;
+  bv_ctx: BvContext;
+}) => Rendered;
+
 /** 创建一个 solidjs 渲染器。 */
 export function create_solidjs_rendered(
-  component: (props: { ent: Ent; bv_ctx: BvContext }) => any
+  component: (props: { ent_id: string; bv_ctx: BvContext }) => any
 ) {
-  return (props: { item: Ent; bv_ctx: BvContext }) => {
+  return (props: { ent_id: string; bv_ctx: BvContext }) => {
     let dispose!: Rendered["dispose"];
     let node!: Rendered["node"];
 
@@ -24,7 +29,7 @@ export function create_solidjs_rendered(
       dispose = d;
       node = component({
         ...props,
-        ent: props.item,
+        ent_id: props.ent_id,
       }) as RenderedDomNode;
     });
 

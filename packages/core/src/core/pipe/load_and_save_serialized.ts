@@ -18,13 +18,13 @@ export interface LoadSerializedEvent extends IPipeEvent<MixEditor> {
   saved_data: SavedData;
 
   /** 最终被加载到内容中的根实体 */
-  ent?: Ent;
+  ent?: string;
 }
 export interface SaveSerializedEvent extends IPipeEvent<MixEditor> {
   pipe_id: "save_serialized";
 
   /** 要被序列化的根实体 */
-  root_ent: Ent;
+  root_ent: string;
 
   /** 序列化后的根实体TDO */
   saved_data?: SavedData;

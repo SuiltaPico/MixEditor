@@ -1,8 +1,7 @@
 import {
   EntChildCompo,
   MixEditor,
-  TreeCollapsedSelectionType,
-  TreeRangeDeleteOp,
+  TreeRangeDeleteOp
 } from "@mixeditor/core";
 import { TextEntType } from "../../ent";
 import { DocRangeDeleteCb, RangeDeleteDecision } from "../../pipe";

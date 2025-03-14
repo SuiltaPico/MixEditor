@@ -13,6 +13,8 @@ import {
   CaretDeleteDecision,
   CaretDeleteDirection,
   DocCaretDeleteCb,
+  DocRangeDeleteCb,
+  RangeDeleteDecision,
 } from "../pipe";
 import { BorderPolicy, DocEntTraitsCompo } from "../compo/doc_ent_traits";
 import { ChildDeletePolicy, SelfDeletePolicy } from "../compo/doc_ent_traits";
@@ -195,8 +197,8 @@ function get_policies_and_counts(
   const actual_child_compo = get_actual_child_compo(ecs, ent_id);
   return {
     children_count: (actual_child_compo as IChildCompo).count(),
-    self_delete_policy: traits.self_delete_from_caret_policy.get(),
-    child_delete_policy: traits.child_delete_from_caret_policy.get(),
+    self_delete_policy: traits.self_delete_policy.get(),
+    child_delete_policy: traits.child_delete_policy.get(),
   };
 }
 
@@ -242,4 +244,33 @@ export const handle_default_caret_delete: MECompoBehaviorMap[typeof DocCaretDele
     }
 
     return CaretDeleteDecision.Skip;
+  };
+
+/**
+ * 默认的范围删除处理逻辑。
+ *
+ * 根据 DocEntTraitsCompo 定义的删除策略进行处理。
+ */
+export const handle_default_range_delete: MECompoBehaviorMap[typeof DocRangeDeleteCb] =
+  async (params) => {
+    const { start, end, ent_id, ex_ctx, tx } = params;
+    const { ecs, op } = ex_ctx;
+
+    const traits = ecs.get_compo(ent_id, DocEntTraitsCompo.type) as
+      | DocEntTraitsCompo
+      | undefined;
+    if (!traits) return RangeDeleteDecision.DeleteSelf;
+
+    const { children_count } = get_policies_and_counts(ecs, ent_id, traits);
+
+    if (start <= 0 && end >= children_count) {
+      return RangeDeleteDecision.DeleteSelf;
+    } else {
+      const start_idx = start <= 0 ? 0 : start;
+      const end_idx = end >= children_count ? children_count - 1 : end;
+      await tx.execute(
+        new TreeRangeDeleteOp(op.gen_id(), ent_id, start_idx, end_idx)
+      );
+      return RangeDeleteDecision.Done({});
+    }
   };
