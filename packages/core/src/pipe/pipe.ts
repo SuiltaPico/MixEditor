@@ -30,6 +30,10 @@ export class Pipe<TEvent extends IPipeEvent<TExCtx>, TExCtx>
     this.stages.set(stage.id, stage);
   }
 
+  delete_stage(stage_id: string): void {
+    this.stages.delete(stage_id);
+  }
+
   async execute(
     /** 外部上下文 */
     ex_ctx: TExCtx,

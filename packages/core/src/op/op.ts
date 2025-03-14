@@ -5,10 +5,3 @@ export interface Op {
   /** 操作类型 */
   type: string;
 }
-
-export function create_BaseOp(id: string, type: string): Op {
-  return {
-    id,
-    type,
-  };
-}

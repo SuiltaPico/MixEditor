@@ -1,4 +1,4 @@
-import { create_BaseOp, Op } from "./op";
+import { Op } from "./op";
 import { OpBehaviorMap } from "./op_behavior";
 import { OpCtx } from "./op_ctx";
 import {
@@ -47,7 +47,7 @@ export class Transaction
   constructor(op_ctx: OpCtx<any, any, any>, public executer: OpExecutor<any>) {
     super(op_ctx, new ArrayOpExecutorBuffer());
     this.pwr = Promise.withResolvers();
-    executer.execute(create_TransOp(op_ctx.gen_id(), this));
+    executer.execute(new TransactionOp(op_ctx.gen_id(), this));
   }
 
   async commit(): Promise<void> {
@@ -76,28 +76,33 @@ export class Transaction
       }
     }
   }
-  
+
   async wait_for_commited() {
     return await this.pwr.promise;
   }
 }
 
 /** 事务操作。通常由事务管理器产生，在事物提交时执行结束。 */
-export interface TransOp extends Op {
-  type: "transaction";
-  tr: ITransaction;
-}
+export class TransactionOp implements Op {
+  static type = "core:transaction" as const;
+  get type() {
+    return TransactionOp.type;
+  }
 
-export function create_TransOp(id: string, tr: ITransaction): TransOp {
-  const op = create_BaseOp(id, "transaction") as TransOp;
-  op.tr = tr;
-  return op;
+  id: string;
+
+  tr: ITransaction;
+
+  constructor(id: string, tr: ITransaction) {
+    this.id = id;
+    this.tr = tr;
+  }
 }
 
 export function register_TransOp_behavior(
   op_ctx: OpCtx<
     {
-      transaction: TransOp;
+      transaction: TransactionOp;
     },
     OpBehaviorMap<any>,
     any

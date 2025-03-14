@@ -1,6 +1,6 @@
 import Pipe from "./pipe";
 import { IPipeEvent } from "./pipe_event";
-import { IPipeStage } from "./pipe_stage";
+import { IPipeStage, IPipeStageHandler } from "./pipe_stage";
 
 export type PipeEventMap<TExCtx> = {
   [key: string]: IPipeEvent<TExCtx>;
@@ -12,9 +12,9 @@ export class PipeCtx<TPipeEventMap extends PipeEventMap<TExCtx>, TExCtx> {
     Pipe<TPipeEventMap[keyof TPipeEventMap], TExCtx>
   >();
 
-  set_pipe<TEventName extends Extract<keyof TPipeEventMap, string>>(
-    pipe_id: TEventName,
-    pipe_stages: Iterable<IPipeStage<TPipeEventMap[TEventName], TExCtx>>
+  set_pipe<TPipeId extends Extract<keyof TPipeEventMap, string>>(
+    pipe_id: TPipeId,
+    pipe_stages: Iterable<IPipeStage<TPipeEventMap[TPipeId], TExCtx>>
   ) {
     const new_pipe = new Pipe(pipe_id);
     for (const stage of pipe_stages) {
@@ -25,6 +25,14 @@ export class PipeCtx<TPipeEventMap extends PipeEventMap<TExCtx>, TExCtx> {
 
   delete_pipe(pipe_id: string) {
     this.pipes.delete(pipe_id);
+  }
+
+  get_pipe<TPipeId extends Extract<keyof TPipeEventMap, string>>(
+    pipe_id: TPipeId
+  ) {
+    return this.pipes.get(pipe_id) as
+      | Pipe<TPipeEventMap[TPipeId], TExCtx>
+      | undefined;
   }
 
   async execute<TPipeId extends Extract<keyof TPipeEventMap, string>>(

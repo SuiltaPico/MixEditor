@@ -6,7 +6,7 @@ import {
   get_index_of_child_ent,
   get_parent_ent_id,
 } from "@mixeditor/core";
-import { delete_range_in_same_ent } from "./delete";
+import { delete_range_in_same_ent } from "../delete";
 
 /** 实体对合并的决策。 */
 export const MergeEntDecision = {

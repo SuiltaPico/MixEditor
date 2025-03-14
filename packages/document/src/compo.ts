@@ -11,7 +11,7 @@ import {
   RangeDeleteContext,
   RangeDeleteDecision,
 } from "./pipe/delete/range_delete";
-import { MergeEntContext, MergeEntDecision } from "./pipe/merge_ent";
+import { MergeEntContext, MergeEntDecision } from "./pipe/merge/merge_ent";
 
 /**
  * 扩展实体行为类型定义
@@ -36,15 +36,4 @@ export interface EntBehaviorMapExtend {
   >;
   /** 处理实体合并行为 */
   "doc:merge_ent": MEEntBehaviorHandler<MergeEntContext, MergeEntDecision>;
-}
-
-/**
- * 扩展实体行为类型定义
- *
- * 定义文档编辑器特有的实体行为接口
- */
-export interface EntDomainCtxMapExtend {
-  doc: {
-    parent: Ent;
-  };
 }

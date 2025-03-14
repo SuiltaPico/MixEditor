@@ -1,11 +1,12 @@
 import {
+  get_actual_child_compo,
   get_child_ent_id,
   get_index_in_parent_ent,
   get_parent_ent_id,
   MixEditor,
-  TreeCaret
+  TreeCaret,
 } from "@mixeditor/core";
-import { DocCaretNavigate } from ".";
+import { DocCaretNavigateCb } from ".";
 
 /** 光标导航来源，表示触发导航操作的上下文位置 */
 export enum CaretNavigateSource {
@@ -57,6 +58,8 @@ export type CaretNavigateDecision =
 
 /** 光标移动策略上下文。 */
 export interface CaretNavigateContext {
+  /** 当前导航实体 */
+  ent_id: string;
   /** 当前导航方向 */
   direction: CaretDirection;
   /** 触发导航的来源上下文 */
@@ -66,7 +69,7 @@ export interface CaretNavigateContext {
 }
 
 /**
- * 从指定光标位置执行导航操作
+ * 从指定光标位置执行导航操作。
  * @param editor 编辑器实例
  * @param caret 当前光标位置
  * @param direction 导航方向
@@ -92,22 +95,19 @@ export async function execute_navigate_caret_from_pos(
   const caret_ent = ecs_ctx.get_ent(caret_ent_id);
   if (!caret_ent) return;
 
-  let decision: CaretNavigateDecision | undefined;
+  const compo = get_actual_child_compo(ecs_ctx, caret_ent.id);
+  if (!compo) return;
 
-  decision = await ecs_ctx.run_ent_behavior(
-    caret_ent,
-    DocCaretNavigate,
-    {
-      direction,
-      src,
-      from: caret.offset,
-    }
-  );
+  const decision = await ecs_ctx.run_compo_behavior(compo, DocCaretNavigateCb, {
+    ent_id: caret_ent_id,
+    direction,
+    src,
+    from: caret.offset,
+  });
 
   if (!decision || decision.type === "skip") {
     // 跳过当前节点，往下一个节点移动
     const parent_id = get_parent_ent_id(ecs_ctx, caret_ent_id);
-
     if (!parent_id) return;
 
     const index_in_parent = get_index_in_parent_ent(ecs_ctx, caret_ent_id);
@@ -115,7 +115,7 @@ export async function execute_navigate_caret_from_pos(
     return await execute_navigate_caret_from_pos(
       editor,
       {
-        ent_id: parent_id!,
+        ent_id: parent_id,
         offset: index_in_parent,
       },
       direction,

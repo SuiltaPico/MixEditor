@@ -18,15 +18,16 @@ import {
   TDOSerializerMap,
 } from "../tdo/serialize/serialize_ctx";
 import {
-  ArrayChildCompo,
+  EntChildCompo,
   ChildCompo,
   ChildCompoBehaviorMap,
   ParentEntCompo,
   TextChildCompo,
 } from "./compo";
-import { RootEntInitPipe, RootEntInitPipeEvent } from "./ent";
+import { RootEntInitPipeId, RootEntInitPipeEvent } from "./ent";
+import { TreeRangeDeleteOp } from "./op";
 import { MECorePipeEventMap } from "./pipe";
-import { regist_core_behaviors } from "./regist_core_behaviors";
+import { regist_core_items } from "./regist_core_items";
 import { TreeSelectionMapExtend } from "./selection";
 
 export type MEEntBehaviorHandler<
@@ -50,7 +51,7 @@ export type MEPipeStageHandler<TEvent extends MEEvent> = IPipeStageHandler<
 
 /** MixEditor 的组件表，供插件扩展 */
 export interface MECompoMap extends Record<string, Compo> {
-  [ArrayChildCompo.type]: ArrayChildCompo;
+  [EntChildCompo.type]: EntChildCompo;
   [ChildCompo.type]: ChildCompo;
   [TextChildCompo.type]: TextChildCompo;
   [ParentEntCompo.type]: ParentEntCompo;
@@ -63,9 +64,11 @@ export interface MECompoBehaviorMap
     ChildCompoBehaviorMap {}
 
 /** MixEditor 的操作表，供插件扩展 */
-export interface MEOpMap extends OpMap {}
+export interface MEOpMap extends OpMap {
+  [TreeRangeDeleteOp.type]: TreeRangeDeleteOp;
+}
 /** MixEditor 的操作行为映射表，供插件扩展 */
-export interface MEOpBehaviorMap extends OpBehaviorMap<any> {}
+export interface MEOpBehaviorMap extends OpBehaviorMap<MixEditor> {}
 
 /** MixEditor 的选区表，供插件扩展 */
 export interface MESelectionMap extends SelectionMap, TreeSelectionMapExtend {}
@@ -78,7 +81,7 @@ export interface METDODeSerializeMap extends TDODeserializerMap<any> {}
 
 /** MixEditor 的管道事件表，供插件扩展 */
 export interface MEPipeEventMap extends MECorePipeEventMap {
-  [RootEntInitPipe]: RootEntInitPipeEvent;
+  [RootEntInitPipeId]: RootEntInitPipeEvent;
 }
 
 export type MEPlugin = Plugin<MixEditor>;
@@ -108,7 +111,7 @@ export class MixEditor {
   plugin: PluginCtx<ThisType<this>>;
 
   async init(params: InitParams) {
-    regist_core_behaviors(this);
+    regist_core_items(this);
 
     await this.pipe.execute({ pipe_id: "init" }); // 初始化插件
 

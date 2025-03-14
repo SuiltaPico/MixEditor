@@ -4,11 +4,13 @@ import {
   Op,
   Transaction,
   TreeCaret,
+  get_actual_child_compo,
   get_common_ancestor_from_ent,
   get_index_of_child_ent,
   get_parent_ent_id,
 } from "@mixeditor/core";
-import { execute_merge_ent } from "../merge_ent";
+import { execute_merge_ent } from "../merge/merge_ent";
+import { DocRangeDeleteCb } from "./compo_behavior";
 
 /** 节点对删除范围的决策。 */
 export const RangeDeleteDecision = {
@@ -37,10 +39,14 @@ export type RangeDeleteDecision =
     };
 
 export interface RangeDeleteContext {
+  /** 要操作的实体。 */
+  ent_id: string;
   /** 要删除的起点。 */
   start: number;
   /** 要删除的终点。 */
   end: number;
+  /** 事务对象。 */
+  tx: Transaction;
 }
 
 /**
@@ -67,11 +73,16 @@ export async function delete_range_in_same_ent(
     const current = ecs_ctx.get_ent(current_id);
     if (!current) break;
 
+    const actual_child_compo = get_actual_child_compo(ecs_ctx, current_id);
+    if (!actual_child_compo) break;
+
     // 执行实体删除范围处理行为
-    const decision = await ecs_ctx.run_ent_behavior(
-      current,
-      "doc:handle_delete_range",
+    const decision = await ecs_ctx.run_compo_behavior(
+      actual_child_compo,
+      DocRangeDeleteCb,
       {
+        ent_id: current_id,
+        tx,
         start: temp_start_offset,
         end: temp_end_offset,
       }
@@ -159,11 +170,16 @@ export async function delete_start_to_ancestor(
     const current = ecs_ctx.get_ent(current_id);
     if (!current) break;
 
+    const actual_child_compo = get_actual_child_compo(ecs_ctx, current_id);
+    if (!actual_child_compo) break;
+
     // 尝试在当前实体处理右侧删除（从偏移量到末尾）
-    const decision = await ecs_ctx.run_ent_behavior(
-      current,
-      "doc:handle_delete_range",
+    const decision = await ecs_ctx.run_compo_behavior(
+      actual_child_compo,
+      DocRangeDeleteCb,
       {
+        ent_id: current_id,
+        tx,
         start: temp_start_offset,
         end: Number.MAX_SAFE_INTEGER, // 表示删除到当前实体末尾
       }
@@ -219,11 +235,16 @@ export async function delete_end_to_ancestor(
     const current = ecs_ctx.get_ent(current_id);
     if (!current) break;
 
+    const actual_child_compo = get_actual_child_compo(ecs_ctx, current_id);
+    if (!actual_child_compo) break;
+
     // 尝试在当前实体处理左侧删除（从开始到偏移量）
-    const decision = await ecs_ctx.run_ent_behavior(
-      current,
-      "doc:handle_delete_range",
+    const decision = await ecs_ctx.run_compo_behavior(
+      actual_child_compo,
+      DocRangeDeleteCb,
       {
+        ent_id: current_id,
+        tx,
         start: 0, // 表示从当前实体起始位置开始
         end: temp_end_offset,
       }
@@ -281,10 +302,15 @@ export async function delete_ancestor_range(
     const current = ecs_ctx.get_ent(current_id);
     if (!current) break;
 
-    const decision = await ecs_ctx.run_ent_behavior(
-      current,
-      "doc:handle_delete_range",
+    const actual_child_compo = get_actual_child_compo(ecs_ctx, current_id);
+    if (!actual_child_compo) break;
+
+    const decision = await ecs_ctx.run_compo_behavior(
+      actual_child_compo,
+      DocRangeDeleteCb,
       {
+        ent_id: current_id,
+        tx,
         start: temp_start_offset,
         end: temp_end_offset,
       }

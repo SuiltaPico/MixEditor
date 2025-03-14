@@ -6,16 +6,18 @@ export interface TreeCaret {
   offset: number;
 }
 
+export const TreeCollapsedSelectionType = "tree:collapsed" as const;
 /** 树形折叠选区。 */
 export interface TreeCollapsedSelection {
-  type: "tree:collapsed";
+  type: typeof TreeCollapsedSelectionType;
   /** 选区位置。 */
   caret: TreeCaret;
 }
 
+export const TreeExtendedSelectionType = "tree:extended" as const;
 /** 树形扩展选区。 */
 export interface TreeExtendedSelection {
-  type: "tree:extended";
+  type: typeof TreeExtendedSelectionType;
   /** 选区开始位置。 */
   start: TreeCaret;
   /** 选区结束位置。 */

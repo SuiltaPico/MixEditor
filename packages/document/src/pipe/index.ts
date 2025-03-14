@@ -1,33 +1,41 @@
 import { MixEditor } from "@mixeditor/core";
 import {
-  CaretNavigateEvent,
-  DocCaretNavigateCompoBehavior,
+  DocCaretNavigateCbMapExtend,
+  DocCaretNavigateEvent,
+  DocCaretNavigatePipeId,
   register_caret_navigate_pipe,
+  register_DocCaretNavigate,
 } from "./caret_navigate";
 import {
   DirectedDeleteEvent,
   register_directed_delete_pipe,
-} from "./delete/pipe_handler";
+  DocDeleteCbMapExtend,
+  DocDirectedDeletePipeId,
+  register_DocCaretDelete,
+} from "./delete";
 
 export * from "./caret_navigate";
 export * from "./delete";
-export * from "./merge_ent";
+export * from "./merge/merge_ent";
 
 export interface DocCompoBehaviorMapExtend
-  extends DocCaretNavigateCompoBehavior {}
+  extends DocCaretNavigateCbMapExtend,
+    DocDeleteCbMapExtend {}
 
 export interface PipeEventMapExtend {
-  "doc:caret_navigate": CaretNavigateEvent;
-  "doc:directed_delete": DirectedDeleteEvent;
+  [DocCaretNavigatePipeId]: DocCaretNavigateEvent;
+  [DocDirectedDeletePipeId]: DirectedDeleteEvent;
 }
 
-export const register_pipes = (editor: MixEditor) => {
+export const register_pipes_and_compo_behaviors = (editor: MixEditor) => {
   const disposers = [
     register_caret_navigate_pipe(editor),
     register_directed_delete_pipe(editor),
+    register_DocCaretDelete(editor),
+    register_DocCaretNavigate(editor),
   ];
 
   return () => {
-    disposers.forEach((d) => d());
+    disposers.forEach((d) => d?.());
   };
 };

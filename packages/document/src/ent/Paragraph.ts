@@ -1,24 +1,45 @@
 import {
-  ArrayChildCompo,
+  EntChildCompo,
   ChildCompo,
-  EntInitBehavior,
-  MixEditor,
+  create_ent_registration,
+  EntInitPipeEvent,
   ParentEntCompo,
 } from "@mixeditor/core";
+import {
+  BorderPolicy,
+  ChildDeletePolicy,
+  DocEntTraitsCompo,
+  SelfDeletePolicy,
+} from "../compo/doc_ent_traits";
 
-export function register_text_ent(editor: MixEditor) {
-  const ecs_ctx = editor.ecs;
+const default_ChildCompo = new ChildCompo(EntChildCompo.type);
+const default_DocEntTraitsCompo = new DocEntTraitsCompo({
+  can_children_enter: true,
+  can_self_enter: true,
+  border_policy: BorderPolicy.Bordered,
+  self_delete_from_caret_policy: SelfDeletePolicy.Normal,
+  child_delete_from_caret_policy: ChildDeletePolicy.Propagate,
+});
 
-  ecs_ctx.set_ent_behaviors("paragraph", {
-    [EntInitBehavior]({ it, ex_ctx }) {
-      // ex_ctx.pipe.set_pipe(it.id, "paragraph");
+const {
+  EntType: ParagraphEntType,
+  EntInitPipeId: ParagraphEntInitPipeId,
+  register_ent: register_ParagraphEnt,
+} = create_ent_registration({
+  namespace: "doc",
+  ent_type: "paragraph",
+  init_stage_execute: async (event) => {
+    const { it, ex_ctx } = event;
+    ex_ctx.ecs.set_compos(it.id, [
+      default_ChildCompo,
+      new EntChildCompo([]),
+      new ParentEntCompo(undefined),
+      default_DocEntTraitsCompo,
+    ]);
+  },
+});
 
-      const ecs = ex_ctx.ecs;
-      ecs.set_compos(it.id, [
-        new ChildCompo(ArrayChildCompo.type),
-        new ArrayChildCompo([]),
-        new ParentEntCompo(undefined),
-      ]);
-    },
-  });
-}
+export { ParagraphEntType, ParagraphEntInitPipeId, register_ParagraphEnt };
+export type ParagraphEntInitPipeEvent = EntInitPipeEvent<
+  typeof ParagraphEntInitPipeId
+>;

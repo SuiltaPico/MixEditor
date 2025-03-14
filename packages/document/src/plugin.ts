@@ -1,8 +1,9 @@
 import { MEPlugin } from "@mixeditor/core";
-import { register_pipes } from "./pipe";
+import { register_pipes_and_compo_behaviors } from "./pipe";
+import { register_ents } from "./ent";
 
 export const DocumentPlugin: () => MEPlugin = () => {
-  let disposers: (() => void)[] = [];
+  let disposers: ((() => void) | void)[] = [];
   return {
     id: "document",
     version: "0.0.1",
@@ -12,10 +13,13 @@ export const DocumentPlugin: () => MEPlugin = () => {
       author: "Mixeditor",
     },
     init(editor) {
-      disposers.push(register_pipes(editor));
+      disposers.push(
+        register_pipes_and_compo_behaviors(editor),
+        register_ents(editor)
+      );
     },
     dispose(editor) {
-      disposers.forEach((d) => d());
+      disposers.forEach((d) => d?.());
     },
   };
 };

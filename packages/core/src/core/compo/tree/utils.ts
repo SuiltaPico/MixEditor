@@ -12,7 +12,7 @@ import { ParentEntCompo } from "./parent_ent";
  * @param target_ent_id 需要查询的目标实体
  * @returns 实际子实体组件（未找到返回undefined）
  */
-export function get_actual_child_ent_compo(
+export function get_actual_child_compo(
   ecs_ctx: MixEditor["ecs"],
   target_ent_id: string
 ) {
@@ -47,7 +47,7 @@ export function get_index_in_parent_ent(
   if (!parent_id) return -1;
 
   // 获取父容器的实际子实体组件
-  const child_ent_compo = get_actual_child_ent_compo(ecs_ctx, parent_id);
+  const child_ent_compo = get_actual_child_compo(ecs_ctx, parent_id);
   if (!child_ent_compo) return -1;
 
   // 优先使用容器的自定义索引查找方法
@@ -59,7 +59,7 @@ export function get_index_in_parent_ent(
 // ------- ChildEntCompo 相关 -------
 /** 获取实体的子实体数量。*/
 export function get_child_ent_count(ecs_ctx: MixEditor["ecs"], ent_id: string) {
-  const child_ent_compo = get_actual_child_ent_compo(ecs_ctx, ent_id);
+  const child_ent_compo = get_actual_child_compo(ecs_ctx, ent_id);
   if (!child_ent_compo) return 0;
 
   return child_ent_compo.count();
@@ -71,7 +71,7 @@ export function get_child_ent_id(
   ent_id: string,
   index: number
 ) {
-  const child_ent_compo = get_actual_child_ent_compo(ecs_ctx, ent_id);
+  const child_ent_compo = get_actual_child_compo(ecs_ctx, ent_id);
   if (!child_ent_compo) return;
 
   return child_ent_compo.at(index);
@@ -82,7 +82,7 @@ export function get_index_of_child_ent(
   maybe_child: string
 ) {
   // 获取父容器的实际子实体组件
-  const child_ent_compo = get_actual_child_ent_compo(ecs_ctx, ent);
+  const child_ent_compo = get_actual_child_compo(ecs_ctx, ent);
   if (!child_ent_compo) return -1;
 
   // 优先使用容器的自定义索引查找方法

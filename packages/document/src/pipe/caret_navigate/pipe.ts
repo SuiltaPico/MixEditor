@@ -7,8 +7,9 @@ import {
 } from "@mixeditor/core";
 import { CaretDirection, execute_navigate_caret_from_pos } from "./executor";
 
-export interface CaretNavigateEvent extends MEEvent {
-  type: "doc:caret_navigate";
+export const DocCaretNavigatePipeId = "doc:caret_navigate" as const;
+export interface DocCaretNavigateEvent extends MEEvent {
+  type: typeof DocCaretNavigatePipeId;
   direction: CaretDirection;
 }
 
@@ -23,7 +24,7 @@ export interface CaretNavigateEvent extends MEEvent {
  * 3. 应用新的光标位置
  */
 export const caret_navigate_pipe_handler: MEPipeStageHandler<
-  CaretNavigateEvent
+  DocCaretNavigateEvent
 > = async (event, wait_deps) => {
   await wait_deps();
   const editor = event.ex_ctx;
@@ -64,14 +65,14 @@ export const caret_navigate_pipe_handler: MEPipeStageHandler<
  * @param editor 要注册管道的编辑器实例
  */
 export const register_caret_navigate_pipe = (editor: MixEditor) => {
-  editor.pipe.set_pipe("doc:caret_navigate", [
+  editor.pipe.set_pipe(DocCaretNavigatePipeId, [
     {
-      id: "handle_navigate",
+      id: "doc:default",
       execute: caret_navigate_pipe_handler,
     },
   ]);
 
   return () => {
-    editor.pipe.delete_pipe("doc:caret_navigate");
+    editor.pipe.delete_pipe(DocCaretNavigatePipeId);
   };
 };

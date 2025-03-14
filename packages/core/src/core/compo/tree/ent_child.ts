@@ -9,10 +9,10 @@ import { MixEditor } from "../../mix_editor";
  * 实现IChildEntityCompo接口，管理实体的子实体列表
  * 作为子实体的实际存储容器，通过字符串数组存储子实体ID
  */
-export class ArrayChildCompo implements IChildCompo {
-  static readonly type = "array_child" as const;
+export class EntChildCompo implements IChildCompo {
+  static readonly type = "ent_child" as const;
   get type() {
-    return ArrayChildCompo.type;
+    return EntChildCompo.type;
   }
 
   /** 存储子实体ID的信号包装数组 */
@@ -39,26 +39,26 @@ export class ArrayChildCompo implements IChildCompo {
 }
 
 /** 子实体数组组件传输对象结构定义 */
-export interface ArrayChildCompoTDO extends CompoTDO {
+export interface EntChildCompoTDO extends CompoTDO {
   /** 子实体ID列表 */
   children: string[];
 }
 
-export function register_ArrayChildCompo(editor: MixEditor) {
+export function register_EntChildCompo(editor: MixEditor) {
   const { ecs } = editor;
-  ecs.set_compo_behaviors(ArrayChildCompo.type, {
+  ecs.set_compo_behaviors(EntChildCompo.type, {
     /** 序列化组件为传输对象 */
     to_tdo({ it, save_with }) {
       const children = it.children.get();
       save_with(children);
       return {
-        type: ArrayChildCompo.type,
+        type: EntChildCompo.type,
         children: children,
-      } satisfies ArrayChildCompoTDO;
+      } satisfies EntChildCompoTDO;
     },
     /** 从传输对象反序列化组件 */
     from_tdo({ input }) {
-      return new ArrayChildCompo((input as ArrayChildCompoTDO).children);
+      return new EntChildCompo((input as EntChildCompoTDO).children);
     },
     [TreeChildInsert]: ({ it, index, items }) => {
       const children = it.children.get();

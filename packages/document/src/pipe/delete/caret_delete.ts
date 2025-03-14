@@ -1,4 +1,5 @@
 import {
+  get_actual_child_compo,
   get_child_ent_id,
   get_index_in_parent_ent,
   get_index_of_child_ent,
@@ -10,6 +11,7 @@ import {
   TreeCaret,
 } from "@mixeditor/core";
 import { execute_range_deletion } from "./range_delete";
+import { DocCaretDeleteCb } from "./compo_behavior";
 
 /** 驱使删除的来源。 */
 export enum CaretDeleteSource {
@@ -49,11 +51,10 @@ export const CaretDeleteDecision = {
    */
   DeleteSelf: { type: "delete_self" } satisfies CaretDeleteDecision,
   /** 自身节点已经处理了删除，并产生了要执行的操作。 */
-  Done: (props: { operation: Op; selected?: MESelection }) =>
+  Done: (props: { selected?: MESelection }) =>
     ({
       type: "done",
       selected: props.selected,
-      operation: props.operation,
     } satisfies CaretDeleteDecision),
 };
 
@@ -62,16 +63,20 @@ export type CaretDeleteDecision =
   | { type: "skip" } // 跳过当前节点
   | { type: "child"; index: number } // 进入子节点
   | { type: "delete_self" } // 删除自身
-  | { type: "done"; operation: Op; selected?: MESelection }; // 已处理完成
+  | { type: "done"; selected?: MESelection }; // 已处理完成
 
 /** 删除策略上下文。 */
 export interface CaretDeleteContext {
+  /** 要删除的实体。 */
+  ent_id: string;
   /** 要删除的方向。 */
   direction: CaretDeleteDirection;
   /** 请求删除的来源。 */
   src?: CaretDeleteSource;
   /** 删除的起点。 */
   from: number;
+  /** 事务。 */
+  tx: Transaction;
 }
 
 /** 从光标执行删除操作。 */
@@ -94,14 +99,19 @@ export async function execute_caret_deletion(
 
   const to_prev = direction === CaretDeleteDirection.Prev;
 
+  const actual_child_compo = get_actual_child_compo(ecs_ctx, caret_ent_id);
+  if (!actual_child_compo) return;
+
   // 执行当前节点的删除处理
-  const decision = await ecs_ctx.run_ent_behavior(
-    caret_ent,
-    "doc:handle_delete_from_caret",
+  const decision = await ecs_ctx.run_compo_behavior(
+    actual_child_compo,
+    DocCaretDeleteCb,
     {
+      ent_id: caret_ent_id,
       direction,
       src,
       from: caret.offset,
+      tx,
     }
   );
 
@@ -126,7 +136,6 @@ export async function execute_caret_deletion(
       }
     );
   } else if (decision.type === "done") {
-    await tx.execute(decision.operation);
     return { selected: decision.selected };
   } else if (decision.type === "skip") {
     // 处理 Skip 决策：将删除操作交给父节点处理
