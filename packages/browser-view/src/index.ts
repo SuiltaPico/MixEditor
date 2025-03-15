@@ -1,11 +1,13 @@
-import { EntBehaviorMapExtend, EntDomainCtxMapExtend } from "./ent";
+import { CompoMapBvExtend } from "./compo";
 import { PipeEventMapExtend } from "./pipe";
 
-export * from "./plugin";
+export * from "./common";
+export * from "./compo";
 export * from "./pipe";
+export * from "./plugin";
+export * from "./renderer";
 
 declare module "@mixeditor/core" {
-  interface MEEntBehaviorMap extends EntBehaviorMapExtend {}
-  interface MEEntDomainCtxMap extends EntDomainCtxMapExtend {}
   interface MEPipeEventMap extends PipeEventMapExtend {}
+  interface MECompoMap extends CompoMapBvExtend {}
 }

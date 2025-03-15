@@ -3,7 +3,6 @@ import { ECSCtx, Ent } from "../ecs";
 
 /** 内容上下文 */
 export class ContentCtx {
-  // implements IContentCtx<TEntCtx["ent_map"]["root"]>
   root: WrappedSignal<string | undefined>;
 
   constructor(root_ent_id?: string) {

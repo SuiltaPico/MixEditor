@@ -2,7 +2,7 @@
 	"name": "@mixeditor/plugin-basic-text",
 	"version": "0.0.1",
 	"scripts": {
-		"build": "concurrently \"node esbuild.mjs\" \"rollup -c rollup.config.mjs\"",
+		"build2": "concurrently \"node esbuild.mjs\" \"rollup -c rollup.config.mjs\"",
 		"test": "jest"
 	},
 	"main": "dist/index.js",

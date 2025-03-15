@@ -27,12 +27,12 @@ const {
   register_ent: register_ParagraphEnt,
 } = create_ent_registration({
   namespace: "doc",
-  ent_type: "paragraph",
+  ent_type: "doc:paragraph",
   init_stage_execute: async (event) => {
-    const { it, ex_ctx } = event;
+    const { it, ex_ctx, init_params } = event;
     ex_ctx.ecs.set_compos(it.id, [
       default_ChildCompo,
-      new EntChildCompo([]),
+      new EntChildCompo(init_params?.children ?? []),
       new ParentEntCompo(undefined),
       default_DocEntTraitsCompo,
     ]);

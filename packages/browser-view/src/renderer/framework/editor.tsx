@@ -1,7 +1,7 @@
 import { Component, onMount } from "solid-js";
-import { BvContext } from "../context";
+import { BvContext } from "../../context";
 import { ContentRenderer } from "./content";
-import { SelectionRenderer } from "./selection";
+// import { SelectionRenderer } from "./selection/selection";
 
 /** 编辑器渲染器。
  * 入口组件，负责渲染整个编辑器。
@@ -56,7 +56,7 @@ export const EditorRenderer: Component<BvContext> = (bv_ctx) => {
       ref={container}
     >
       <ContentRenderer bv_ctx={bv_ctx} />
-      <SelectionRenderer bv_ctx={bv_ctx} />
+      {/* <SelectionRenderer bv_ctx={bv_ctx} /> */}
     </div>
   );
 };

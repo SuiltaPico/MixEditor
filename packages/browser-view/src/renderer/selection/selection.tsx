@@ -7,15 +7,20 @@ import {
   onMount,
   Show,
 } from "solid-js";
-import { createSignal, Rect } from "@mixeditor/common";
-import { BvContext } from "../context";
+import { create_Signal, Rect } from "@mixeditor/common";
+import { BvContext } from "../../context";
 import {
   Ent,
+  get_child_ent_count,
+  get_child_ent_id,
   get_common_ancestor_from_ent,
+  get_index_of_child_ent,
   MixEditor,
   TreeExtendedSelection,
 } from "@mixeditor/core";
-import { execute_render_selection } from "../pipe";
+import { execute_render_selection } from "../../pipe";
+import { get_bv_child_position } from "../../compo";
+import "./selection.css";
 
 /** 选区渲染器。
  *
@@ -36,12 +41,12 @@ async function get_rect_of_extended_selected(
   editor: MixEditor,
   selection: TreeExtendedSelection
 ) {
-  const ent_ctx = editor.ent;
+  const { ecs } = editor;
   let rects: Rect[] = [];
 
-  const start_ent = selection.start.ent;
+  const start_ent = selection.start.ent_id;
   const start_offset = selection.start.offset;
-  const end_ent = selection.end.ent;
+  const end_ent = selection.end.ent_id;
   const end_offset = selection.end.offset;
 
   if (start_ent === end_ent) {
@@ -63,11 +68,7 @@ async function get_rect_of_extended_selected(
   // 3. 从起始节点在共同祖先的子节点下一位开始，到结束节点在共同祖先的子节点上一位结束，期间选择所有子节点的选区
 
   // 获取起始和结束节点的共同祖先
-  const result = await get_common_ancestor_from_ent(
-    ent_ctx,
-    start_ent,
-    end_ent
-  );
+  const result = await get_common_ancestor_from_ent(ecs, start_ent, end_ent);
   // 如果找不到共同祖先。则代表并不在同一棵树上，则因为无法选中而流程结束，返回空数组
   if (!result) return rects;
 
@@ -90,7 +91,7 @@ async function get_rect_of_extended_selected(
     execute_render_selection(editor, end_ent, 0, end_offset, rects),
   ];
 
-  let current: Ent | undefined;
+  let current: string | undefined;
   const reversed_start_ancestors = start_ancestors
     .slice(ancestor_index + 1)
     .toReversed();
@@ -102,29 +103,20 @@ async function get_rect_of_extended_selected(
   current = start_ent;
   for (let i = 0; i < reversed_start_ancestors.length; i++) {
     const current_parent = reversed_start_ancestors[i];
-    const parent_length = await ent_ctx.exec_behavior(
-      current_parent,
-      "tree:length",
-      {}
-    )!;
+    const parent_length = get_child_ent_count(ecs, current_parent);
 
     // 获取当前节点在父节点中的索引
-    const current_index = await ent_ctx.exec_behavior(
-      current_parent,
-      "tree:index_of_child",
-      {
-        child: current as any,
-      }
-    )!;
+    const current_index = get_index_of_child_ent(ecs, current_parent, current);
 
     // 处理后侧兄弟节点的选区
     for (let i = current_index + 1; i < parent_length; i++) {
+      const child_ent_id = get_child_ent_id(ecs, current_parent, i);
+      if (!child_ent_id) continue;
+
       promises.push(
         execute_render_selection(
           editor,
-          (await ent_ctx.exec_behavior(current_parent, "tree:child_at", {
-            index: i,
-          })) as Ent,
+          child_ent_id,
           0,
           Number.MAX_SAFE_INTEGER,
           rects
@@ -139,22 +131,17 @@ async function get_rect_of_extended_selected(
   for (let i = 0; i < reversed_end_ancestors.length; i++) {
     const current_parent = reversed_end_ancestors[i];
     // 获取当前节点在父节点中的索引
-    const current_index = await ent_ctx.exec_behavior(
-      current_parent,
-      "tree:index_of_child",
-      {
-        child: current as any,
-      }
-    )!;
+    const current_index = get_index_of_child_ent(ecs, current_parent, current);
 
     // 处理前侧兄弟节点的选区
     for (let i = current_index - 1; i >= 0; i--) {
+      const child_ent_id = get_child_ent_id(ecs, current_parent, i);
+      if (!child_ent_id) continue;
+
       promises.push(
         execute_render_selection(
           editor,
-          (await ent_ctx.exec_behavior(current_parent, "tree:child_at", {
-            index: i,
-          })) as Ent,
+          child_ent_id,
           0,
           Number.MAX_SAFE_INTEGER,
           rects
@@ -165,30 +152,27 @@ async function get_rect_of_extended_selected(
   }
 
   // 起始节点在共同祖先的子节点索引
-  const start_ancestor_index = await ent_ctx.exec_behavior(
+  const start_ancestor_index = get_index_of_child_ent(
+    ecs,
     common_ancestor,
-    "tree:index_of_child",
-    {
-      child: start_ancestors[ancestor_index + 1] as any,
-    }
-  )!;
+    start_ancestors[ancestor_index + 1]
+  );
 
   // 结束节点在共同祖先的子节点索引
-  const end_ancestor_index = await ent_ctx.exec_behavior(
+  const end_ancestor_index = get_index_of_child_ent(
+    ecs,
     common_ancestor,
-    "tree:index_of_child",
-    {
-      child: end_ancestors[ancestor_index + 1] as any,
-    }
-  )!;
+    end_ancestors[ancestor_index + 1]
+  );
 
   for (let i = start_ancestor_index + 1; i < end_ancestor_index; i++) {
+    const child_ent_id = get_child_ent_id(ecs, common_ancestor, i);
+    if (!child_ent_id) continue;
+
     promises.push(
       execute_render_selection(
         editor,
-        (await ent_ctx.exec_behavior(common_ancestor, "tree:child_at", {
-          index: i,
-        })) as Ent,
+        child_ent_id,
         0,
         Number.MAX_SAFE_INTEGER,
         rects
@@ -210,7 +194,7 @@ export const TreeRangeRenderer: Component<{
 
   const selection = editor.selection;
   /** 选区范围。 */
-  const ranges = createSignal<
+  const ranges = create_Signal<
     {
       start: {
         x: number;
@@ -258,13 +242,7 @@ export const TreeRangeRenderer: Component<{
       if (selected) {
         const info =
           selected.type === "tree:collapsed" ? selected.caret : selected.start;
-        const result = await editor.ent.exec_behavior(
-          info.ent,
-          "bv:get_child_caret",
-          {
-            index: info.offset,
-          }
-        );
+        const result = get_bv_child_position(editor, info.ent_id, info.offset);
         if (!result) return;
         caret!.style.left = `${result.x}px`;
         caret!.style.top = `${result.y}px`;
@@ -312,12 +290,14 @@ export const TreeRangeRenderer: Component<{
         {ranges.get().map((range) => (
           <div
             class="__range"
-            style={{
-              left: `${range.start.x}px`,
-              top: `${range.start.y}px`,
-              width: `${range.end.x - range.start.x}px`,
-              height: `${range.end.y - range.start.y}px`,
-            }}
+            style={
+              {
+                left: `${range.start.x}px`,
+                top: `${range.start.y}px`,
+                width: `${range.end.x - range.start.x}px`,
+                height: `${range.end.y - range.start.y}px`,
+              } as any
+            }
           ></div>
         ))}
       </div>

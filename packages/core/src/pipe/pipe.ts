@@ -50,7 +50,9 @@ export class Pipe<TEvent extends IPipeEvent<TExCtx>, TExCtx>
     event.ex_ctx = ex_ctx;
 
     const { fast_fail = false } = options ?? {};
-    const promise_all = fast_fail ? Promise.all : Promise.allSettled;
+    const promise_all = (fast_fail ? Promise.all : Promise.allSettled).bind(
+      Promise
+    );
 
     const promise_map = new Map<string, MaybePromise<void>>();
     const first_run_pwr = Promise.withResolvers<void>();
@@ -75,7 +77,8 @@ export class Pipe<TEvent extends IPipeEvent<TExCtx>, TExCtx>
     // 开始执行
     first_run_pwr.resolve();
 
-    await promise_all(Array.from(promise_map.values()));
+    const promises = Array.from(promise_map.values());
+    await promise_all(promises);
 
     return event as TEvent;
   }

@@ -27,12 +27,12 @@ const {
   register_ent: register_TextEnt,
 } = create_ent_registration({
   namespace: "doc",
-  ent_type: "text",
+  ent_type: "doc:text",
   init_stage_execute: async (event) => {
-    const { it, ex_ctx } = event;
+    const { it, ex_ctx, init_params } = event;
     ex_ctx.ecs.set_compos(it.id, [
       default_ChildCompo,
-      new TextChildCompo(""),
+      new TextChildCompo(init_params?.text ?? ""),
       new ParentEntCompo(undefined),
       default_DocEntTraitsCompo,
     ]);

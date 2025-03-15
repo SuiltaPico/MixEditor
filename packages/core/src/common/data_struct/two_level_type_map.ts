@@ -17,10 +17,12 @@ export class TwoLevelTypeMap<
     return this.map.get(master_type);
   }
   set(master_type: TMasterKey, segment_type: TSegmentKey, value: TValue) {
-    if (!this.map.has(master_type)) {
-      this.map.set(master_type, new Map());
+    let master_map = this.map.get(master_type);
+    if (!master_map) {
+      master_map = new Map();
+      this.map.set(master_type, master_map);
     }
-    this.map.get(master_type)?.set(segment_type, value);
+    master_map.set(segment_type, value);
   }
   delete(master_type: TMasterKey, segment_type: TSegmentKey) {
     this.map.get(master_type)?.delete(segment_type);

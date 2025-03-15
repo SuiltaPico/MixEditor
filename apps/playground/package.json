@@ -12,7 +12,8 @@
     "@mixeditor/browser-view": "workspace:*",
     "@mixeditor/common": "workspace:*",
     "@mixeditor/core": "workspace:*",
-    "@mixeditor/plugin-basic-text": "workspace:*",
+    "@mixeditor/document": "workspace:*",
+    "@mixeditor/doc-bv-bridge": "workspace:*",
     "solid-js": "^1.9.4"
   },
   "devDependencies": {

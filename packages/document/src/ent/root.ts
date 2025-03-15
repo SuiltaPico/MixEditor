@@ -8,23 +8,22 @@ import {
 
 export function register_RootEnt_doc_extend(editor: MixEditor) {
   const { pipe } = editor;
-  pipe.set_pipe(RootEntInitPipeId, [
-    {
-      id: "doc",
-      execute(event) {
-        const { it, ex_ctx } = event;
-        ex_ctx.ecs.set_compos(it.id, [
-          new DocEntTraitsCompo({
-            can_children_enter: true,
-            can_self_enter: false,
-            border_policy: BorderPolicy.NoCrossing,
-            self_delete_from_caret_policy: SelfDeletePolicy.Never,
-            child_delete_from_caret_policy: ChildDeletePolicy.Propagate,
-          }),
-        ]);
-      },
+  const init_pipe = pipe.get_pipe(RootEntInitPipeId)!;
+  init_pipe.set_stage({
+    id: "doc",
+    execute(event) {
+      const { it, ex_ctx } = event;
+      ex_ctx.ecs.set_compos(it.id, [
+        new DocEntTraitsCompo({
+          can_children_enter: true,
+          can_self_enter: false,
+          border_policy: BorderPolicy.NoCrossing,
+          self_delete_from_caret_policy: SelfDeletePolicy.Never,
+          child_delete_from_caret_policy: ChildDeletePolicy.Propagate,
+        }),
+      ]);
     },
-  ]);
+  });
   return () => {
     pipe.get_pipe(RootEntInitPipeId)?.delete_stage("doc");
   };

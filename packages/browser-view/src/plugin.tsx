@@ -1,17 +1,15 @@
 import { MEPlugin } from "@mixeditor/core";
-import { RootRenderer } from "./renderer/root";
-import { create_solidjs_rendered } from "./renderer/node_renderer";
-import { BvContext } from "./context";
 import { render } from "solid-js/web";
-import { EditorRenderer } from "./renderer/editor";
+import { BvContext } from "./context";
+import { register_RootEnt_bv_extend } from "./ent";
+import { EditorRenderer } from "./renderer/framework/editor";
 
 export type BrowserViewExposed = ReturnType<
-  ReturnType<typeof browser_view>["init"]
+  ReturnType<typeof BrowserViewPlugin>["init"]
 >;
 
-export const browser_view = (params: { mount_to: HTMLElement }) => {
+export const BrowserViewPlugin = (params: { mount_to: HTMLElement }) => {
   let dispose_render_root: (() => void) | undefined;
-  let bv_ctx;
 
   return {
     id: "browser_view",
@@ -22,6 +20,8 @@ export const browser_view = (params: { mount_to: HTMLElement }) => {
       author: "Mixeditor",
     },
     init(editor) {
+      register_RootEnt_bv_extend(editor);
+
       let bv_ctx = {
         editor,
       } as BvContext;

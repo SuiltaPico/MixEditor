@@ -10,9 +10,9 @@ const {
   namespace: "core",
   ent_type: "core:root",
   init_stage_execute: async (event) => {
-    const { it, ex_ctx } = event;
+    const { it, ex_ctx, init_params } = event;
     ex_ctx.ecs.set_compos(it.id, [
-      new EntChildCompo([]),
+      new EntChildCompo(init_params?.children ?? []),
       new ChildCompo(EntChildCompo.type),
     ]);
   },

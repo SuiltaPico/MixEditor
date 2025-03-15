@@ -31,7 +31,13 @@ export type EntBehaviorMap<TExCtx> = Record<
   EntBehaviorHandler<any, any, TExCtx>
 > & {
   /** 实体初始化。 */
-  [EntInitBehavior]: EntBehaviorHandler<{}, void, TExCtx>;
+  [EntInitBehavior]: EntBehaviorHandler<
+    {
+      init_params: any;
+    },
+    void,
+    TExCtx
+  >;
   /** 实体保存为 TDO 前。 */
   [EntBeforeSaveTdoBehavior]: EntBehaviorHandler<{}, void, TExCtx>;
   /** 实体从 TDO 加载后。 */
@@ -121,7 +127,7 @@ export class ECSCtx<
   }
 
   /** 创建实体。 */
-  async create_ent(ent_type: string) {
+  async create_ent(ent_type: string, params?: any) {
     type BehaviorParams = Omit<
       Parameters<TEntBehaviorMap[any]>[0],
       "it" | "ex_ctx"
@@ -129,7 +135,9 @@ export class ECSCtx<
 
     const id = this.gen_ent_id();
     const ent = new Ent(id, ent_type);
-    await this.run_ent_behavior(ent, "init", {} as BehaviorParams);
+    await this.run_ent_behavior(ent, "init", {
+      init_params: params,
+    } as BehaviorParams);
     this.ents.set(id, ent);
     return ent;
   }

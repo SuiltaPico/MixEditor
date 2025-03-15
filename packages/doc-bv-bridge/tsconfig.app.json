@@ -3,12 +3,9 @@
     "target": "ESNext",
     "useDefineForClassFields": true,
     "module": "ESNext",
-    "lib": [
-      "ESNext",
-      "DOM",
-      "DOM.Iterable"
-    ],
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
     "skipLibCheck": true,
+
     /* Bundler mode */
     "moduleResolution": "Bundler",
     "allowImportingTsExtensions": true,
@@ -17,11 +14,10 @@
     "noEmit": true,
     "jsx": "preserve",
     "jsxImportSource": "solid-js",
+
     /* Linting */
     "strict": true,
     "noFallthroughCasesInSwitch": true,
   },
-  "include": [
-    "src"
-  ],
+  "include": ["src", "src/renderer/selection/selection.tsx", "../../plugins/bv-doc-selection/src/selection.ts"]
 }

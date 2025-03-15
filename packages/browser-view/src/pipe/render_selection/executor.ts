@@ -1,75 +1,48 @@
 import { Rect } from "@mixeditor/common";
-import { Ent, MixEditor } from "@mixeditor/core";
+import { get_actual_child_compo, MixEditor } from "@mixeditor/core";
+import { BvRenderableCompo, BvRenderSelectionDecision } from "../../compo";
 
-/** 选区绘制决策。 */
-export const BvRenderSelectionDecision = {
-  /** 跳过，不绘制选区。
-   * @default
-   */
-  Skip: {
-    type: "skip",
-  },
-  /** 进入自己的逐个子节点。 */
-  Enter: {
-    type: "enter",
-  },
-  /** 默认行为。（直接在当前节点绘制选区） */
-  Render: (rects: Rect[]) => ({
-    type: "render" as const,
-    /** 选区范围。 */
-    rects,
-  }),
-} as const;
-
-/** 选区绘制决策。 */
-export type BvRenderSelectionDecision =
-  | {
-      type: "skip";
-    }
-  | {
-      type: "enter";
-    }
-  | {
-      type: "render";
-      rects: Rect[];
-    };
-
-export interface BvRenderSelectionContext {
-  from: number;
-  to: number;
+async function get_render_decision(
+  editor: MixEditor,
+  ent_id: string,
+  from: number,
+  to: number
+): Promise<BvRenderSelectionDecision> {
+  const ent_ctx = editor.ecs;
+  const renderable = ent_ctx.get_compo(ent_id, BvRenderableCompo.type);
+  if (!renderable) return BvRenderSelectionDecision.Ignore;
+  return renderable.get_render_selection_policy({ editor, ent_id, from, to });
 }
 
 export async function execute_render_selection(
   editor: MixEditor,
-  ent: Ent,
+  ent_id: string,
   from: number,
   to: number,
   rects: Rect[]
 ) {
   const ent_ctx = editor.ecs;
-  const decision = await ent_ctx(
-    ent,
-    "bv:handle_render_selection",
-    {
-      from,
-      to,
-    }
-  );
-  if (!decision || decision.type === "skip") return;
-  else if (decision.type === "enter") {
-    const length = await ent_ctx.exec_behavior(ent, "tree:length", {})!;
+  const decision = await get_render_decision(editor, ent_id, from, to);
+
+  if (decision.type === "ignore") return;
+  else if (decision.type === "traverse") {
+    const actual_child_compo = get_actual_child_compo(ent_ctx, ent_id);
+    if (!actual_child_compo) return;
+
+    const length = actual_child_compo.count();
     if (to > length) {
       to = length - 1;
     }
     let promises: Promise<void>[] = [];
     for (let i = from; i <= to; i++) {
+      const child_ent_id = actual_child_compo.at(i);
+      if (!child_ent_id) continue;
+
       // 全选子节点
       promises.push(
         execute_render_selection(
           editor,
-          (await ent_ctx.exec_behavior(ent, "tree:child_at", {
-            index: i,
-          })) as Ent,
+          child_ent_id,
           0,
           Number.MAX_SAFE_INTEGER,
           rects
@@ -77,7 +50,7 @@ export async function execute_render_selection(
       );
     }
     await Promise.all(promises);
-  } else if (decision.type === "render") {
+  } else if (decision.type === "draw_rect") {
     rects.push(...decision.rects);
   }
 }

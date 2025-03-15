@@ -1,9 +1,20 @@
-import { onMount } from "solid-js";
-import { create_DocumentTDO, MixEditor } from "@mixeditor/core";
-import { browser_view } from "@mixeditor/browser-view";
-import { paragraph, text } from "@mixeditor/plugin-basic-text";
-import "./App.css";
+import { BrowserViewPlugin } from "@mixeditor/browser-view";
 import "@mixeditor/browser-view/index.css";
+import {
+  build_ent_specs,
+  ent_spec,
+  MixEditor,
+  RootEntType,
+} from "@mixeditor/core";
+import {
+  DocBoldCompo,
+  DocumentPlugin,
+  ParagraphEntType,
+  TextEntType,
+} from "@mixeditor/document";
+import { DocBvBridgePlugin } from "@mixeditor/doc-bv-bridge";
+import { onMount } from "solid-js";
+import "./App.css";
 
 function array_repeat<T>(arr: () => T[], count: number) {
   return Array.from({ length: count }, () => arr()).flat();
@@ -15,99 +26,57 @@ function App() {
   onMount(async () => {
     const editor = new MixEditor({
       plugins: [
-        browser_view({
-          element: editor_container!,
+        DocumentPlugin(),
+        BrowserViewPlugin({
+          mount_to: editor_container!,
         }),
-        text(),
-        paragraph(),
+        DocBvBridgePlugin(),
       ],
     });
+    // @ts-ignore
+    window.editor = editor;
+    await editor.init({});
+
+    console.time("build_ent_specs");
+    const root = await build_ent_specs(
+      editor,
+      ent_spec(RootEntType, {
+        children: array_repeat(
+          () => [
+            ent_spec(ParagraphEntType, {
+              children: [
+                ent_spec(TextEntType, {
+                  text: "SQL SELECT 语句简介",
+                }),
+              ],
+            }),
+            ent_spec(ParagraphEntType, {
+              children: [
+                ent_spec(TextEntType, {
+                  text: "SQL（Structured Query Language，结构化查询语言）中的 ",
+                }),
+                ent_spec(
+                  TextEntType,
+                  {
+                    text: "SELECT",
+                  },
+                  [new DocBoldCompo()]
+                ),
+                ent_spec(TextEntType, {
+                  text: " 语句是用于从数据库中检索数据的最基本且最常用的命令。它允许用户从一张或多张数据库表中提取所需的数据，并支持对数据进行筛选、排序、分组和聚合等操作。",
+                }),
+              ],
+            }),
+          ],
+          5
+        ),
+      })
+    );
+    console.timeEnd("build_ent_specs");
+
+    editor.content.root.set(root);
+
     console.log(editor);
-    await editor.init();
-    const { node_manager, saver } = editor;
-
-    const doc = create_DocumentTDO(node_manager.gen_id(), {
-      children: array_repeat(
-        () => [
-          {
-            id: node_manager.gen_id(),
-            type: "paragraph",
-            children: [
-              {
-                id: node_manager.gen_id(),
-                type: "text",
-                content:
-                  "富文本编辑器是一种允许用户以所见即所得（WYSIWYG）的方式创建和编辑文本的工具。与纯文本编辑器不同，富文本编辑器允许用户对文本进行格式化，例如更改字体、字号、颜色，以及添加粗体、斜体、下划线等样式。",
-              },
-              {
-                id: node_manager.gen_id(),
-                type: "text",
-                content:
-                  "富文本编辑器是一种允许用户以所见即所得（WYSIWYG）的方式创建和编辑文本的工具。与纯文本编辑器不同，富文本编辑器允许用户对文本进行格式化，例如更改字体、字号、颜色，以及添加粗体、斜体、下划线等样式。",
-              },
-            ],
-          },
-          {
-            id: node_manager.gen_id(),
-            type: "paragraph",
-            children: [
-              {
-                id: node_manager.gen_id(),
-                type: "text",
-                content:
-                  "这种编辑器通常被用于需要丰富内容呈现的场景，例如博客文章、电子邮件、在线文档编辑等。用户可以像使用文字处理软件一样，直观地编辑文本内容，而无需了解 HTML 等标记语言。",
-              },
-              {
-                id: node_manager.gen_id(),
-                type: "text",
-                content:
-                  "这种编辑器通常被用于需要丰富内容呈现的场景，例如博客文章、电子邮件、在线文档编辑等。用户可以像使用文字处理软件一样，直观地编辑文本内容，而无需了解 HTML 等标记语言。",
-              },
-            ],
-          },
-          {
-            id: node_manager.gen_id(),
-            type: "paragraph",
-            children: [
-              {
-                id: node_manager.gen_id(),
-                type: "text",
-                content:
-                  "富文本编辑器通过将用户的格式化操作转换成相应的代码来实现富文本效果。当用户保存或发布内容时，这些代码会被解析并渲染成最终的视觉效果。",
-              },
-            ],
-          },
-          {
-            id: node_manager.gen_id(),
-            type: "paragraph",
-            children: [
-              {
-                id: node_manager.gen_id(),
-                type: "text",
-                content:
-                  "常见的富文本编辑器功能包括段落格式化、字符格式化、插入链接和图片等。通过这些功能，用户可以轻松地创建出具有良好可读性和视觉吸引力的内容。",
-              },
-            ],
-          },
-          {
-            id: node_manager.gen_id(),
-            type: "paragraph",
-            children: [
-              {
-                id: node_manager.gen_id(),
-                type: "text",
-                content:
-                  "富文本编辑器通过将用户的格式化操作转换成相应的代码来实现富文本效果。当用户保存或发布内容时，这些代码会被解析并渲染成最终的视觉效果。",
-              },
-            ],
-          },
-        ],
-        1
-      ),
-    });
-
-    await saver.load(doc);
-    console.log(editor.document.get());
   });
 
   return (

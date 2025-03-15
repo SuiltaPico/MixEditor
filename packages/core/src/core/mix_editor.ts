@@ -108,7 +108,7 @@ export class MixEditor {
     ThisType<this>
   >;
 
-  plugin: PluginCtx<ThisType<this>>;
+  plugin: PluginCtx<this>;
 
   async init(params: InitParams) {
     regist_core_items(this);
@@ -124,7 +124,7 @@ export class MixEditor {
     await this.pipe.execute({ pipe_id: "destroy" }); // 销毁插件
   }
 
-  constructor() {
+  constructor(params: { plugins: MEPlugin[] }) {
     this.ecs = new ECSCtx(this);
     this.content = new ContentCtx();
     this.op = new OpCtx(this);
@@ -136,5 +136,8 @@ export class MixEditor {
       ThisType<this>
     >(this);
     this.plugin = new PluginCtx(this);
+    for (const plugin of params.plugins) {
+      this.plugin.register(plugin);
+    }
   }
 }
