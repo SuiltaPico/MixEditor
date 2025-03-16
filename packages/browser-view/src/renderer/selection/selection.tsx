@@ -16,11 +16,12 @@ import {
   get_common_ancestor_from_ent,
   get_index_of_child_ent,
   MixEditor,
+  TreeCollapsedSelectionType,
   TreeExtendedSelection,
 } from "@mixeditor/core";
 import { execute_render_selection } from "../../pipe";
-import { get_bv_child_position } from "../../compo";
 import "./selection.css";
+import { BvRenderableCompo } from "../../compo";
 
 /** 选区渲染器。
  *
@@ -238,30 +239,46 @@ export const TreeRangeRenderer: Component<{
 
   // 自动更新选区位置
   createEffect(
-    on(selection.get_selection, async (selected) => {
-      if (selected) {
-        const info =
-          selected.type === "tree:collapsed" ? selected.caret : selected.start;
-        const result = get_bv_child_position(editor, info.ent_id, info.offset);
-        if (!result) return;
-        caret!.style.left = `${result.x}px`;
-        caret!.style.top = `${result.y}px`;
-        caret!.style.height = `${result.height}px`;
-      }
+    on(
+      () => selection.get_selection(),
+      async (selected) => {
+        console.log("selection changed", selected);
 
-      if (selected && selected.type === "tree:extended") {
-        const rects = await get_rect_of_extended_selected(editor, selected);
-        // 更新选区范围
-        ranges.set(
-          rects.map((rect) => ({
-            start: { x: rect.x, y: rect.y },
-            end: { x: rect.x + rect.width, y: rect.y + rect.height },
-          }))
-        );
-      } else {
-        ranges.set([]);
+        if (selected) {
+          const info =
+            selected.type === TreeCollapsedSelectionType
+              ? selected.caret
+              : selected.start;
+          const renderable = editor.ecs.get_compo(
+            info.ent_id,
+            BvRenderableCompo.type
+          );
+          if (!renderable) return;
+          const result = renderable.get_child_pos({
+            editor,
+            ent_id: info.ent_id,
+            index: info.offset,
+          });
+          if (!result) return;
+          caret!.style.left = `${result.x}px`;
+          caret!.style.top = `${result.y}px`;
+          caret!.style.height = `${result.height}px`;
+        }
+
+        if (selected && selected.type === "tree:extended") {
+          const rects = await get_rect_of_extended_selected(editor, selected);
+          // 更新选区范围
+          ranges.set(
+            rects.map((rect) => ({
+              start: { x: rect.x, y: rect.y },
+              end: { x: rect.x + rect.width, y: rect.y + rect.height },
+            }))
+          );
+        } else {
+          ranges.set([]);
+        }
       }
-    })
+    )
   );
 
   return (

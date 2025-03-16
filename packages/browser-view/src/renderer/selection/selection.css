@@ -1,9 +1,9 @@
 .mix_editor {
   position: relative;
   min-height: 300px;
-  padding: 10px;
   border: 1px solid #ccc;
   background: #fff;
+  display: flex;
 
   & > ._mixeditor_selection {
     position: absolute;
@@ -31,18 +31,10 @@
     }
   }
 
-  & > ._document {
+  & > ._root {
     user-select: none;
     cursor: text;
-  }
-
-  & > ._paragraph {
-    margin: 1em 0;
-    line-height: 1.5;
-  }
-
-  & > ._text {
-    white-space: pre-wrap;
+    padding: 10px;
   }
 }
 

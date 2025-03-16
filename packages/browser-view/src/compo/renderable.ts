@@ -44,6 +44,10 @@ export type BvRenderSelectionDecision =
 export interface BvRenderableParams {
   /** 渲染函数 */
   renderer: BvRenderableCompo["renderer"];
+
+  /** 自定义位置获取函数（可选） */
+  custom_get_child_pos?: BvRenderableCompo["custom_get_child_pos"];
+
   /** 选区渲染策略（可选） */
   render_selection_policy?: BvRenderableCompo["render_selection_policy"];
   /** 自定义选区渲染函数（可选） */
@@ -66,6 +70,16 @@ export class BvRenderableCompo implements Compo {
   /** 渲染结果（可能未定义） */
   render_result: RenderResult | undefined;
 
+  custom_get_child_pos:
+    | ((params: CustomDecisionFnParams<{ index: number }>) =>
+        | {
+            x: number;
+            y: number;
+            height: number;
+          }
+        | undefined)
+    | undefined;
+
   /** 选区渲染策略 */
   render_selection_policy: BvRenderSelectionDecision;
   /** 自定义的选区渲染决策函数 */
@@ -75,6 +89,14 @@ export class BvRenderableCompo implements Compo {
       to: number;
     }>
   ) => MaybePromise<BvRenderSelectionDecision>;
+
+  get_child_pos(
+    params: Parameters<
+      Exclude<BvRenderableCompo["custom_get_child_pos"], undefined>
+    >[0]
+  ) {
+    return this.custom_get_child_pos?.(params);
+  }
 
   /** 获取选区渲染策略 */
   async get_render_selection_policy(
@@ -92,6 +114,7 @@ export class BvRenderableCompo implements Compo {
     this.renderer = params.renderer;
     this.render_selection_policy =
       params.render_selection_policy ?? BvRenderSelectionDecision.Ignore;
+    this.custom_get_child_pos = params.custom_get_child_pos;
     this.custom_render_selection = params.custom_render_selection;
   }
 }
