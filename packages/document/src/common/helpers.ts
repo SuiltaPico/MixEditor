@@ -24,31 +24,54 @@ import { ChildDeletePolicy, SelfDeletePolicy } from "../compo/doc_ent_traits";
 function children_enter_navigation(
   traits: DocEntTraitsCompo,
   from: number,
-  toPrev: boolean,
+  to_prev: boolean,
   src: CaretNavigateSource | undefined,
   children_count: number
 ) {
-  // 边界策略为不允许越界时的处理
-  if (traits.border_policy.get() === BorderPolicy.NoCrossing) {
-    const atStart = toPrev && from <= 0;
-    const atEnd = !toPrev && from >= children_count;
-    if (atStart || atEnd) return CaretNavigateDecision.Skip;
-  }
+  const border_policy = traits.border_policy.get();
+  const can_self_enter = traits.can_self_enter.get();
 
   // 根据导航来源处理不同情况
   switch (src) {
     case CaretNavigateSource.Child: // 来自子元素的导航
-      return CaretNavigateDecision.Self(from + (toPrev ? 0 : 1));
+      let new_pos;
+      if (can_self_enter) {
+        new_pos = from + (to_prev ? 0 : 1);
+      } else {
+        new_pos = from + (to_prev ? -1 : 1);
+      }
+      const cross_border_in_same_direction =
+        border_policy === BorderPolicy.Bordered
+          ? (to_prev && new_pos < 0) || (!to_prev && new_pos > children_count)
+          : (to_prev && new_pos <= 0) ||
+            (!to_prev && new_pos >= children_count);
+
+      if (cross_border_in_same_direction) return CaretNavigateDecision.Skip;
+      if (can_self_enter) {
+        return CaretNavigateDecision.Self(new_pos);
+      } else {
+        return CaretNavigateDecision.Child(new_pos);
+      }
     case CaretNavigateSource.Parent: // 来自父元素的导航
-      if ((toPrev && from < 0) || (!toPrev && from >= children_count)) {
+      const cross_border_in_opposite_direction =
+        border_policy === BorderPolicy.Bordered
+          ? (!to_prev && from < 0) || (to_prev && from > children_count)
+          : (!to_prev && from <= 0) || (to_prev && from >= children_count);
+      if ((to_prev && from < 0) || (!to_prev && from >= children_count)) {
         return CaretNavigateDecision.Skip;
+      }
+      if (cross_border_in_opposite_direction) {
+        if (border_policy === BorderPolicy.Bordered) {
+          return CaretNavigateDecision.Self(to_prev ? children_count : 0);
+        }
+        return CaretNavigateDecision.Self(to_prev ? children_count - 1 : 1);
       }
       return CaretNavigateDecision.Self(from);
     default: // 直接导航（非来自父或子）
-      if ((toPrev && from <= 0) || (!toPrev && from >= children_count)) {
+      if ((to_prev && from <= 0) || (!to_prev && from >= children_count)) {
         return CaretNavigateDecision.Skip;
       }
-      return CaretNavigateDecision.Child(from + (toPrev ? -1 : 0));
+      return CaretNavigateDecision.Child(from + (to_prev ? -1 : 0));
   }
 }
 
@@ -57,27 +80,32 @@ function children_enter_navigation(
  */
 function no_children_enter_navigation(
   traits: DocEntTraitsCompo,
-  newPos: number,
-  toPrev: boolean,
+  new_pos: number,
+  to_prev: boolean,
   children_count: number
 ) {
-  const atStart = toPrev ? newPos >= children_count : newPos <= 0;
-  const atEnd = toPrev ? newPos < 0 : newPos > children_count;
+  const border_policy = traits.border_policy.get();
+  const cross_border_in_same_direction =
+    border_policy === BorderPolicy.Bordered
+      ? (to_prev && new_pos < 0) || (!to_prev && new_pos > children_count)
+      : (to_prev && new_pos <= 0) || (!to_prev && new_pos >= children_count);
+  const cross_border_in_opposite_direction =
+    border_policy === BorderPolicy.Bordered
+      ? (!to_prev && new_pos < 0) || (to_prev && new_pos > children_count)
+      : (!to_prev && new_pos <= 0) || (to_prev && new_pos >= children_count);
 
-  switch (traits.border_policy.get()) {
-    case BorderPolicy.NoCrossing: // 严格不越界
-      if (atEnd) return CaretNavigateDecision.Skip;
-      return CaretNavigateDecision.Self(
-        Math.max(0, Math.min(newPos, children_count))
-      );
-    case BorderPolicy.Bordered: // 有边界但允许循环
-      if (atStart)
-        return CaretNavigateDecision.Self(toPrev ? children_count - 1 : 0);
-      if (atEnd) return CaretNavigateDecision.Skip;
-      return CaretNavigateDecision.Self(newPos);
-    case BorderPolicy.None: // 无边界限制
-      return CaretNavigateDecision.Self(newPos);
+  // 如果顺导航方向越界，则跳过
+  if (cross_border_in_same_direction) return CaretNavigateDecision.Skip;
+  // 如果逆导航方向越界，则跳跃到边界内
+  if (cross_border_in_opposite_direction) {
+    if (border_policy === BorderPolicy.Bordered) {
+      return CaretNavigateDecision.Self(to_prev ? children_count : 0);
+    } else {
+      return CaretNavigateDecision.Self(to_prev ? children_count - 1 : 1);
+    }
   }
+  // 否则则正常导航
+  return CaretNavigateDecision.Self(new_pos);
 }
 
 /**
@@ -87,7 +115,14 @@ function no_children_enter_navigation(
  */
 export const handle_default_caret_navigate: MECompoBehaviorMap[typeof DocCaretNavigateCb] =
   async (params) => {
-    let { from, direction, src, ex_ctx, ent_id } = params;
+    let {
+      from,
+      direction,
+      src,
+      ex_ctx,
+      ent_id,
+      it: actual_child_compo,
+    } = params;
 
     // 获取实体组件系统上下文
     const ecs = ex_ctx.ecs;
@@ -104,17 +139,16 @@ export const handle_default_caret_navigate: MECompoBehaviorMap[typeof DocCaretNa
     }
 
     // 获取实际子组件信息
-    const actual_child_compo = get_actual_child_compo(ecs, ent_id);
     const children_count = (actual_child_compo as IChildCompo).count();
-    const toPrev = direction === CaretDirection.Prev;
+    const to_prev = direction === CaretDirection.Prev;
 
     // 根据是否允许进入子节点分发处理逻辑
     return traits.can_children_enter.get()
-      ? children_enter_navigation(traits, from, toPrev, src, children_count)
+      ? children_enter_navigation(traits, from, to_prev, src, children_count)
       : no_children_enter_navigation(
           traits,
           from + direction,
-          toPrev,
+          to_prev,
           children_count
         );
   };

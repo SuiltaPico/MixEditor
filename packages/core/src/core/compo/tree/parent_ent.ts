@@ -1,6 +1,6 @@
 import { create_Signal, WrappedSignal } from "@mixeditor/common";
 import { IArrayLike } from "../../../common/object";
-import { Compo, CompoTDO } from "../../../ecs";
+import { Compo, ToTdoCb, CompoTDO } from "../../../ecs";
 import { MixEditor } from "../../mix_editor";
 
 /**
@@ -31,7 +31,7 @@ export interface ParentEntCompoTDO extends CompoTDO {
 export function register_ParentEntCompo(editor: MixEditor) {
   const { ecs } = editor;
   ecs.set_compo_behaviors(ParentEntCompo.type, {
-    to_tdo({ it, save_with }) {
+    [ToTdoCb]({ it, save_with }) {
       const parent_id = it.parent_id.get();
       if (parent_id) {
         save_with([parent_id]);

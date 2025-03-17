@@ -30,9 +30,17 @@ const {
   ent_type: "doc:paragraph",
   init_stage_execute: async (event) => {
     const { it, ex_ctx, init_params } = event;
+    const children = init_params?.children ?? [];
+    for (const child of children) {
+      const parent_compo = ex_ctx.ecs.get_compo(child, ParentEntCompo.type);
+      if (!parent_compo) {
+        ex_ctx.ecs.set_compos(child, [new ParentEntCompo(it.id)]);
+      }
+      parent_compo.parent_id.set(it.id);
+    }
     ex_ctx.ecs.set_compos(it.id, [
       default_ChildCompo,
-      new EntChildCompo(init_params?.children ?? []),
+      new EntChildCompo(children),
       new ParentEntCompo(undefined),
       default_DocEntTraitsCompo,
     ]);

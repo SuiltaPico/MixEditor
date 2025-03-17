@@ -5,7 +5,7 @@
   background: #fff;
   display: flex;
 
-  & > ._mixeditor_selection {
+  & > ._bv_selection {
     position: absolute;
     top: 0;
     left: 0;
@@ -13,18 +13,21 @@
     height: 100%;
     pointer-events: none;
 
-    & > .__caret {
+    & > ._caret {
       width: 1px;
       background: #000;
-      animation: blink 1s step-end infinite;
       position: absolute;
 
-      & > .__inputer {
+      &.__blink {
+        animation: bv__caret_blink 1s step-end infinite;
+      }
+
+      & > ._inputer {
         opacity: 0;
       }
     }
-    & > .__ranges {
-      & > .__range {
+    & > ._ranges {
+      & > ._range {
         position: absolute;
         background-color: #0080ff5a;
       }
@@ -38,7 +41,7 @@
   }
 }
 
-@keyframes blink {
+@keyframes bv__caret_blink {
   from,
   to {
     opacity: 1;

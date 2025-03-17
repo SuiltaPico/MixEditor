@@ -1,5 +1,5 @@
 import { create_Signal, WrappedSignal } from "@mixeditor/common";
-import { CompoTDO } from "../../../ecs";
+import { ToTdoCb, CompoTDO } from "../../../ecs";
 import { MixEditor } from "../../mix_editor";
 import { IChildCompo, TreeChildDelete, TreeChildInsert } from "./child";
 
@@ -41,7 +41,7 @@ export interface TextChildCompoTDO extends CompoTDO {
 export function register_TextChildCompo(editor: MixEditor) {
   const { ecs } = editor;
   ecs.set_compo_behaviors(TextChildCompo.type, {
-    to_tdo({ it }) {
+    [ToTdoCb]({ it }) {
       const content = it.content.get();
       return {
         type: TextChildCompo.type,

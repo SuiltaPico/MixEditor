@@ -22,16 +22,16 @@ export type GetEntBehaviorHandlerParams<
   ? TParams
   : never;
 
-export const EntInitBehavior = "init";
-export const EntBeforeSaveTdoBehavior = "before_save_tdo";
-export const EntAfterLoadTdoBehavior = "after_load_tdo";
+export const InitEb = "init";
+export const BeforeSaveTdoEb = "before_save_tdo";
+export const AfterLoadTdoEb = "after_load_tdo";
 
 export type EntBehaviorMap<TExCtx> = Record<
   string,
   EntBehaviorHandler<any, any, TExCtx>
 > & {
   /** 实体初始化。 */
-  [EntInitBehavior]: EntBehaviorHandler<
+  [InitEb]: EntBehaviorHandler<
     {
       init_params: any;
     },
@@ -39,16 +39,19 @@ export type EntBehaviorMap<TExCtx> = Record<
     TExCtx
   >;
   /** 实体保存为 TDO 前。 */
-  [EntBeforeSaveTdoBehavior]: EntBehaviorHandler<{}, void, TExCtx>;
+  [BeforeSaveTdoEb]: EntBehaviorHandler<{}, void, TExCtx>;
   /** 实体从 TDO 加载后。 */
-  [EntAfterLoadTdoBehavior]: EntBehaviorHandler<{}, void, TExCtx>;
+  [AfterLoadTdoEb]: EntBehaviorHandler<{}, void, TExCtx>;
 };
+
+export const ToTdoCb = "to_tdo";
+export const FromTdoCb = "from_tdo";
 export type CompoBehaviorMap<TExCtx> = Record<
   string,
   CompoBehaviorHandler<any, any, TExCtx>
 > & {
   /** 组件转换为 TDO。 */
-  to_tdo: CompoBehaviorHandler<
+  [ToTdoCb]: CompoBehaviorHandler<
     {
       save_with: (ents: string[]) => void;
     },
@@ -56,7 +59,7 @@ export type CompoBehaviorMap<TExCtx> = Record<
     TExCtx
   >;
   /** TDO 转换为组件。 */
-  from_tdo: CompoBehaviorHandler<{ input: CompoTDO }, Compo, TExCtx>;
+  [FromTdoCb]: CompoBehaviorHandler<{ input: CompoTDO }, Compo, TExCtx>;
 };
 
 /** 实体上下文。 */
@@ -201,7 +204,7 @@ export class ECSCtx<
     if (curr_compos) {
       await Promise.all(
         Array.from(curr_compos.values()).map(async (compo) => {
-          const tdo = await this.run_compo_behavior(compo, "to_tdo", {
+          const tdo = await this.run_compo_behavior(compo, ToTdoCb, {
             save_with,
           } as BehaviorParams);
           if (tdo) compos[compo.type] = tdo;

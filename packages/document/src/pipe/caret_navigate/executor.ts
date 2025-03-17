@@ -90,27 +90,37 @@ export async function execute_navigate_caret_from_pos(
   direction: CaretDirection,
   src?: CaretNavigateSource
 ): Promise<TreeCaret | undefined> {
-  const ecs_ctx = editor.ecs;
+  const ecs = editor.ecs;
   const caret_ent_id = caret.ent_id;
-  const caret_ent = ecs_ctx.get_ent(caret_ent_id);
-  if (!caret_ent) return;
 
-  const compo = get_actual_child_compo(ecs_ctx, caret_ent.id);
-  if (!compo) return;
+  const actual_child_compo = get_actual_child_compo(ecs, caret_ent_id);
+  if (!actual_child_compo) return;
 
-  const decision = await ecs_ctx.run_compo_behavior(compo, DocCaretNavigateCb, {
-    ent_id: caret_ent_id,
+  const decision = await ecs.run_compo_behavior(
+    actual_child_compo,
+    DocCaretNavigateCb,
+    {
+      ent_id: caret_ent_id,
+      direction,
+      src,
+      from: caret.offset,
+    }
+  );
+  console.log(
+    "execute_navigate_caret_from_pos",
+    ecs.get_ent(caret_ent_id)?.type,
+    actual_child_compo,
     direction,
     src,
-    from: caret.offset,
-  });
+    decision
+  );
 
   if (!decision || decision.type === "skip") {
     // 跳过当前节点，往下一个节点移动
-    const parent_id = get_parent_ent_id(ecs_ctx, caret_ent_id);
+    const parent_id = get_parent_ent_id(ecs, caret_ent_id);
     if (!parent_id) return;
 
-    const index_in_parent = get_index_in_parent_ent(ecs_ctx, caret_ent_id);
+    const index_in_parent = get_index_in_parent_ent(ecs, caret_ent_id);
 
     return await execute_navigate_caret_from_pos(
       editor,
@@ -128,18 +138,11 @@ export async function execute_navigate_caret_from_pos(
     };
   } else if (decision.type === "child") {
     // 继续访问子节点
-    const child_ent_id = get_child_ent_id(
-      ecs_ctx,
-      caret_ent_id,
-      decision.index
-    );
+    const child_ent_id = get_child_ent_id(ecs, caret_ent_id, decision.index);
     if (!child_ent_id) return;
 
-    // 按照进入方向进行判断。
     return await execute_navigate_caret_from_pos(
       editor,
-      // 如果是 next 进入的子节点，则尝试移动到子节点的头部。
-      // 如果是 prev 进入的子节点，则尝试移动到子节点的尾部。
       {
         ent_id: child_ent_id!,
         offset: direction === CaretDirection.Next ? 0 : Number.MAX_SAFE_INTEGER,

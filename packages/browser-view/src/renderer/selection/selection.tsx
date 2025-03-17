@@ -32,7 +32,7 @@ export const SelectionRenderer: Component<{
 }> = (props) => {
   // TODO: 添加多选区范围渲染
   return (
-    <div class="_mixeditor_selection">
+    <div class="_bv_selection">
       <TreeRangeRenderer bv_ctx={props.bv_ctx} />
     </div>
   );
@@ -263,6 +263,10 @@ export const TreeRangeRenderer: Component<{
           caret!.style.left = `${result.x}px`;
           caret!.style.top = `${result.y}px`;
           caret!.style.height = `${result.height}px`;
+          caret!.classList.remove("__blink");
+          requestAnimationFrame(() => {
+            caret!.classList.add("__blink");
+          });
         }
 
         if (selected && selected.type === "tree:extended") {
@@ -289,9 +293,9 @@ export const TreeRangeRenderer: Component<{
           selected_type() === "tree:extended"
         }
       >
-        <div class="__caret" ref={(it) => (caret = it)}>
+        <div class="_caret" ref={(it) => (caret = it)}>
           <div
-            class="__inputer"
+            class="_inputer"
             contentEditable
             ref={(it) => (inputer = it)}
             onCompositionEnd={handle_inputer_composition_end}
@@ -302,11 +306,11 @@ export const TreeRangeRenderer: Component<{
           />
         </div>
       </Show>
-      <div class="__ranges">
+      <div class="_ranges">
         {/* TODO：使用 solid-js 的 For 进行缓存。 */}
         {ranges.get().map((range) => (
           <div
-            class="__range"
+            class="_range"
             style={
               {
                 left: `${range.start.x}px`,

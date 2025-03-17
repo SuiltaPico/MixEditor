@@ -12,6 +12,8 @@ export type RenderedDomNode = Node & {
 export type RenderResult = {
   /** 销毁函数。 */
   dispose: () => void;
+  /** 直接渲染的节点。 */
+  final_node?: RenderedDomNode;
   /** 渲染结果的节点。 */
   node: RenderedDomNode;
 };

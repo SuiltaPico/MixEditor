@@ -54,8 +54,6 @@ export function register_TextEnt_extend(editor: MixEditor) {
       const bv_renderable_compo = new BvRenderableCompo({
         renderer: from_solidjs_compo(TextEntRenderer),
         custom_get_child_pos: (params) => {
-          console.log("custom_get_child_pos", params);
-
           const render_result = bv_renderable_compo.render_result;
           if (!render_result) return undefined;
 
@@ -95,7 +93,6 @@ export function register_TextEnt_extend(editor: MixEditor) {
             };
           }
         },
-        // render_selection_policy: BvRenderSelectionDecision.,
       });
       ecs.set_compos(it.id, [bv_renderable_compo]);
     },

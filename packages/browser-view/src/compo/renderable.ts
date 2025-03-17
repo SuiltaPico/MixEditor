@@ -67,7 +67,7 @@ export class BvRenderableCompo implements Compo {
 
   /** 渲染函数 */
   renderer: Renderer;
-  /** 渲染结果（可能未定义） */
+  /** 渲染结果 */
   render_result: RenderResult | undefined;
 
   custom_get_child_pos:

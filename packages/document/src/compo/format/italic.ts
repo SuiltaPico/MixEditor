@@ -1,8 +1,27 @@
-import { Compo } from "@mixeditor/core";
+import {
+  Compo,
+  MixEditor,
+  ToTdoCb,
+  FromTdoCb,
+} from "@mixeditor/core";
 
-export class DocItalicCompo implements Compo {
-  static type = "doc:italic" as const;
+export class DocTextItalicCompo implements Compo {
+  static type = "doc:text_italic" as const;
   get type() {
-    return DocItalicCompo.type;
+    return DocTextItalicCompo.type;
   }
+}
+
+export function register_DocTextItalicCompo(editor: MixEditor) {
+  const { ecs } = editor;
+  ecs.set_compo_behaviors(DocTextItalicCompo.type, {
+    [ToTdoCb]() {
+      return {
+        type: DocTextItalicCompo.type,
+      };
+    },
+    [FromTdoCb]({ input }) {
+      return new DocTextItalicCompo();
+    },
+  });
 }

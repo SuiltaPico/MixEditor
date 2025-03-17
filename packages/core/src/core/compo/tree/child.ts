@@ -1,5 +1,5 @@
 import { IArrayLike } from "../../../common/object";
-import { Compo, CompoBehaviorMap, CompoTDO, Ent } from "../../../ecs";
+import { Compo, ToTdoCb, CompoBehaviorMap, CompoTDO, Ent } from "../../../ecs";
 import { MECompoBehaviorHandler, MixEditor } from "../../mix_editor";
 import { RouteCompo } from "../basic/route";
 
@@ -27,7 +27,7 @@ export function register_ChildCompo(editor: MixEditor) {
   const { ecs } = editor;
   ecs.set_compo_behaviors(ChildCompo.type, {
     /** 序列化组件为传输对象 */
-    async to_tdo({ it }) {
+    async [ToTdoCb]({ it }) {
       const src = it.src.get();
       return {
         type: ChildCompo.type,

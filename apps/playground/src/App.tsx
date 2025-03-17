@@ -1,5 +1,6 @@
 import { BrowserViewPlugin } from "@mixeditor/browser-view";
 import "@mixeditor/browser-view/index.css";
+import "@mixeditor/doc-bv-bridge/index.css";
 import {
   build_ent_specs,
   ent_spec,
@@ -7,7 +8,7 @@ import {
   RootEntType,
 } from "@mixeditor/core";
 import {
-  DocBoldCompo,
+  DocTextBoldCompo,
   DocumentPlugin,
   ParagraphEntType,
   TextEntType,
@@ -60,7 +61,7 @@ function App() {
                   {
                     text: "SELECT",
                   },
-                  [new DocBoldCompo()]
+                  [new DocTextBoldCompo()]
                 ),
                 ent_spec(TextEntType, {
                   text: " 语句是用于从数据库中检索数据的最基本且最常用的命令。它允许用户从一张或多张数据库表中提取所需的数据，并支持对数据进行筛选、排序、分组和聚合等操作。",

@@ -1,6 +1,7 @@
 import { MEPlugin } from "@mixeditor/core";
 import { register_pipes_and_compo_behaviors } from "./pipe";
 import { register_ents } from "./ent";
+import { register_compos } from "./compo";
 
 export const DocumentPlugin: () => MEPlugin = () => {
   let disposers: ((() => void) | void)[] = [];
@@ -15,7 +16,8 @@ export const DocumentPlugin: () => MEPlugin = () => {
     init(editor) {
       disposers.push(
         register_pipes_and_compo_behaviors(editor),
-        register_ents(editor)
+        register_ents(editor),
+        register_compos(editor)
       );
     },
     dispose(editor) {

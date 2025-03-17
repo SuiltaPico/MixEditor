@@ -1,4 +1,4 @@
-import { CompoMapBvExtend } from "./compo";
+import { CompoBehaviorMapBvExtend, CompoMapBvExtend } from "./compo";
 import { PipeEventMapExtend } from "./pipe";
 
 export * from "./common";
@@ -10,4 +10,5 @@ export * from "./renderer";
 declare module "@mixeditor/core" {
   interface MEPipeEventMap extends PipeEventMapExtend {}
   interface MECompoMap extends CompoMapBvExtend {}
+  interface MECompoBehaviorMap extends CompoBehaviorMapBvExtend {}
 }

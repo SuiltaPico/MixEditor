@@ -1,5 +1,5 @@
 import { MEEntBehaviorMap, MixEditor } from "../core";
-import { EntInitBehavior, GetEntBehaviorHandlerParams } from "../ecs";
+import { InitEb, GetEntBehaviorHandlerParams } from "../ecs";
 
 export type EntInitPipeEvent<TPipeId extends string> =
   GetEntBehaviorHandlerParams<MEEntBehaviorMap["init"]> & {
@@ -48,7 +48,7 @@ export function create_ent_registration<
     const { ecs, pipe } = editor;
     pipe.set_pipe(EntInitPipeId, [init_stage as any]);
     ecs.set_ent_behaviors(ent_type, {
-      async [EntInitBehavior]({ it, init_params }) {
+      async [InitEb]({ it, init_params }) {
         await pipe.execute({
           pipe_id: EntInitPipeId,
           it,

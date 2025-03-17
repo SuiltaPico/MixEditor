@@ -1,6 +1,6 @@
 import { create_Signal, WrappedSignal } from "@mixeditor/common";
 import { IChildCompo, TreeChildDelete, TreeChildInsert } from "./child";
-import { CompoTDO, Ent, EntTDO } from "../../../ecs";
+import { ToTdoCb, CompoTDO, Ent, EntTDO } from "../../../ecs";
 import { MixEditor } from "../../mix_editor";
 
 /**
@@ -48,7 +48,7 @@ export function register_EntChildCompo(editor: MixEditor) {
   const { ecs } = editor;
   ecs.set_compo_behaviors(EntChildCompo.type, {
     /** 序列化组件为传输对象 */
-    to_tdo({ it, save_with }) {
+    [ToTdoCb]({ it, save_with }) {
       const children = it.children.get();
       save_with(children);
       return {

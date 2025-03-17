@@ -9,7 +9,7 @@ import { CaretDirection, execute_navigate_caret_from_pos } from "./executor";
 
 export const DocCaretNavigatePipeId = "doc:caret_navigate" as const;
 export interface DocCaretNavigateEvent extends MEEvent {
-  type: typeof DocCaretNavigatePipeId;
+  pipe_id: typeof DocCaretNavigatePipeId;
   direction: CaretDirection;
 }
 

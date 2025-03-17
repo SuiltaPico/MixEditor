@@ -11,12 +11,10 @@ import { Compo, MECompoBehaviorMap } from "@mixeditor/core";
 
 // 首先定义边界处理策略的枚举类型
 export enum BorderPolicy {
-  /** 无边界，直接跳过 */
+  /** 无边界，自身没有 0 和 children_count 索引。 */
   None = "none",
-  /** 有边界，允许临时穿越 */
+  /** 有边界，自身具有 0 和 children_count 索引。 */
   Bordered = "bordered",
-  /** 不允许穿越边界 */
-  NoCrossing = "no_crossing",
 }
 
 export enum SelfDeletePolicy {
