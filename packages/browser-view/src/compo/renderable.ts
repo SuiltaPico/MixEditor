@@ -6,6 +6,7 @@ import {
 } from "@mixeditor/core";
 import { RenderResult, Renderer } from "../common/render";
 import { MaybePromise, Rect } from "@mixeditor/common";
+import { DOMCaretPos } from "../common";
 
 /** 选区绘制决策。 */
 export const BvRenderSelectionDecision = {
@@ -52,6 +53,8 @@ export interface BvRenderableParams {
   render_selection_policy?: BvRenderableCompo["render_selection_policy"];
   /** 自定义选区渲染函数（可选） */
   custom_render_selection?: BvRenderableCompo["custom_render_selection"];
+
+  handle_pointer_event_forward?: BvRenderableCompo["handle_pointer_event_forward"];
 }
 
 /** 浏览器视图可渲染组件
@@ -71,7 +74,7 @@ export class BvRenderableCompo implements Compo {
   render_result: RenderResult | undefined;
 
   custom_get_child_pos:
-    | ((params: CustomDecisionFnParams<{ index: number }>) =>
+    | ((params: CustomDecisionFnParams<{ index: number; root_rect: Rect }>) =>
         | {
             x: number;
             y: number;
@@ -81,14 +84,25 @@ export class BvRenderableCompo implements Compo {
     | undefined;
 
   /** 选区渲染策略 */
-  render_selection_policy: BvRenderSelectionDecision;
+  render_selection_policy: BvRenderSelectionDecision & {
+    type: "ignore" | "traverse";
+  };
   /** 自定义的选区渲染决策函数 */
   custom_render_selection?: (
     params: CustomDecisionFnParams<{
       from: number;
       to: number;
+      root_rect: Rect;
     }>
   ) => MaybePromise<BvRenderSelectionDecision>;
+
+  /** 自定义的点击事件处理函数 */
+  handle_pointer_event_forward?: (
+    params: CustomDecisionFnParams<{
+      pos: DOMCaretPos;
+      event: PointerEvent;
+    }>
+  ) => void;
 
   get_child_pos(
     params: Parameters<
@@ -110,11 +124,20 @@ export class BvRenderableCompo implements Compo {
     return this.render_selection_policy;
   }
 
+  forward_pointer_event(
+    params: Parameters<
+      Exclude<BvRenderableCompo["handle_pointer_event_forward"], undefined>
+    >[0]
+  ) {
+    return this.handle_pointer_event_forward?.(params);
+  }
+
   constructor(params: BvRenderableParams) {
     this.renderer = params.renderer;
     this.render_selection_policy =
       params.render_selection_policy ?? BvRenderSelectionDecision.Ignore;
     this.custom_get_child_pos = params.custom_get_child_pos;
     this.custom_render_selection = params.custom_render_selection;
+    this.handle_pointer_event_forward = params.handle_pointer_event_forward;
   }
 }

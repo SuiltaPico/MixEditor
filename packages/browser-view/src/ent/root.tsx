@@ -8,6 +8,7 @@ import { from_solidjs_compo, NodeRenderer } from "../common/render";
 import { BvRenderableCompo } from "../compo/renderable";
 import { NodeRendererWrapper } from "../renderer/framework/content";
 import { For } from "solid-js";
+import { bv_forward_pointer_event } from "../compo/utils";
 
 /** 根节点渲染器。
  *
@@ -18,7 +19,12 @@ export const RootRenderer: NodeRenderer = (props) => {
   const { ecs } = editor;
   const child = ecs.get_compo(props.ent_id, EntChildCompo.type);
   return (
-    <div class="_root">
+    <div
+      class="_root"
+      onPointerDown={(event) =>
+        bv_forward_pointer_event(editor, props.ent_id, event)
+      }
+    >
       <For each={child.children.get()}>
         {(child) => {
           return <NodeRendererWrapper ent_id={child} bv_ctx={props.bv_ctx} />;

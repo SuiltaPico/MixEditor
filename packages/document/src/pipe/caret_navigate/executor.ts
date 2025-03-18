@@ -18,10 +18,12 @@ export enum CaretNavigateSource {
 
 /** 光标移动方向，定义在文档结构中的导航方向 */
 export enum CaretDirection {
-  /** 向文档后部移动（通常对应右方向键或下方向键） */
+  /** 向文档后部移动（通常对应右方向键） */
   Next = 1,
-  /** 向文档前部移动（通常对应左方向键或上方向键） */
+  /** 向文档前部移动（通常对应左方向键） */
   Prev = -1,
+  /** 无方向 */
+  None = 0,
 }
 
 /** 光标导航决策工厂方法，用于创建不同类型的导航决策 */
@@ -30,7 +32,11 @@ export const CaretNavigateDecision = {
    * 跳过当前节点，继续在父级上下文中寻找下一个可导航位置
    * 典型使用场景：当当前节点不允许光标停留时
    */
-  Skip: { type: "skip" } satisfies CaretNavigateDecision,
+  Skip: (params: { direction: CaretDirection }) => {
+    const result = params as CaretNavigateDecision & { type: "skip" };
+    result.type = "skip";
+    return result satisfies CaretNavigateDecision & { type: "skip" };
+  },
 
   /**
    * 停留在当前节点，并指定具体的光标位置
@@ -54,7 +60,7 @@ export const CaretNavigateDecision = {
 export type CaretNavigateDecision =
   | { type: "self"; pos: number } // 进入当前节点
   | { type: "child"; index: number } // 进入子节点
-  | { type: "skip" }; // 跳过当前节点
+  | { type: "skip"; direction: CaretDirection }; // 跳过当前节点
 
 /** 光标移动策略上下文。 */
 export interface CaretNavigateContext {
@@ -112,6 +118,7 @@ export async function execute_navigate_caret_from_pos(
     actual_child_compo,
     direction,
     src,
+    caret.offset,
     decision
   );
 
@@ -128,7 +135,7 @@ export async function execute_navigate_caret_from_pos(
         ent_id: parent_id,
         offset: index_in_parent,
       },
-      direction,
+      decision?.direction ?? direction,
       CaretNavigateSource.Child
     );
   } else if (decision.type === "self") {

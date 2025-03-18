@@ -40,7 +40,8 @@ export const SelectionRenderer: Component<{
 
 async function get_rect_of_extended_selected(
   editor: MixEditor,
-  selection: TreeExtendedSelection
+  selection: TreeExtendedSelection,
+  root_rect: Rect
 ) {
   const { ecs } = editor;
   let rects: Rect[] = [];
@@ -57,6 +58,7 @@ async function get_rect_of_extended_selected(
       start_ent,
       start_offset,
       end_offset,
+      root_rect,
       rects
     );
     return rects;
@@ -80,6 +82,9 @@ async function get_rect_of_extended_selected(
     ancestor_index,
   } = result;
 
+  start_ancestors.push(start_ent);
+  end_ancestors.push(end_ent);
+
   const promises: Promise<void>[] = [
     // 先选中起始节点和结束节点
     execute_render_selection(
@@ -87,9 +92,10 @@ async function get_rect_of_extended_selected(
       start_ent,
       start_offset,
       Number.MAX_SAFE_INTEGER,
+      root_rect,
       rects
     ),
-    execute_render_selection(editor, end_ent, 0, end_offset, rects),
+    execute_render_selection(editor, end_ent, 0, end_offset, root_rect, rects),
   ];
 
   let current: string | undefined;
@@ -120,6 +126,7 @@ async function get_rect_of_extended_selected(
           child_ent_id,
           0,
           Number.MAX_SAFE_INTEGER,
+          root_rect,
           rects
         )
       );
@@ -145,6 +152,7 @@ async function get_rect_of_extended_selected(
           child_ent_id,
           0,
           Number.MAX_SAFE_INTEGER,
+          root_rect,
           rects
         )
       );
@@ -176,6 +184,7 @@ async function get_rect_of_extended_selected(
         child_ent_id,
         0,
         Number.MAX_SAFE_INTEGER,
+        root_rect,
         rects
       )
     );
@@ -244,6 +253,14 @@ export const TreeRangeRenderer: Component<{
       async (selected) => {
         console.log("selection changed", selected);
 
+        const root_rect = (
+          bv_ctx.editor.ecs.get_compo(
+            bv_ctx.editor.content.root.get()!,
+            BvRenderableCompo.type
+          )?.render_result?.node as HTMLElement
+        )?.getBoundingClientRect();
+        if (!root_rect) return;
+
         if (selected) {
           const info =
             selected.type === TreeCollapsedSelectionType
@@ -258,6 +275,7 @@ export const TreeRangeRenderer: Component<{
             editor,
             ent_id: info.ent_id,
             index: info.offset,
+            root_rect,
           });
           if (!result) return;
           caret!.style.left = `${result.x}px`;
@@ -270,7 +288,11 @@ export const TreeRangeRenderer: Component<{
         }
 
         if (selected && selected.type === "tree:extended") {
-          const rects = await get_rect_of_extended_selected(editor, selected);
+          const rects = await get_rect_of_extended_selected(
+            editor,
+            selected,
+            root_rect
+          );
           // 更新选区范围
           ranges.set(
             rects.map((rect) => ({

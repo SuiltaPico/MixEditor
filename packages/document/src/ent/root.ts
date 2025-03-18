@@ -17,7 +17,7 @@ export function register_RootEnt_doc_extend(editor: MixEditor) {
         new DocEntTraitsCompo({
           can_children_enter: true,
           can_self_enter: false,
-          border_policy: BorderPolicy.None,
+          border_policy: BorderPolicy.Unbordered,
           self_delete_from_caret_policy: SelfDeletePolicy.Never,
           child_delete_from_caret_policy: ChildDeletePolicy.Propagate,
         }),

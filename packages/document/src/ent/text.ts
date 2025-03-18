@@ -16,7 +16,7 @@ const default_ChildCompo = new ChildCompo(TextChildCompo.type);
 const default_DocEntTraitsCompo = new DocEntTraitsCompo({
   can_children_enter: false,
   can_self_enter: true,
-  border_policy: BorderPolicy.None,
+  border_policy: BorderPolicy.Unbordered,
   self_delete_from_caret_policy: SelfDeletePolicy.WhenEmpty,
   child_delete_from_caret_policy: ChildDeletePolicy.Absorb,
 });

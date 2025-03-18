@@ -68,6 +68,72 @@ function App() {
                 }),
               ],
             }),
+            ent_spec(ParagraphEntType, {
+              children: [
+                ent_spec(TextEntType, {
+                  text: "基本语法",
+                }),
+              ],
+            }),
+            ent_spec(ParagraphEntType, {
+              children: [
+                ent_spec(TextEntType, {
+                  text: "SELECT column1, column2 FROM table_name WHERE condition;",
+                }),
+              ],
+            }),
+            ent_spec(ParagraphEntType, {
+              children: [
+                ent_spec(
+                  TextEntType,
+                  {
+                    text: "SELECT：",
+                  },
+                  [new DocTextBoldCompo()]
+                ),
+                ent_spec(TextEntType, {
+                  text: "指定要检索的列。可以使用 ",
+                }),
+                ent_spec(
+                  TextEntType,
+                  {
+                    text: "*",
+                  },
+                  [new DocTextBoldCompo()]
+                ),
+                ent_spec(TextEntType, {
+                  text: " 表示选择所有列。",
+                }),
+              ],
+            }),
+            ent_spec(ParagraphEntType, {
+              children: [
+                ent_spec(
+                  TextEntType,
+                  {
+                    text: "FROM：",
+                  },
+                  [new DocTextBoldCompo()]
+                ),
+                ent_spec(TextEntType, {
+                  text: "指定要从中检索数据的表。",
+                }),
+              ],
+            }),
+            ent_spec(ParagraphEntType, {
+              children: [
+                ent_spec(
+                  TextEntType,
+                  {
+                    text: "WHERE：",
+                  },
+                  [new DocTextBoldCompo()]
+                ),
+                ent_spec(TextEntType, {
+                  text: "​（可选）：用于指定筛选条件，只有满足条件的行才会被返回。",
+                }),
+              ],
+            }),
           ],
           5
         ),

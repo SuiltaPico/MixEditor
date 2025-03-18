@@ -22,6 +22,8 @@ export interface TreeExtendedSelection {
   start: TreeCaret;
   /** 选区结束位置。 */
   end: TreeCaret;
+  /** 选区锚点位置。 */
+  anchor: "start" | "end";
 }
 
 /** 树形选区。 */
@@ -46,11 +48,13 @@ export function create_TreeCollapsedSelection(
 /** 创建树形扩展选区。 */
 export function create_TreeExtendedSelection(
   start: TreeCaret,
-  end: TreeCaret
+  end: TreeCaret,
+  anchor: "start" | "end"
 ): TreeExtendedSelection {
   return {
     type: "tree:extended",
     start,
     end,
+    anchor,
   };
 }

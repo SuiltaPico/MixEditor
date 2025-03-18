@@ -1,9 +1,5 @@
 import { MixEditor } from "../../mix_editor";
-import {
-  ChildCompo,
-  find_child_ent_index_default,
-  IChildCompo,
-} from "./child";
+import { ChildCompo, find_child_ent_index_default, IChildCompo } from "./child";
 import { ParentEntCompo } from "./parent_ent";
 
 /**
@@ -82,13 +78,13 @@ export function get_index_of_child_ent(
   maybe_child: string
 ) {
   // 获取父容器的实际子实体组件
-  const child_ent_compo = get_actual_child_compo(ecs_ctx, ent);
-  if (!child_ent_compo) return -1;
+  const actual_child_compo = get_actual_child_compo(ecs_ctx, ent);
+  if (!actual_child_compo) return -1;
 
   // 优先使用容器的自定义索引查找方法
-  return child_ent_compo.index_of
-    ? child_ent_compo.index_of(maybe_child)
-    : find_child_ent_index_default(child_ent_compo, maybe_child);
+  return actual_child_compo.index_of
+    ? actual_child_compo.index_of(maybe_child)
+    : find_child_ent_index_default(actual_child_compo, maybe_child);
 }
 
 // ------- ParentEntCompo 相关 -------
@@ -143,6 +139,28 @@ export async function get_ent_path_and_ancestors(
     current = get_parent_ent_id(ecs_ctx, current);
   }
   return { path: path.reverse(), ancestors: ancestors.reverse() };
+}
+
+/** 比较两个节点的路径的先后顺序。
+ * * 如果 path1 在 path2 之前，返回 -1；
+ * * 如果 path1 在 path2 之后，返回 1；
+ * * 如果 path1 和 path2 相同，返回 0。
+ */
+export function path_compare(path1: number[], path2: number[]) {
+  const len = Math.min(path1.length, path2.length);
+
+  // 逐个比较每个位置的索引
+  for (let i = 0; i < len; i++) {
+    if (path1[i] < path2[i]) return -1;
+    if (path1[i] > path2[i]) return 1;
+  }
+
+  // 如果前面的索引都相同，则比较路径长度
+  if (path1.length < path2.length) return -1;
+  if (path1.length > path2.length) return 1;
+
+  // 完全相同的路径
+  return 0;
 }
 
 /**

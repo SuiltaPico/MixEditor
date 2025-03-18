@@ -3,6 +3,7 @@ import { BvRenderableCompo } from "./renderable";
 
 export * from "./renderable";
 export * from "./behavior/wrap";
+export * from "./utils";
 
 export interface CompoMapBvExtend {
   [BvRenderableCompo.type]: BvRenderableCompo;

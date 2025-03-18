@@ -6,12 +6,19 @@ async function get_render_decision(
   editor: MixEditor,
   ent_id: string,
   from: number,
-  to: number
+  to: number,
+  root_rect: Rect
 ): Promise<BvRenderSelectionDecision> {
   const ent_ctx = editor.ecs;
   const renderable = ent_ctx.get_compo(ent_id, BvRenderableCompo.type);
   if (!renderable) return BvRenderSelectionDecision.Ignore;
-  return renderable.get_render_selection_policy({ editor, ent_id, from, to });
+  return renderable.get_render_selection_policy({
+    editor,
+    ent_id,
+    from,
+    to,
+    root_rect,
+  });
 }
 
 export async function execute_render_selection(
@@ -19,10 +26,17 @@ export async function execute_render_selection(
   ent_id: string,
   from: number,
   to: number,
+  root_rect: Rect,
   rects: Rect[]
 ) {
   const ent_ctx = editor.ecs;
-  const decision = await get_render_decision(editor, ent_id, from, to);
+  const decision = await get_render_decision(
+    editor,
+    ent_id,
+    from,
+    to,
+    root_rect
+  );
 
   if (decision.type === "ignore") return;
   else if (decision.type === "traverse") {
@@ -45,6 +59,7 @@ export async function execute_render_selection(
           child_ent_id,
           0,
           Number.MAX_SAFE_INTEGER,
+          root_rect,
           rects
         )
       );
