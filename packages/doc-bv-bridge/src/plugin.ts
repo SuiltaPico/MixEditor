@@ -36,7 +36,7 @@ async function handle_key_down(editor: MixEditor, event: KeyboardEvent) {
   } else if (event.key === "Delete") {
     const result = await editor.pipe.execute({
       pipe_id: DocDirectedDeletePipeId,
-      direction: CaretDeleteDirection.Prev,
+      direction: CaretDeleteDirection.Next,
     });
     console.log(result);
   }

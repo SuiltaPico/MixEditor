@@ -145,9 +145,9 @@ export class OpExecutor<TBuffer extends IOpExecutorBuffer>
    * - 错误处理：执行出错 Op 不会被推入 history_buffer。
    */
   async execute(op: Op): Promise<void> {
-    console.log("[OpExecutor] execute.wait_for_idle", op);
+    // console.log("[OpExecutor] execute.wait_for_idle", op);
     await this.wait_for_idle();
-    console.log("[OpExecutor] execute.start", op);
+    // console.log("[OpExecutor] execute.start", op);
     const op_exec_done_pwr = Promise.withResolvers<void>();
     this.curr_op_exec = {
       op,
@@ -158,15 +158,15 @@ export class OpExecutor<TBuffer extends IOpExecutorBuffer>
     let error_result: OpExecError | undefined;
 
     try {
-      console.log("[OpExecutor] execute.execute", op);
+      // console.log("[OpExecutor] execute.execute", op);
       await this.op_ctx.exec_behavior(op, "execute", {});
-      console.log("[OpExecutor] execute.done", op);
+      // console.log("[OpExecutor] execute.done", op);
       this.history_buffer.push(op);
       this.undo_stack.length = 0; // 清空撤销栈
     } catch (e) {
-      console.log("[OpExecutor] execute.error", op, e);
+      // console.log("[OpExecutor] execute.error", op, e);
       error_result = await this.handle_op_error(op, OpExecType.Execute, e);
-      console.log("[OpExecutor] execute.error.done", op, error_result);
+      // console.log("[OpExecutor] execute.error.done", op, error_result);
     } finally {
       this.curr_op_exec = undefined;
       op_exec_done_pwr.resolve();

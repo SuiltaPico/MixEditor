@@ -307,7 +307,7 @@ export function register_TextEnt_extend(editor: MixEditor) {
     id: "doc_bv_bridge",
     execute: async (event) => {
       const { it } = event;
-      const { ecs, content } = editor;
+      const { ecs } = editor;
 
       const bv_renderable_compo = new BvRenderableCompo({
         renderer: from_solidjs_compo(TextEntRenderer),

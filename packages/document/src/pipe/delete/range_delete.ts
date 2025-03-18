@@ -350,6 +350,8 @@ export async function execute_range_deletion(
 ) {
   // 执行删除逻辑
   if (start.ent_id === end.ent_id) {
+    console.log("delete_range_in_same_ent", start.ent_id, start.offset, end.offset);
+    
     await delete_range_in_same_ent(
       editor,
       tx,

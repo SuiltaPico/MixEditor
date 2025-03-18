@@ -22,6 +22,8 @@ export class TreeRangeDeleteOp implements Op {
   deleted_ents: string[] = [];
 
   constructor(id: string, target: string, start: number, end: number) {
+    console.log("TreeRangeDeleteOp", id, target, start, end);
+    
     this.id = id;
     this.target = target;
     this.start = start;

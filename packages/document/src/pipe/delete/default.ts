@@ -1,4 +1,5 @@
 import {
+  create_TreeCollapsedSelection,
   get_actual_child_compo,
   IChildCompo,
   MECompoBehaviorMap,
@@ -19,6 +20,10 @@ import {
   DocRangeDeleteCb,
   RangeDeleteDecision,
 } from ".";
+import {
+  CaretDirection,
+  execute_navigate_caret_from_pos,
+} from "../caret_navigate";
 
 /**
  * 处理自身删除逻辑
@@ -46,7 +51,7 @@ async function delete_child_range(
   ex_ctx: MixEditor,
   ent_id: string,
   from: number,
-  toPrev: boolean,
+  to_prev: boolean,
   tx: Transaction
 ) {
   const { op } = ex_ctx;
@@ -54,18 +59,21 @@ async function delete_child_range(
     new TreeRangeDeleteOp(
       op.gen_id(),
       ent_id,
-      toPrev ? from - 1 : from,
-      toPrev ? from : from + 1
+      to_prev ? from - 1 : from,
+      to_prev ? from - 1 : from
     )
   );
-  return CaretDeleteDecision.Done({
-    selected: {
-      type: TreeCollapsedSelectionType,
-      caret: {
-        ent_id,
-        offset: toPrev ? from - 1 : from,
-      },
+  const new_selection = await execute_navigate_caret_from_pos(
+    ex_ctx,
+    {
+      ent_id,
+      offset: to_prev ? from - 1 : from,
     },
+    CaretDirection.None 
+  );
+  if (!new_selection) return CaretDeleteDecision.Done({});
+  return CaretDeleteDecision.Done({
+    selected: create_TreeCollapsedSelection(new_selection),
   });
 }
 
@@ -78,14 +86,14 @@ function handle_child_deletion(
   ex_ctx: MixEditor,
   ent_id: string,
   from: number,
-  toPrev: boolean,
+  to_prev: boolean,
   tx: Transaction
 ) {
   switch (child_delete_policy) {
     case ChildDeletePolicy.Propagate:
       return CaretDeleteDecision.Child(target_idx);
     case ChildDeletePolicy.Absorb:
-      return delete_child_range(ex_ctx, ent_id, from, toPrev, tx);
+      return delete_child_range(ex_ctx, ent_id, from, to_prev, tx);
   }
 }
 
@@ -126,23 +134,23 @@ export const handle_default_caret_delete: MECompoBehaviorMap[typeof DocCaretDele
 
     const { children_count, self_delete_policy, child_delete_policy } =
       get_policies_and_counts(ecs, ent_id, traits);
-    const toPrev = direction === CaretDeleteDirection.Prev;
+    const to_prev = direction === CaretDeleteDirection.Prev;
 
     // 处理边界删除（自身删除）
-    if ((toPrev && from <= 0) || (!toPrev && from >= children_count)) {
+    if ((to_prev && from <= 0) || (!to_prev && from >= children_count)) {
       return handle_self_deletion(self_delete_policy, children_count);
     }
 
     // 处理子元素删除
-    if ((toPrev && from > 0) || (!toPrev && from < children_count)) {
-      const target_idx = from + (toPrev ? -1 : 0);
+    if ((to_prev && from > 0) || (!to_prev && from < children_count)) {
+      const target_idx = from + (to_prev ? -1 : 0);
       return handle_child_deletion(
         child_delete_policy,
         target_idx,
         ex_ctx,
         ent_id,
         from,
-        toPrev,
+        to_prev,
         tx
       );
     }

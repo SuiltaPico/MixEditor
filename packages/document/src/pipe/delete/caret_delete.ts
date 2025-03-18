@@ -115,6 +115,15 @@ export async function execute_caret_deletion(
     }
   );
 
+  console.log(
+    "execute_caret_deletion",
+    caret_ent_id,
+    direction,
+    src,
+    caret.offset,
+    decision
+  );
+
   if (!decision || decision.type === "delete_self") {
     // 获取父节点
     const parent_ent_id = get_parent_ent_id(ecs_ctx, caret_ent_id);
@@ -128,11 +137,11 @@ export async function execute_caret_deletion(
       tx,
       {
         ent_id: parent_ent_id,
-        offset: index_in_parent! - 1,
+        offset: to_prev ? index_in_parent! - 1 : index_in_parent!,
       },
       {
         ent_id: parent_ent_id,
-        offset: index_in_parent!,
+        offset: to_prev ? index_in_parent! - 1 : index_in_parent!,
       }
     );
   } else if (decision.type === "done") {
