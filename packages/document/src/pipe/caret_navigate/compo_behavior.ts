@@ -1,6 +1,6 @@
 import { MECompoBehaviorHandler, MixEditor } from "@mixeditor/core";
 import { CaretNavigateContext, CaretNavigateDecision } from "./executor";
-import { handle_default_caret_navigate } from "../../common/helpers";
+import { handle_default_caret_navigate } from "./default";
 
 export const DocCaretNavigateCb = "doc:caret_navigate" as const;
 export interface DocCaretNavigateCbMapExtend {

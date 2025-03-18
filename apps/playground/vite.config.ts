@@ -4,4 +4,7 @@ import UnoCSS from "unocss/vite";
 
 export default defineConfig({
   plugins: [solid(), UnoCSS()],
+  build: {
+    minify: false
+  }
 });

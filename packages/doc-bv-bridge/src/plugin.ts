@@ -2,19 +2,43 @@ import { MEPlugin, MixEditor } from "@mixeditor/core";
 import { register_ents } from "./ent";
 import { register_compos } from "./compo";
 import { BrowserViewExposed } from "@mixeditor/browser-view";
-import { CaretDirection } from "@mixeditor/document";
+import {
+  CaretDeleteDirection,
+  CaretDirection,
+  DocCaretNavigatePipeId,
+  DocDirectedDeletePipeId,
+} from "@mixeditor/document";
 
-function handle_key_down(editor: MixEditor, event: KeyboardEvent) {
+async function handle_key_down(editor: MixEditor, event: KeyboardEvent) {
+  if (event.ctrlKey) {
+    if (event.key === "z") {
+      await editor.op.executor.undo();
+    } else if (event.key === "y") {
+      await editor.op.executor.redo();
+    }
+  }
   if (event.key === "ArrowLeft") {
     editor.pipe.execute({
-      pipe_id: "doc:caret_navigate",
+      pipe_id: DocCaretNavigatePipeId,
       direction: CaretDirection.Prev,
     });
   } else if (event.key === "ArrowRight") {
     editor.pipe.execute({
-      pipe_id: "doc:caret_navigate",
+      pipe_id: DocCaretNavigatePipeId,
       direction: CaretDirection.Next,
     });
+  } else if (event.key === "Backspace") {
+    const result = await editor.pipe.execute({
+      pipe_id: DocDirectedDeletePipeId,
+      direction: CaretDeleteDirection.Prev,
+    });
+    console.log(result);
+  } else if (event.key === "Delete") {
+    const result = await editor.pipe.execute({
+      pipe_id: DocDirectedDeletePipeId,
+      direction: CaretDeleteDirection.Prev,
+    });
+    console.log(result);
   }
 }
 

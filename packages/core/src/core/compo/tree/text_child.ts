@@ -2,6 +2,7 @@ import { create_Signal, WrappedSignal } from "@mixeditor/common";
 import { ToTdoCb, CompoTDO } from "../../../ecs";
 import { MixEditor } from "../../mix_editor";
 import { IChildCompo, TreeChildDelete, TreeChildInsert } from "./child";
+import { TempEntType } from "../../ent/temp";
 
 /**
  * 文本内容组件
@@ -69,9 +70,8 @@ export function register_TextChildCompo(editor: MixEditor) {
       it.content.set(content.slice(0, start) + content.slice(end + 1));
 
       // 创建一个临时文本实体，用于存储删除的文本内容
-      const ent = await ecs.create_ent("text");
-      const text_content_compo = ecs.get_compo(ent.id, TextChildCompo.type)!;
-      text_content_compo.content.set(deleted);
+      const ent = await ecs.create_ent(TempEntType);
+      ecs.set_compo(ent.id, new TextChildCompo(deleted));
 
       return [ent.id];
     },

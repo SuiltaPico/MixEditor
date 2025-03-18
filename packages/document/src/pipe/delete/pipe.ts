@@ -16,11 +16,11 @@ export const DocDirectedDeletePipeId = "doc:delete_directed" as const;
 
 /** 带方向删除事件。 */
 export interface DirectedDeleteEvent extends MEEvent {
-  type: typeof DocDirectedDeletePipeId;
+  pipe_id: typeof DocDirectedDeletePipeId;
   /** 删除方向。 */
   direction: CaretDeleteDirection;
   /** 新的选区。 */
-  new_selection: MESelection;
+  new_selection?: MESelection;
 }
 
 /**

@@ -8,7 +8,7 @@ import {
 import {
   handle_default_caret_delete,
   handle_default_range_delete,
-} from "../../common/helpers";
+} from "./default";
 
 export const DocCaretDeleteCb = "doc:caret_delete" as const;
 export const DocRangeDeleteCb = "doc:range_delete" as const;
