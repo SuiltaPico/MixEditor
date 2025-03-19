@@ -1,7 +1,7 @@
 import { create_ent_registration, EntInitPipeEvent } from "../../common/ent";
 import { EntChildCompo } from "../compo/tree/ent_child";
 import { ChildCompo } from "../compo/tree/child";
-import { ParentEntCompo } from "../compo";
+import { ParentEntCompo, set_children_parent_refs } from "../compo";
 
 const {
   EntType: RootEntType,
@@ -13,15 +13,11 @@ const {
   init_stage_execute: async (event) => {
     const { it, ex_ctx, init_params } = event;
     const children = init_params?.children ?? [];
-    for (const child of children) {
-      const parent_compo = ex_ctx.ecs.get_compo(child, ParentEntCompo.type);
-      if (!parent_compo) {
-        ex_ctx.ecs.set_compos(child, [new ParentEntCompo(it.id)]);
-      }
-      parent_compo.parent_id.set(it.id);
-    }
+
+    set_children_parent_refs(ex_ctx.ecs, children, it.id);
+  
     ex_ctx.ecs.set_compos(it.id, [
-      new EntChildCompo(init_params?.children ?? []),
+      new EntChildCompo(children),
       new ChildCompo(EntChildCompo.type),
     ]);
   },

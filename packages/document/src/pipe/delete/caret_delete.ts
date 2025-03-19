@@ -54,7 +54,7 @@ export const CaretDeleteDecision = {
   Done: (props: { selected?: MESelection }) =>
     ({
       type: "done",
-      selected: props.selected,
+      selection: props.selected,
     } satisfies CaretDeleteDecision),
 };
 
@@ -63,7 +63,7 @@ export type CaretDeleteDecision =
   | { type: "skip" } // 跳过当前节点
   | { type: "child"; index: number } // 进入子节点
   | { type: "delete_self" } // 删除自身
-  | { type: "done"; selected?: MESelection }; // 已处理完成
+  | { type: "done"; selection?: MESelection }; // 已处理完成
 
 /** 删除策略上下文。 */
 export interface CaretDeleteContext {
@@ -88,7 +88,7 @@ export async function execute_caret_deletion(
   src?: CaretDeleteSource
 ): Promise<
   | {
-      selected?: MESelection;
+      selection?: MESelection;
     }
   | undefined
 > {
@@ -132,20 +132,17 @@ export async function execute_caret_deletion(
     // 获取当前节点在父节点中的索引
     const index_in_parent = get_index_in_parent_ent(ecs_ctx, caret_ent_id);
 
-    await execute_range_deletion(
-      editor,
-      tx,
-      {
-        ent_id: parent_ent_id,
-        offset: to_prev ? index_in_parent! - 1 : index_in_parent!,
-      },
-      {
-        ent_id: parent_ent_id,
-        offset: to_prev ? index_in_parent! - 1 : index_in_parent!,
-      }
-    );
+    const delete_caret = {
+      ent_id: parent_ent_id,
+      offset:
+        direction === CaretDeleteDirection.Prev
+          ? index_in_parent! - 1
+          : index_in_parent!,
+    };
+
+    await execute_range_deletion(editor, tx, delete_caret, delete_caret);
   } else if (decision.type === "done") {
-    return { selected: decision.selected };
+    return { selection: decision.selection };
   } else if (decision.type === "skip") {
     // 处理 Skip 决策：将删除操作交给父节点处理
     const parent_ent_id = get_parent_ent_id(ecs_ctx, caret_ent_id);

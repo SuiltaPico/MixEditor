@@ -6,19 +6,23 @@ import {
   TextChildCompo,
 } from "@mixeditor/core";
 import {
-  BorderPolicy,
-  ChildDeletePolicy,
-  DocEntTraitsCompo,
-  SelfDeletePolicy,
-} from "../compo/doc_ent_traits";
+  BorderType,
+  CaretDeleteStrategy,
+  DocConfigCompo,
+  FrontBorderStrategy,
+  BackBorderStrategy,
+  RangeDeleteStrategy,
+} from "../compo/doc_config";
 
 const default_ChildCompo = new ChildCompo(TextChildCompo.type);
-const default_DocEntTraitsCompo = new DocEntTraitsCompo({
-  can_children_enter: false,
-  can_self_enter: true,
-  border_policy: BorderPolicy.Unbordered,
-  self_delete_from_caret_policy: SelfDeletePolicy.WhenEmpty,
-  child_delete_from_caret_policy: ChildDeletePolicy.Absorb,
+const default_DocEntTraitsCompo = new DocConfigCompo({
+  allow_enter_children: false,
+  allow_enter_self: true,
+  border_type: BorderType.Open,
+  caret_delete_policy: CaretDeleteStrategy.DeleteChild,
+  range_delete_policy: RangeDeleteStrategy.DeleteChild,
+  front_border_strategy: FrontBorderStrategy.MergeWithPrev,
+  back_border_strategy: BackBorderStrategy.PropagateToNext,
 });
 
 const {
@@ -39,5 +43,5 @@ const {
   },
 });
 
-export { TextEntType, TextEntInitPipeId, register_TextEnt };
+export { register_TextEnt, TextEntInitPipeId, TextEntType };
 export type TextEntInitPipeEvent = EntInitPipeEvent<typeof TextEntInitPipeId>;

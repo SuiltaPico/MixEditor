@@ -88,6 +88,28 @@ export function get_index_of_child_ent(
 }
 
 // ------- ParentEntCompo 相关 -------
+
+/**
+ * 为子节点设置父引用
+ * @param children 子节点ID列表
+ * @param parent_id 父节点ID
+ * @param ex_ctx 执行上下文
+ */
+export function set_children_parent_refs(
+  ecs_ctx: MixEditor["ecs"],
+  children: string[],
+  parent_id: string
+) {
+  for (const child of children) {
+    const parent_compo = ecs_ctx.get_compo(child, ParentEntCompo.type);
+    if (!parent_compo) {
+      ecs_ctx.set_compos(child, [new ParentEntCompo(parent_id)]);
+    } else {
+      parent_compo.parent_id.set(parent_id);
+    }
+  }
+}
+
 /**
  * 获取实体的直接父实体
  * @param ecs_ctx ECS上下文对象
@@ -101,6 +123,7 @@ export function get_parent_ent_id(ecs_ctx: MixEditor["ecs"], ent: string) {
   if (!parent_id) return;
   return parent_id;
 }
+
 /**
  * 获取实体到根节点的路径索引数组
  * @param ecs_ctx ECS上下文对象

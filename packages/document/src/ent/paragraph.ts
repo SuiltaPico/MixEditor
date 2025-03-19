@@ -4,21 +4,28 @@ import {
   create_ent_registration,
   EntInitPipeEvent,
   ParentEntCompo,
+  set_children_parent_refs,
 } from "@mixeditor/core";
 import {
-  BorderPolicy,
-  ChildDeletePolicy,
-  DocEntTraitsCompo,
-  SelfDeletePolicy,
-} from "../compo/doc_ent_traits";
+  BackBorderStrategy,
+  BorderType,
+  CaretDeleteStrategy,
+  DocConfigCompo,
+  FrontBorderStrategy,
+  RangeDeleteStrategy,
+} from "../compo/doc_config";
 
 const default_ChildCompo = new ChildCompo(EntChildCompo.type);
-const default_DocEntTraitsCompo = new DocEntTraitsCompo({
-  can_children_enter: true,
-  can_self_enter: true,
-  border_policy: BorderPolicy.Bordered,
-  self_delete_from_caret_policy: SelfDeletePolicy.Normal,
-  child_delete_from_caret_policy: ChildDeletePolicy.Propagate,
+const default_DocEntTraitsCompo = new DocConfigCompo({
+  allow_enter_children: true,
+  allow_enter_self: true,
+  border_type: BorderType.Closed,
+  caret_delete_policy: CaretDeleteStrategy.PropagateToChild,
+  range_delete_policy: RangeDeleteStrategy.DeleteChild,
+  front_border_strategy:
+    FrontBorderStrategy.MergeWithPrev,
+  back_border_strategy:
+    BackBorderStrategy.PropagateToNext,
 });
 
 const {
@@ -31,13 +38,9 @@ const {
   init_stage_execute: async (event) => {
     const { it, ex_ctx, init_params } = event;
     const children = init_params?.children ?? [];
-    for (const child of children) {
-      const parent_compo = ex_ctx.ecs.get_compo(child, ParentEntCompo.type);
-      if (!parent_compo) {
-        ex_ctx.ecs.set_compos(child, [new ParentEntCompo(it.id)]);
-      }
-      parent_compo.parent_id.set(it.id);
-    }
+
+    set_children_parent_refs(ex_ctx.ecs, children, it.id);
+
     ex_ctx.ecs.set_compos(it.id, [
       default_ChildCompo,
       new EntChildCompo(children),

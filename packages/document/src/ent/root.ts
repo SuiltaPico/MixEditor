@@ -1,10 +1,5 @@
 import { MixEditor, RootEntInitPipeId } from "@mixeditor/core";
-import {
-  BorderPolicy,
-  ChildDeletePolicy,
-  DocEntTraitsCompo,
-  SelfDeletePolicy,
-} from "../compo/doc_ent_traits";
+import { BorderType, DocConfigCompo } from "../compo/doc_config";
 
 export function register_RootEnt_doc_extend(editor: MixEditor) {
   const { pipe } = editor;
@@ -14,12 +9,10 @@ export function register_RootEnt_doc_extend(editor: MixEditor) {
     execute(event) {
       const { it, ex_ctx } = event;
       ex_ctx.ecs.set_compos(it.id, [
-        new DocEntTraitsCompo({
-          can_children_enter: true,
-          can_self_enter: false,
-          border_policy: BorderPolicy.Unbordered,
-          self_delete_from_caret_policy: SelfDeletePolicy.Never,
-          child_delete_from_caret_policy: ChildDeletePolicy.Propagate,
+        new DocConfigCompo({
+          allow_enter_children: true,
+          allow_enter_self: false,
+          border_type: BorderType.Open,
         }),
       ]);
     },

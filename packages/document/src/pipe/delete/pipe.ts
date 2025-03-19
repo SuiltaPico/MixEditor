@@ -72,8 +72,8 @@ export const directed_delete_pipe_handler: IPipeStageHandler<
   }
 
   // 更新删除后的光标位置
-  if (result?.selected) {
-    editor.selection.set_selection(result.selected);
+  if (result?.selection) {
+    editor.selection.set_selection(result.selection);
   }
 };
 

@@ -1,18 +1,14 @@
 import {
   create_TreeCollapsedSelection,
-  get_actual_child_compo,
-  IChildCompo,
+  get_child_ent_count,
+  get_child_ent_id,
+  get_index_of_child_ent,
+  get_parent_ent_id,
   MECompoBehaviorMap,
   MixEditor,
   Transaction,
-  TreeCollapsedSelectionType,
   TreeRangeDeleteOp,
 } from "@mixeditor/core";
-import {
-  ChildDeletePolicy,
-  DocEntTraitsCompo,
-  SelfDeletePolicy,
-} from "../../compo";
 import {
   CaretDeleteDecision,
   CaretDeleteDirection,
@@ -21,168 +17,233 @@ import {
   RangeDeleteDecision,
 } from ".";
 import {
+  BackBorderStrategy,
+  BorderType,
+  DocConfigCompo,
+  FrontBorderStrategy,
+} from "../../compo";
+import {
   CaretDirection,
   execute_navigate_caret_from_pos,
 } from "../caret_navigate";
+import { execute_merge_ent } from "../merge/merge_ent";
 
-/**
- * 处理自身删除逻辑
- */
-async function handle_self_deletion(
-  self_delete_policy: SelfDeletePolicy,
-  children_count: number
-) {
-  switch (self_delete_policy) {
-    case SelfDeletePolicy.Never:
-      return CaretDeleteDecision.Skip;
-    case SelfDeletePolicy.WhenEmpty:
-      return children_count === 0
-        ? CaretDeleteDecision.DeleteSelf
-        : CaretDeleteDecision.Skip;
-    case SelfDeletePolicy.Normal:
-      return CaretDeleteDecision.DeleteSelf;
-  }
-}
-
-/**
- * 处理子元素范围删除操作
- */
-async function delete_child_range(
-  ex_ctx: MixEditor,
-  ent_id: string,
-  from: number,
-  to_prev: boolean,
-  tx: Transaction
-) {
-  const { op } = ex_ctx;
-  await tx.execute(
-    new TreeRangeDeleteOp(
-      op.gen_id(),
-      ent_id,
-      to_prev ? from - 1 : from,
-      to_prev ? from - 1 : from
-    )
-  );
-  const new_selection = await execute_navigate_caret_from_pos(
-    ex_ctx,
-    {
-      ent_id,
-      offset: to_prev ? from - 1 : from,
-    },
-    CaretDirection.None 
-  );
-  if (!new_selection) return CaretDeleteDecision.Done({});
-  return CaretDeleteDecision.Done({
-    selected: create_TreeCollapsedSelection(new_selection),
-  });
-}
-
-/**
- * 处理子元素删除逻辑
- */
-function handle_child_deletion(
-  child_delete_policy: ChildDeletePolicy,
-  target_idx: number,
-  ex_ctx: MixEditor,
-  ent_id: string,
-  from: number,
-  to_prev: boolean,
-  tx: Transaction
-) {
-  switch (child_delete_policy) {
-    case ChildDeletePolicy.Propagate:
-      return CaretDeleteDecision.Child(target_idx);
-    case ChildDeletePolicy.Absorb:
-      return delete_child_range(ex_ctx, ent_id, from, to_prev, tx);
-  }
-}
-
-/**
- * 获取策略和子元素数量
- */
-function get_policies_and_counts(
-  ecs: MixEditor["ecs"],
-  ent_id: string,
-  traits: DocEntTraitsCompo
-) {
-  const actual_child_compo = get_actual_child_compo(ecs, ent_id);
-  return {
-    children_count: (actual_child_compo as IChildCompo).count(),
-    self_delete_policy: traits.self_delete_policy.get(),
-    child_delete_policy: traits.child_delete_policy.get(),
-  };
-}
-
-/**
- * 默认的光标删除处理逻辑。
+/** 默认的光标删除处理逻辑。
  *
  * 根据 DocEntTraitsCompo 定义的删除策略进行处理。
  */
 export const handle_default_caret_delete: MECompoBehaviorMap[typeof DocCaretDeleteCb] =
   async (params) => {
-    const { from, direction, ent_id, ex_ctx, tx } = params;
-    const ecs = ex_ctx.ecs;
+    const { from, direction, ent_id, ex_ctx: editor, tx } = params;
+    const { ecs, op } = editor;
 
-    const traits = ecs.get_compo(ent_id, DocEntTraitsCompo.type) as
-      | DocEntTraitsCompo
+    const doc_config = ecs.get_compo(ent_id, DocConfigCompo.type) as
+      | DocConfigCompo
       | undefined;
-    if (!traits) return CaretDeleteDecision.Skip;
+    if (!doc_config) return CaretDeleteDecision.Done({});
 
-    if (traits.custom_caret_delete) {
-      return traits.custom_caret_delete(params);
-    }
+    console.log(
+      "[handle_default_caret_delete]",
+      params,
+      doc_config,
+      ecs.get_ent(ent_id)?.type
+    );
 
-    const { children_count, self_delete_policy, child_delete_policy } =
-      get_policies_and_counts(ecs, ent_id, traits);
-    const to_prev = direction === CaretDeleteDirection.Prev;
+    // 如果有自定义删除处理函数，优先使用
+    if (doc_config.custom_caret_delete)
+      return doc_config.custom_caret_delete(params);
 
-    // 处理边界删除（自身删除）
-    if ((to_prev && from <= 0) || (!to_prev && from >= children_count)) {
-      return handle_self_deletion(self_delete_policy, children_count);
-    }
+    const { caret_delete_policy, front_border_strategy, back_border_strategy } =
+      doc_config;
+    const policy = caret_delete_policy.get();
 
-    // 处理子元素删除
-    if ((to_prev && from > 0) || (!to_prev && from < children_count)) {
-      const target_idx = from + (to_prev ? -1 : 0);
-      return handle_child_deletion(
-        child_delete_policy,
-        target_idx,
-        ex_ctx,
-        ent_id,
-        from,
-        to_prev,
-        tx
+    // 根据删除策略进行处理
+    if (policy.type === "skip") return CaretDeleteDecision.Done({});
+
+    if (policy.type === "propagate_to_child")
+      return CaretDeleteDecision.Child(
+        direction === CaretDeleteDirection.Prev ? from - 1 : from
       );
+
+    if (policy.type === "delete_child") {
+      const border_type = doc_config.border_policy.get();
+      const child_count = get_child_ent_count(ecs, ent_id);
+      const min_index = border_type === BorderType.Closed ? 0 : 1;
+      const max_index =
+        border_type === BorderType.Closed ? child_count : child_count - 1;
+
+      // 处理边界情况
+      if (border_type === BorderType.Closed) {
+        // 前向删除且在文档开头
+        if (direction === CaretDeleteDirection.Prev && from <= min_index) {
+          return handle_border_strategy(
+            front_border_strategy.get(),
+            params,
+            editor,
+            tx,
+            ent_id,
+            CaretDeleteDirection.Prev
+          );
+        }
+
+        // 后向删除且在文档末尾
+        if (direction === CaretDeleteDirection.Next && from >= max_index) {
+          return handle_border_strategy(
+            back_border_strategy.get(),
+            params,
+            editor,
+            tx,
+            ent_id,
+            CaretDeleteDirection.Next
+          );
+        }
+      }
+
+      let delete_index = from;
+      if (delete_index < min_index) delete_index = min_index;
+      else if (delete_index > max_index) delete_index = max_index;
+
+      if (direction === CaretDeleteDirection.Prev) delete_index--;
+
+      // 实际执行删除子实体操作
+      await tx.execute(
+        new TreeRangeDeleteOp(op.gen_id(), ent_id, delete_index, delete_index)
+      );
+
+      // 检查是否需要删除自身（如果删除后节点为空）
+      if (
+        border_type === BorderType.Open &&
+        get_child_ent_count(ecs, ent_id) === 0
+      ) {
+        return CaretDeleteDecision.DeleteSelf;
+      }
+
+      const new_selection = await execute_navigate_caret_from_pos(
+        editor,
+        { ent_id, offset: delete_index },
+        CaretDirection.None
+      );
+
+      return CaretDeleteDecision.Done({
+        selected: new_selection
+          ? create_TreeCollapsedSelection(new_selection)
+          : undefined,
+      });
     }
 
-    return CaretDeleteDecision.Skip;
+    return CaretDeleteDecision.Done({});
   };
 
-/**
- * 默认的范围删除处理逻辑。
+/** 处理边界策略的辅助函数 */
+async function handle_border_strategy(
+  strategy: FrontBorderStrategy | BackBorderStrategy,
+  params: Parameters<MECompoBehaviorMap[typeof DocCaretDeleteCb]>[0],
+  editor: MixEditor,
+  tx: Transaction,
+  ent_id: string,
+  direction: number
+) {
+  const { ecs } = editor;
+
+  if (strategy.type === "none") {
+    return CaretDeleteDecision.Done({});
+  }
+
+  if (
+    strategy.type === "propagate_to_next" ||
+    strategy.type === "propagate_to_prev"
+  ) {
+    return CaretDeleteDecision.Skip;
+  }
+
+  if (
+    strategy.type === "merge_with_next" ||
+    strategy.type === "merge_with_prev"
+  ) {
+    const parent_ent_id = get_parent_ent_id(ecs, ent_id);
+    if (!parent_ent_id) return CaretDeleteDecision.Skip;
+
+    const index_in_parent = get_index_of_child_ent(ecs, parent_ent_id, ent_id);
+    if (index_in_parent < 0) return CaretDeleteDecision.Skip;
+
+    const target_index = index_in_parent + direction;
+    const target_ent_id = get_child_ent_id(ecs, parent_ent_id, target_index);
+    if (!target_ent_id) return CaretDeleteDecision.Skip;
+
+    // 确定合并的顺序 (第一个参数是保留的实体)
+    const [first_ent, second_ent] =
+      direction === CaretDeleteDirection.Prev
+        ? [target_ent_id, ent_id] // 向前合并
+        : [ent_id, target_ent_id]; // 向后合并
+
+    const success = await execute_merge_ent(editor, tx, first_ent, second_ent);
+    return success ? CaretDeleteDecision.Done({}) : CaretDeleteDecision.Skip;
+  }
+
+  if (strategy.type === "custom") {
+    return strategy.handler({ ...params, editor });
+  }
+
+  return CaretDeleteDecision.Skip;
+}
+
+/** 默认的范围删除决策函数。
  *
- * 根据 DocEntTraitsCompo 定义的删除策略进行处理。
+ * 根据 DocEntTraitsCompo 定义的删除策略进行决策。
  */
 export const handle_default_range_delete: MECompoBehaviorMap[typeof DocRangeDeleteCb] =
   async (params) => {
     const { start, end, ent_id, ex_ctx, tx } = params;
     const { ecs, op } = ex_ctx;
 
-    const traits = ecs.get_compo(ent_id, DocEntTraitsCompo.type) as
-      | DocEntTraitsCompo
+    const doc_config = ecs.get_compo(ent_id, DocConfigCompo.type) as
+      | DocConfigCompo
       | undefined;
-    if (!traits) return RangeDeleteDecision.DeleteSelf;
+    if (!doc_config) return RangeDeleteDecision.Done({});
 
-    const { children_count } = get_policies_and_counts(ecs, ent_id, traits);
+    console.log(
+      "[handle_default_range_delete]",
+      params,
+      doc_config,
+      ecs.get_ent(ent_id)?.type
+    );
 
-    if (start <= 0 && end >= children_count) {
-      return RangeDeleteDecision.DeleteSelf;
-    } else {
-      const start_idx = start <= 0 ? 0 : start;
-      const end_idx = end >= children_count ? children_count - 1 : end;
-      await tx.execute(
-        new TreeRangeDeleteOp(op.gen_id(), ent_id, start_idx, end_idx)
-      );
+    if (doc_config.custom_range_delete) {
+      return doc_config.custom_range_delete(params);
+    }
+
+    const range_delete_policy = doc_config.range_delete_policy.get();
+    const border_type = doc_config.border_policy.get();
+
+    if (range_delete_policy.type === "skip") {
       return RangeDeleteDecision.Done({});
     }
+
+    if (range_delete_policy.type === "delete_child") {
+      await tx.execute(new TreeRangeDeleteOp(op.gen_id(), ent_id, start, end));
+
+      const new_selection = await execute_navigate_caret_from_pos(
+        ex_ctx,
+        { ent_id, offset: start },
+        CaretDirection.None
+      );
+
+      const decision = new_selection
+        ? RangeDeleteDecision.Done({
+            selected: create_TreeCollapsedSelection(new_selection),
+          })
+        : RangeDeleteDecision.Done({});
+
+      // 检查是否需要删除自身（如果删除后节点为空）
+      if (
+        border_type === BorderType.Open &&
+        get_child_ent_count(ecs, ent_id) === 0
+      ) {
+        return RangeDeleteDecision.DeleteSelf;
+      }
+
+      return decision;
+    }
+
+    return RangeDeleteDecision.Done({});
   };

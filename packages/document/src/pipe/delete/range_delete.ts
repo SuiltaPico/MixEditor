@@ -1,5 +1,6 @@
 import {
   Ent,
+  MESelection,
   MixEditor,
   Op,
   Transaction,
@@ -21,7 +22,7 @@ export const RangeDeleteDecision = {
     type: "delete_self",
   },
   /** 自身节点已经处理了删除，并产生了要执行的操作。 */
-  Done: (props: { operation?: Op; selected?: TreeCaret }) => {
+  Done: (props: { operation?: Op; selected?: MESelection }) => {
     const result = props as RangeDeleteDecision & { type: "done" };
     result.type = "done";
     return result;
@@ -350,8 +351,6 @@ export async function execute_range_deletion(
 ) {
   // 执行删除逻辑
   if (start.ent_id === end.ent_id) {
-    console.log("delete_range_in_same_ent", start.ent_id, start.offset, end.offset);
-    
     await delete_range_in_same_ent(
       editor,
       tx,

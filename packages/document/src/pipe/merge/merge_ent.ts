@@ -108,7 +108,7 @@ export async function execute_merge_ent(
     host_id,
     source_id
   );
-  if (!common_ancestor_info) return;
+  if (!common_ancestor_info) return false;
 
   const { ancestors1, ancestors2, ancestor_index } = common_ancestor_info;
 
@@ -116,6 +116,7 @@ export async function execute_merge_ent(
   const full_ancestors_chain2 = ancestors2.concat(source_id);
 
   const execute_merges: ((tx: Transaction) => Promise<void>)[] = [];
+  let allow_merged = false;
 
   // 从公共祖先下层开始，尝试逐层确认合并
   for (let i = ancestor_index + 1; i < full_ancestors_chain1.length; i++) {
@@ -135,10 +136,13 @@ export async function execute_merge_ent(
 
     if (decision?.type === "done") {
       execute_merges.push(decision.execute_merge);
+      allow_merged = true;
     } else {
       break;
     }
   }
+
+  if (!allow_merged) return false;
 
   // 从最内层开始执行合并，并删除 source 节点
   for (
@@ -168,4 +172,6 @@ export async function execute_merge_ent(
 
   // 删除 source 节点
   ecs_ctx.delete_ent(source_id);
+
+  return true;
 }

@@ -2,7 +2,7 @@ import {
   IChildCompo,
   MECompoBehaviorMap
 } from "@mixeditor/core";
-import { BorderPolicy, DocEntTraitsCompo } from "../../compo/doc_ent_traits";
+import { BorderType, DocConfigCompo } from "../../compo/doc_config";
 import {
   CaretDirection,
   CaretNavigateDecision,
@@ -14,7 +14,7 @@ import {
  * 处理允许进入子节点时的导航逻辑
  */
 function children_enter_navigation(
-  traits: DocEntTraitsCompo,
+  traits: DocConfigCompo,
   from: number,
   to_prev: boolean,
   to_next: boolean,
@@ -23,7 +23,7 @@ function children_enter_navigation(
   children_count: number
 ) {
   const border_policy = traits.border_policy.get();
-  const can_self_enter = traits.can_self_enter.get();
+  const can_self_enter = traits.can_enter_self.get();
   let new_pos;
 
   // 根据导航来源处理不同情况
@@ -32,11 +32,11 @@ function children_enter_navigation(
     if (can_self_enter) {
       new_pos = from + (to_next ? 1 : 0);
       const cross_border_in_same_direction_to_prev =
-        border_policy === BorderPolicy.Bordered
+        border_policy === BorderType.Closed
           ? (to_prev || no_direction) && new_pos < 0
           : (to_prev || no_direction) && new_pos <= 0;
       const cross_border_in_same_direction_to_next =
-        border_policy === BorderPolicy.Bordered
+        border_policy === BorderType.Closed
           ? (to_next || no_direction) && new_pos > children_count
           : (to_next || no_direction) && new_pos >= children_count;
 
@@ -70,11 +70,11 @@ function children_enter_navigation(
     new_pos = from;
     if (can_self_enter) {
       const cross_border_in_same_direction_to_prev =
-        border_policy === BorderPolicy.Bordered
+        border_policy === BorderType.Closed
           ? (to_prev || no_direction) && new_pos < 0
           : (to_prev || no_direction) && new_pos <= 0;
       const cross_border_in_same_direction_to_next =
-        border_policy === BorderPolicy.Bordered
+        border_policy === BorderType.Closed
           ? (to_next || no_direction) && new_pos > children_count
           : (to_next || no_direction) && new_pos >= children_count;
 
@@ -88,12 +88,12 @@ function children_enter_navigation(
         });
 
       const cross_border_in_opposite_direction =
-        border_policy === BorderPolicy.Bordered
+        border_policy === BorderType.Closed
           ? (to_next && new_pos < 0) || (to_prev && new_pos > children_count)
           : (to_next && new_pos <= 0) || (to_prev && new_pos >= children_count);
 
       if (cross_border_in_opposite_direction) {
-        if (border_policy === BorderPolicy.Bordered)
+        if (border_policy === BorderType.Closed)
           return CaretNavigateDecision.Self(to_prev ? children_count : 0);
 
         return CaretNavigateDecision.Self(to_prev ? children_count - 1 : 1);
@@ -143,7 +143,7 @@ function children_enter_navigation(
  * 处理不允许进入子节点时的导航逻辑
  */
 function no_children_enter_navigation(
-  traits: DocEntTraitsCompo,
+  traits: DocConfigCompo,
   new_pos: number,
   to_prev: boolean,
   to_next: boolean,
@@ -152,11 +152,11 @@ function no_children_enter_navigation(
 ) {
   const border_policy = traits.border_policy.get();
   const cross_border_in_same_direction_to_prev =
-    border_policy === BorderPolicy.Bordered
+    border_policy === BorderType.Closed
       ? (to_prev || no_direction) && new_pos < 0
       : (to_prev || no_direction) && new_pos <= 0;
   const cross_border_in_same_direction_to_next =
-    border_policy === BorderPolicy.Bordered
+    border_policy === BorderType.Closed
       ? (to_next || no_direction) && new_pos > children_count
       : (to_next || no_direction) && new_pos >= children_count;
   // 如果顺导航方向越界，则跳过
@@ -168,13 +168,13 @@ function no_children_enter_navigation(
     return CaretNavigateDecision.Skip({ direction: CaretDirection.Next });
 
   const cross_border_in_opposite_direction =
-    border_policy === BorderPolicy.Bordered
+    border_policy === BorderType.Closed
       ? (!to_prev && new_pos < 0) || (to_prev && new_pos > children_count)
       : (!to_prev && new_pos <= 0) || (to_prev && new_pos >= children_count);
 
   // 如果逆导航方向越界，则跳跃到边界内
   if (cross_border_in_opposite_direction) {
-    if (border_policy === BorderPolicy.Bordered) {
+    if (border_policy === BorderType.Closed) {
       return CaretNavigateDecision.Self(to_prev ? children_count : 0);
     } else {
       return CaretNavigateDecision.Self(to_prev ? children_count - 1 : 1);
@@ -204,8 +204,8 @@ export const handle_default_caret_navigate: MECompoBehaviorMap[typeof DocCaretNa
     const ecs = ex_ctx.ecs;
 
     // 获取当前实体的文档特性组件
-    const traits = ecs.get_compo(ent_id, DocEntTraitsCompo.type) as
-      | DocEntTraitsCompo
+    const traits = ecs.get_compo(ent_id, DocConfigCompo.type) as
+      | DocConfigCompo
       | undefined;
     if (!traits) return CaretNavigateDecision.Skip({ direction }); // 如果没有特性组件则跳过
 
