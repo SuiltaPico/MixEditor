@@ -26,7 +26,7 @@ import {
   CaretDirection,
   execute_navigate_caret_from_pos,
 } from "../caret_navigate";
-import { execute_merge_ent } from "../merge/merge_ent";
+import { execute_merge_ent } from "../merge";
 
 /** 默认的光标删除处理逻辑。
  *

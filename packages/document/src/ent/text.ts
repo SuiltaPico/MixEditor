@@ -11,7 +11,6 @@ import {
   DocConfigCompo,
   FrontBorderStrategy,
   BackBorderStrategy,
-  RangeDeleteStrategy,
 } from "../compo/doc_config";
 
 const default_ChildCompo = new ChildCompo(TextChildCompo.type);

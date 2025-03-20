@@ -11,8 +11,8 @@ import {
   get_parent_ent_id,
   process_shallow_nodes,
 } from "@mixeditor/core";
-import { execute_merge_ent } from "../merge/merge_ent";
 import { DocRangeDeleteCb } from "./compo_behavior";
+import { execute_merge_ent } from "../merge";
 
 /** 节点对删除范围的决策。 */
 export const RangeDeleteDecision = {
@@ -61,7 +61,7 @@ export async function delete_ent_range(
   const actual_child_compo = get_actual_child_compo(ecs_ctx, ent_id);
   if (!actual_child_compo) return;
 
-  const decision = await ecs_ctx.run_compo_behavior(
+  await ecs_ctx.run_compo_behavior(
     actual_child_compo,
     DocRangeDeleteCb,
     {

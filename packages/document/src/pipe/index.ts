@@ -13,14 +13,16 @@ import {
   DocDirectedDeletePipeId,
   register_DocCaretDelete,
 } from "./delete";
+import { register_DocMerge, DocMergeCbMapExtend } from "./merge";
 
 export * from "./caret_navigate";
 export * from "./delete";
-export * from "./merge/merge_ent";
+export * from "./merge";
 
 export interface DocCompoBehaviorMapExtend
   extends DocCaretNavigateCbMapExtend,
-    DocDeleteCbMapExtend {}
+    DocDeleteCbMapExtend,
+    DocMergeCbMapExtend {}
 
 export interface DocPipeEventMapExtend {
   [DocCaretNavigatePipeId]: DocCaretNavigateEvent;
@@ -33,6 +35,7 @@ export const register_pipes_and_compo_behaviors = (editor: MixEditor) => {
     register_directed_delete_pipe(editor),
     register_DocCaretDelete(editor),
     register_DocCaretNavigate(editor),
+    register_DocMerge(editor),
   ];
 
   return () => {
