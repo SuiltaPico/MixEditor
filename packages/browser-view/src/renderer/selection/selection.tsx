@@ -101,8 +101,6 @@ async function get_rect_of_extended_selected(
 
   await Promise.all(promises);
 
-  console.log("[get_rect_of_extended_selected]", rects);
-
   return rects;
 }
 

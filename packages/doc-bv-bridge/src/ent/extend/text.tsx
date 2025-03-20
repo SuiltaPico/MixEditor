@@ -62,13 +62,6 @@ function handle_collapsed_selection(
     compare_result = path_compare(self_path, start_path);
   }
 
-  console.log(
-    "[handle_collapsed_selection]",
-    self_path,
-    start_path,
-    compare_result
-  );
-
   if (compare_result < 0) {
     editor.selection.set_selection(
       create_TreeExtendedSelection(new_caret, curr_selection.caret, "end")

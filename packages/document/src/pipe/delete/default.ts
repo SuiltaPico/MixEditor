@@ -214,9 +214,8 @@ export const handle_default_range_delete: MECompoBehaviorMap[typeof DocRangeDele
     const range_delete_policy = doc_config.range_delete_policy.get();
     const border_type = doc_config.border_policy.get();
 
-    if (range_delete_policy.type === "skip") {
+    if (range_delete_policy.type === "skip")
       return RangeDeleteDecision.Done({});
-    }
 
     if (range_delete_policy.type === "delete_child") {
       await tx.execute(new TreeRangeDeleteOp(op.gen_id(), ent_id, start, end));

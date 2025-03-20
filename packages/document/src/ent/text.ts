@@ -20,7 +20,6 @@ const default_DocEntTraitsCompo = new DocConfigCompo({
   allow_enter_self: true,
   border_type: BorderType.Open,
   caret_delete_policy: CaretDeleteStrategy.DeleteChild,
-  range_delete_policy: RangeDeleteStrategy.DeleteChild,
   front_border_strategy: FrontBorderStrategy.MergeWithPrev,
   back_border_strategy: BackBorderStrategy.PropagateToNext,
 });

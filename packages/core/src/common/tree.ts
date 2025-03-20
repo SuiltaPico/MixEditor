@@ -395,7 +395,6 @@ export function process_shallow_nodes(
   }
 
   function process_lca_child_between_start_and_end() {
-    console.log(start_path, end_path);
 
     // 处理 start_ent_lca_child + 1 到 end_ent_lca_child - 1 之间的所有实体
     processor(lca, start_path[lca_index] + 1, end_path[lca_index] - 1);

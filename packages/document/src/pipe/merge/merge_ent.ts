@@ -6,7 +6,7 @@ import {
   get_lca_of_ent,
   get_parent_ent_id,
 } from "@mixeditor/core";
-import { delete_range_in_same_ent } from "../delete";
+import { delete_ent_range } from "../delete";
 
 /** 实体对合并的决策。 */
 export const MergeEntDecision = {
@@ -160,7 +160,7 @@ export async function execute_merge_ent(
         source_parent_id,
         src_id
       );
-      await delete_range_in_same_ent(
+      await delete_ent_range(
         editor,
         tx,
         source_parent_id,

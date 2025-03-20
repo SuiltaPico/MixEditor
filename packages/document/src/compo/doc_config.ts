@@ -237,7 +237,7 @@ export class DocConfigCompo implements Compo {
       params.caret_delete_policy ?? CaretDeleteStrategy.Skip
     );
     this.range_delete_policy = create_Signal(
-      params.range_delete_policy ?? RangeDeleteStrategy.Skip
+      params.range_delete_policy ?? RangeDeleteStrategy.DeleteChild
     );
     this.front_border_strategy = create_Signal(
       params.front_border_strategy ?? FrontBorderStrategy.None
