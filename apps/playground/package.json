@@ -12,16 +12,16 @@
     "@mixeditor/browser-view": "workspace:*",
     "@mixeditor/common": "workspace:*",
     "@mixeditor/core": "workspace:*",
-    "@mixeditor/document": "workspace:*",
     "@mixeditor/doc-bv-bridge": "workspace:*",
-    "solid-js": "^1.9.4"
+    "@mixeditor/document": "workspace:*",
+    "solid-js": "^1.9.5"
   },
   "devDependencies": {
-    "@unocss/transformer-directives": "^66.0.0",
+    "@unocss/transformer-directives": "66.1.0-beta.6",
     "concurrently": "^9.1.2",
-    "typescript": "~5.7.3",
-    "unocss": "^66.0.0",
-    "vite": "^6.1.0",
-    "vite-plugin-solid": "^2.11.1"
+    "typescript": "~5.8.2",
+    "unocss": "66.1.0-beta.6",
+    "vite": "^6.2.2",
+    "vite-plugin-solid": "^2.11.6"
   }
 }
