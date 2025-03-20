@@ -2,8 +2,8 @@ import {
   Ent,
   MixEditor,
   Transaction,
-  get_common_ancestor_from_ent,
   get_index_of_child_ent,
+  get_lca_of_ent,
   get_parent_ent_id,
 } from "@mixeditor/core";
 import { delete_range_in_same_ent } from "../delete";
@@ -103,14 +103,14 @@ export async function execute_merge_ent(
   const ecs_ctx = editor.ecs;
 
   // 获取公共祖先，从公共祖先的子节点开始，尝试逐层合并，直到有一层不接受合并为止。
-  const common_ancestor_info = await get_common_ancestor_from_ent(
+  const common_ancestor_info = await get_lca_of_ent(
     ecs_ctx,
     host_id,
     source_id
   );
   if (!common_ancestor_info) return false;
 
-  const { ancestors1, ancestors2, ancestor_index } = common_ancestor_info;
+  const { ancestors1, ancestors2, lca_index } = common_ancestor_info;
 
   const full_ancestors_chain1 = ancestors1.concat(host_id);
   const full_ancestors_chain2 = ancestors2.concat(source_id);
@@ -119,7 +119,7 @@ export async function execute_merge_ent(
   let allow_merged = false;
 
   // 从公共祖先下层开始，尝试逐层确认合并
-  for (let i = ancestor_index + 1; i < full_ancestors_chain1.length; i++) {
+  for (let i = lca_index + 1; i < full_ancestors_chain1.length; i++) {
     const curr_host_id = full_ancestors_chain1[i];
     const curr_host = ecs_ctx.get_ent(curr_host_id);
     if (!curr_host) break;
@@ -146,8 +146,8 @@ export async function execute_merge_ent(
 
   // 从最内层开始执行合并，并删除 source 节点
   for (
-    let i = ancestor_index + execute_merges.length;
-    i >= ancestor_index + 1;
+    let i = lca_index + execute_merges.length;
+    i >= lca_index + 1;
     i--
   ) {
     const src_id = full_ancestors_chain2[i];

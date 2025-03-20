@@ -46,17 +46,14 @@ async function handle_pointer_down_base(
   editor.selection.set_selection(create_TreeCollapsedSelection(caret));
 }
 
-async function handle_collapsed_selection(
+function handle_collapsed_selection(
   editor: MixEditor,
   ent_id: string,
   self_path: number[],
   curr_selection: TreeCollapsedSelection,
   new_caret: TreeCaret
 ) {
-  const start_path = await get_ent_path(
-    editor.ecs,
-    curr_selection.caret.ent_id
-  );
+  const start_path = get_ent_path(editor.ecs, curr_selection.caret.ent_id);
   let compare_result;
 
   if (curr_selection.caret.ent_id === ent_id) {
@@ -64,6 +61,13 @@ async function handle_collapsed_selection(
   } else {
     compare_result = path_compare(self_path, start_path);
   }
+
+  console.log(
+    "[handle_collapsed_selection]",
+    self_path,
+    start_path,
+    compare_result
+  );
 
   if (compare_result < 0) {
     editor.selection.set_selection(
@@ -73,25 +77,30 @@ async function handle_collapsed_selection(
     editor.selection.set_selection(
       create_TreeExtendedSelection(curr_selection.caret, new_caret, "start")
     );
+  } else {
+    editor.selection.set_selection(create_TreeCollapsedSelection(new_caret));
   }
 }
 
-async function handle_extended_selection(
+function handle_extended_selection(
   editor: MixEditor,
-  ent_id: string,
-  self_path: number[],
+  caret_ent_id: string,
+  caret_path: number[],
   curr_selection: TreeExtendedSelection,
   new_caret: TreeCaret
 ) {
   const anchor = curr_selection.anchor;
   const anchor_info = curr_selection[anchor];
-  const anchor_path = await get_ent_path(editor.ecs, anchor_info.ent_id);
+  const anchor_path = get_ent_path(editor.ecs, anchor_info.ent_id);
   let compare_result;
 
-  if (anchor_info.ent_id === ent_id) {
+  if (anchor_info.ent_id === caret_ent_id) {
     compare_result = new_caret.offset - anchor_info.offset;
   } else {
-    compare_result = path_compare(self_path, anchor_path);
+    const p1 = [...caret_path, new_caret.offset];
+    const p2 = [...anchor_path, anchor_info.offset];
+
+    compare_result = path_compare(p1, p2);
   }
 
   if (compare_result < 0) {
@@ -102,6 +111,8 @@ async function handle_extended_selection(
     editor.selection.set_selection(
       create_TreeExtendedSelection(anchor_info, new_caret, "start")
     );
+  } else {
+    editor.selection.set_selection(create_TreeCollapsedSelection(new_caret));
   }
 }
 
@@ -114,11 +125,8 @@ async function handle_pointer_move_base(
   if (event.buttons !== 1) return;
 
   // 获取选区
-  const selected = editor.selection.get_selection();
-  if (!selected) return;
-
-  // 获取自己的路径和选区起始节点的路径
-  const self_path = await get_ent_path(editor.ecs, ent_id);
+  const selection = editor.selection.get_selection();
+  if (!selection) return;
 
   // 利用比较函数，计算鼠标位置相对于选区起始节点或者锚点位置在前还是后，
   // 然后根据比较结果，选择之前选区到新选区的转换模式。
@@ -134,20 +142,23 @@ async function handle_pointer_move_base(
   );
   if (!new_caret) return;
 
-  if (selected.type === TreeCollapsedSelectionType) {
-    await handle_collapsed_selection(
+  // 获取自己的路径和选区起始节点的路径
+  const caret_path = get_ent_path(editor.ecs, new_caret.ent_id);
+
+  if (selection.type === TreeCollapsedSelectionType) {
+    handle_collapsed_selection(
       editor,
-      ent_id,
-      self_path,
-      selected,
+      new_caret.ent_id,
+      caret_path,
+      selection,
       new_caret
     );
-  } else if (selected.type === TreeExtendedSelectionType) {
-    await handle_extended_selection(
+  } else if (selection.type === TreeExtendedSelectionType) {
+    handle_extended_selection(
       editor,
-      ent_id,
-      self_path,
-      selected,
+      new_caret.ent_id,
+      caret_path,
+      selection,
       new_caret
     );
   }
@@ -177,7 +188,7 @@ export const TextEntRenderer: NodeRenderer = (props) => {
     if (event.me_handled) return;
     // @ts-ignore
     event.me_handled = true;
-    await handle_pointer_event_base(editor, ent_id, event, (caret_pos) => 
+    await handle_pointer_event_base(editor, ent_id, event, (caret_pos) =>
       handle_pointer_down_base(editor, ent_id, event, caret_pos)
     );
   }
@@ -260,7 +271,7 @@ function get_render_selection_decision(
 
   const child_ent_count = get_child_ent_count(editor.ecs, param.ent_id);
   const start = Math.max(0, from);
-  const end = Math.min(child_ent_count, to);
+  const end = Math.min(child_ent_count, to + 1);
 
   const node = render_result.node as HTMLElement;
   const range = document.createRange();
@@ -286,14 +297,14 @@ function handle_pointer_event_forward(
   const { editor, pos, event } = params;
   const handlerMap = {
     pointerdown: handle_pointer_down_base,
-    pointermove: handle_pointer_move_base
+    pointermove: handle_pointer_move_base,
   };
-  
+
   if (event.type in handlerMap) {
     handlerMap[event.type as keyof typeof handlerMap](
-      editor, 
-      params.ent_id, 
-      event, 
+      editor,
+      params.ent_id,
+      event,
       pos
     );
   }

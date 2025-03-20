@@ -8,7 +8,6 @@ export * from "./ent_child";
 export * from "./child";
 export * from "./parent_ent";
 export * from "./text_child";
-export * from "./utils";
 
 export function register_tree_compos(editor: MixEditor) {
   register_EntChildCompo(editor);

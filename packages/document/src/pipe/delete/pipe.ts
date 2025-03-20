@@ -60,14 +60,13 @@ export const directed_delete_pipe_handler: IPipeStageHandler<
   } else if (selection.type === TreeExtendedSelectionType) {
     // 处理选中区域删除（如选中文本后按删除键）
     const tx = new Transaction(editor.op, editor.op.executor);
-    result = {
-      operation: await execute_range_deletion(
-        editor,
-        tx,
-        { ent_id: selection.start.ent_id, offset: selection.start.offset },
-        { ent_id: selection.end.ent_id, offset: selection.end.offset }
-      ),
-    };
+    result = await execute_range_deletion(
+      editor,
+      tx,
+      { ent_id: selection.start.ent_id, offset: selection.start.offset },
+      { ent_id: selection.end.ent_id, offset: selection.end.offset }
+    );
+
     await tx.commit();
   }
 

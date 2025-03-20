@@ -13,11 +13,12 @@ import {
   Ent,
   get_child_ent_count,
   get_child_ent_id,
-  get_common_ancestor_from_ent,
   get_index_of_child_ent,
   MixEditor,
+  process_shallow_nodes,
   TreeCollapsedSelectionType,
   TreeExtendedSelection,
+  TreeExtendedSelectionType,
 } from "@mixeditor/core";
 import { execute_render_selection } from "../../pipe";
 import "./selection.css";
@@ -70,127 +71,37 @@ async function get_rect_of_extended_selected(
   // 2. 从结束节点向上遍历到共同祖先的子节点，期间处理前侧兄弟节点的选区
   // 3. 从起始节点在共同祖先的子节点下一位开始，到结束节点在共同祖先的子节点上一位结束，期间选择所有子节点的选区
 
-  // 获取起始和结束节点的共同祖先
-  const result = await get_common_ancestor_from_ent(ecs, start_ent, end_ent);
-  // 如果找不到共同祖先。则代表并不在同一棵树上，则因为无法选中而流程结束，返回空数组
-  if (!result) return rects;
-
-  const {
-    common_ancestor,
-    ancestors1: start_ancestors,
-    ancestors2: end_ancestors,
-    ancestor_index,
-  } = result;
-
-  start_ancestors.push(start_ent);
-  end_ancestors.push(end_ent);
-
-  const promises: Promise<void>[] = [
-    // 先选中起始节点和结束节点
-    execute_render_selection(
-      editor,
-      start_ent,
-      start_offset,
-      Number.MAX_SAFE_INTEGER,
-      root_rect,
-      rects
-    ),
-    execute_render_selection(editor, end_ent, 0, end_offset, root_rect, rects),
-  ];
-
-  let current: string | undefined;
-  const reversed_start_ancestors = start_ancestors
-    .slice(ancestor_index + 1)
-    .toReversed();
-  const reversed_end_ancestors = end_ancestors
-    .slice(ancestor_index + 1)
-    .toReversed();
-
-  // 从起始节点向上遍历，直到共同祖先
-  current = start_ent;
-  for (let i = 0; i < reversed_start_ancestors.length; i++) {
-    const current_parent = reversed_start_ancestors[i];
-    const parent_length = get_child_ent_count(ecs, current_parent);
-
-    // 获取当前节点在父节点中的索引
-    const current_index = get_index_of_child_ent(ecs, current_parent, current);
-
-    // 处理后侧兄弟节点的选区
-    for (let i = current_index + 1; i < parent_length; i++) {
-      const child_ent_id = get_child_ent_id(ecs, current_parent, i);
-      if (!child_ent_id) continue;
+  const promises: Promise<void>[] = [];
+  process_shallow_nodes(
+    ecs,
+    start_ent,
+    start_offset,
+    end_ent,
+    end_offset,
+    (ent, start_offset, end_offset) => {
+      console.log(
+        "[process_shallow_nodes]",
+        ecs.get_ent(ent),
+        start_offset,
+        end_offset
+      );
 
       promises.push(
         execute_render_selection(
           editor,
-          child_ent_id,
-          0,
-          Number.MAX_SAFE_INTEGER,
+          ent,
+          start_offset,
+          end_offset,
           root_rect,
           rects
         )
       );
     }
-    current = current_parent;
-  }
-
-  // 从结束节点向上遍历，直到共同祖先
-  current = end_ent;
-  for (let i = 0; i < reversed_end_ancestors.length; i++) {
-    const current_parent = reversed_end_ancestors[i];
-    // 获取当前节点在父节点中的索引
-    const current_index = get_index_of_child_ent(ecs, current_parent, current);
-
-    // 处理前侧兄弟节点的选区
-    for (let i = current_index - 1; i >= 0; i--) {
-      const child_ent_id = get_child_ent_id(ecs, current_parent, i);
-      if (!child_ent_id) continue;
-
-      promises.push(
-        execute_render_selection(
-          editor,
-          child_ent_id,
-          0,
-          Number.MAX_SAFE_INTEGER,
-          root_rect,
-          rects
-        )
-      );
-    }
-    current = current_parent;
-  }
-
-  // 起始节点在共同祖先的子节点索引
-  const start_ancestor_index = get_index_of_child_ent(
-    ecs,
-    common_ancestor,
-    start_ancestors[ancestor_index + 1]
   );
-
-  // 结束节点在共同祖先的子节点索引
-  const end_ancestor_index = get_index_of_child_ent(
-    ecs,
-    common_ancestor,
-    end_ancestors[ancestor_index + 1]
-  );
-
-  for (let i = start_ancestor_index + 1; i < end_ancestor_index; i++) {
-    const child_ent_id = get_child_ent_id(ecs, common_ancestor, i);
-    if (!child_ent_id) continue;
-
-    promises.push(
-      execute_render_selection(
-        editor,
-        child_ent_id,
-        0,
-        Number.MAX_SAFE_INTEGER,
-        root_rect,
-        rects
-      )
-    );
-  }
 
   await Promise.all(promises);
+
+  console.log("[get_rect_of_extended_selected]", rects);
 
   return rects;
 }
@@ -251,7 +162,24 @@ export const TreeRangeRenderer: Component<{
     on(
       () => selection.get_selection(),
       async (selected) => {
-        console.log("selection changed", selected);
+        if (selected?.type === TreeCollapsedSelectionType) {
+          console.log("selection changed", selected.type, selected.caret);
+        } else if (selected?.type === TreeExtendedSelectionType) {
+          console.log(
+            "selection changed",
+            selected.type,
+            "start:",
+            editor.ecs.get_ent(selected.start.ent_id),
+            selected.start.offset,
+            "end:",
+            editor.ecs.get_ent(selected.end.ent_id),
+            selected.end.offset,
+            "anchor:",
+            selected.anchor
+          );
+        } else {
+          console.log("selection changed", selected);
+        }
 
         const root_rect = (
           bv_ctx.editor.ecs.get_compo(

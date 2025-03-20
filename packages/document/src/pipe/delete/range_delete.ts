@@ -6,8 +6,8 @@ import {
   Transaction,
   TreeCaret,
   get_actual_child_compo,
-  get_common_ancestor_from_ent,
   get_index_of_child_ent,
+  get_lca_of_ent,
   get_parent_ent_id,
 } from "@mixeditor/core";
 import { execute_merge_ent } from "../merge/merge_ent";
@@ -22,7 +22,7 @@ export const RangeDeleteDecision = {
     type: "delete_self",
   },
   /** 自身节点已经处理了删除，并产生了要执行的操作。 */
-  Done: (props: { operation?: Op; selected?: MESelection }) => {
+  Done: (props: { selection?: MESelection }) => {
     const result = props as RangeDeleteDecision & { type: "done" };
     result.type = "done";
     return result;
@@ -36,7 +36,7 @@ export type RangeDeleteDecision =
   | {
       type: "done";
       operation?: Op;
-      selected?: TreeCaret;
+      selection?: MESelection;
     };
 
 export interface RangeDeleteContext {
@@ -105,10 +105,9 @@ export async function delete_range_in_same_ent(
       temp_start_offset = index_in_parent!;
       temp_end_offset = index_in_parent! - 1;
     } else if (decision.type === "done") {
-      if (decision.operation) {
-        await tx.execute(decision.operation);
-      }
-      break;
+      return {
+        selection: decision.selection,
+      };
     }
   }
 }
@@ -127,13 +126,13 @@ export async function delete_between_ents(
   end: TreeCaret
 ) {
   const ecs_ctx = editor.ecs;
-  const common_ancestor_data = await get_common_ancestor_from_ent(
+  const common_ancestor_data = await get_lca_of_ent(
     ecs_ctx,
     start.ent_id,
     end.ent_id
   );
   if (!common_ancestor_data) return;
-  const common_ancestor = common_ancestor_data.common_ancestor;
+  const common_ancestor = common_ancestor_data.lca;
 
   await delete_start_to_ancestor(editor, tx, start, common_ancestor);
   await delete_end_to_ancestor(editor, tx, end, common_ancestor);
@@ -142,8 +141,8 @@ export async function delete_between_ents(
   await delete_ancestor_range(
     editor,
     tx,
-    common_ancestor_data.path1[common_ancestor_data.ancestor_index] + 1,
-    common_ancestor_data.path2[common_ancestor_data.ancestor_index] - 1,
+    common_ancestor_data.path1[common_ancestor_data.lca_index] + 1,
+    common_ancestor_data.path2[common_ancestor_data.lca_index] - 1,
     common_ancestor
   );
 }
@@ -163,6 +162,8 @@ export async function delete_start_to_ancestor(
   start: TreeCaret,
   common_ancestor_id: string
 ) {
+  console.log("[delete_start_to_ancestor]", ...arguments);
+
   const ecs_ctx = editor.ecs;
   let current_id = start.ent_id;
   let temp_start_offset: number = start.offset;
@@ -228,6 +229,8 @@ export async function delete_end_to_ancestor(
   end: TreeCaret,
   common_ancestor_id: string
 ) {
+  console.log("[delete_end_to_ancestor]", ...arguments);
+
   const ecs_ctx = editor.ecs;
   let current_id = end.ent_id;
   let temp_end_offset: number = end.offset;
@@ -293,6 +296,8 @@ export async function delete_ancestor_range(
   end_offset: number,
   common_ancestor_id: string
 ) {
+  console.log("[delete_ancestor_range]", ...arguments);
+
   const ecs_ctx = editor.ecs;
   // --- 处理公共祖先到结束节点的路径 ---
 
@@ -349,9 +354,10 @@ export async function execute_range_deletion(
   start: TreeCaret,
   end: TreeCaret
 ) {
+  let result;
   // 执行删除逻辑
   if (start.ent_id === end.ent_id) {
-    await delete_range_in_same_ent(
+    result = await delete_range_in_same_ent(
       editor,
       tx,
       start.ent_id,
@@ -359,9 +365,11 @@ export async function execute_range_deletion(
       end.offset
     );
   } else {
-    await delete_between_ents(editor, tx, start, end);
+    result = await delete_between_ents(editor, tx, start, end);
   }
 
   // 执行合并逻辑
   await execute_merge_ent(editor, tx, start.ent_id, end.ent_id);
+
+  return result;
 }

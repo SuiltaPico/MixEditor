@@ -1,6 +1,6 @@
+import { get_actual_child_compo } from "../../common";
 import { Op } from "../../op";
 import {
-  get_actual_child_compo,
   TreeChildDelete,
   TreeChildInsert,
 } from "../compo";
@@ -22,8 +22,8 @@ export class TreeRangeDeleteOp implements Op {
   deleted_ents: string[] = [];
 
   constructor(id: string, target: string, start: number, end: number) {
-    console.log("TreeRangeDeleteOp", id, target, start, end);
-    
+    console.log("TreeRangeDeleteOp", target, start, end);
+
     this.id = id;
     this.target = target;
     this.start = start;

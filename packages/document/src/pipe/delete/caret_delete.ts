@@ -90,7 +90,7 @@ export async function execute_caret_deletion(
   | {
       selection?: MESelection;
     }
-  | undefined
+  | void
 > {
   const ecs_ctx = editor.ecs;
   const caret_ent_id = caret.ent_id;
@@ -134,13 +134,10 @@ export async function execute_caret_deletion(
 
     const delete_caret = {
       ent_id: parent_ent_id,
-      offset:
-        direction === CaretDeleteDirection.Prev
-          ? index_in_parent! - 1
-          : index_in_parent!,
+      offset: index_in_parent!,
     };
 
-    await execute_range_deletion(editor, tx, delete_caret, delete_caret);
+    return await execute_range_deletion(editor, tx, delete_caret, delete_caret);
   } else if (decision.type === "done") {
     return { selection: decision.selection };
   } else if (decision.type === "skip") {

@@ -5,7 +5,10 @@ import {
   RootEntType,
 } from "@mixeditor/core";
 import { from_solidjs_compo, NodeRenderer } from "../common/render";
-import { BvRenderableCompo } from "../compo/renderable";
+import {
+  BvRenderableCompo,
+  BvRenderSelectionDecision,
+} from "../compo/renderable";
 import { NodeRendererWrapper } from "../renderer/framework/content";
 import { For } from "solid-js";
 import { bv_forward_pointer_event } from "../compo/utils";
@@ -61,6 +64,7 @@ export function register_RootEnt_bv_extend(editor: MixEditor) {
             height: child_rect.height,
           };
         },
+        render_selection_policy: BvRenderSelectionDecision.Traverse,
       });
       ecs.set_compos(event.it.id, [renderable]);
     },

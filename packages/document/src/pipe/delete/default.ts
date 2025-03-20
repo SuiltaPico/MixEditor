@@ -45,8 +45,8 @@ export const handle_default_caret_delete: MECompoBehaviorMap[typeof DocCaretDele
     console.log(
       "[handle_default_caret_delete]",
       params,
-      doc_config,
-      ecs.get_ent(ent_id)?.type
+      ecs.get_ent(ent_id),
+      doc_config
     );
 
     // 如果有自定义删除处理函数，优先使用
@@ -100,10 +100,9 @@ export const handle_default_caret_delete: MECompoBehaviorMap[typeof DocCaretDele
       }
 
       let delete_index = from;
-      if (delete_index < min_index) delete_index = min_index;
-      else if (delete_index > max_index) delete_index = max_index;
-
       if (direction === CaretDeleteDirection.Prev) delete_index--;
+      if (delete_index < 0) delete_index = min_index;
+      else if (delete_index > max_index) delete_index = max_index;
 
       // 实际执行删除子实体操作
       await tx.execute(
@@ -230,7 +229,7 @@ export const handle_default_range_delete: MECompoBehaviorMap[typeof DocRangeDele
 
       const decision = new_selection
         ? RangeDeleteDecision.Done({
-            selected: create_TreeCollapsedSelection(new_selection),
+            selection: create_TreeCollapsedSelection(new_selection),
           })
         : RangeDeleteDecision.Done({});
 
