@@ -195,7 +195,7 @@ export const TextEntRenderer: NodeRenderer = (props) => {
 
   return (
     <span
-      class="_text"
+      class="__text"
       onPointerDown={handle_pointer_down}
       onPointerMove={handle_pointer_move}
     >

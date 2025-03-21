@@ -1,4 +1,5 @@
 import {
+  create_TreeCollapsedSelection,
   get_actual_child_compo,
   get_child_ent_id,
   get_index_in_parent_ent,
@@ -9,9 +10,15 @@ import {
   Op,
   Transaction,
   TreeCaret,
+  TreeCollapsedSelectionType,
+  TreeExtendedSelectionType,
 } from "@mixeditor/core";
 import { execute_range_deletion } from "./range_delete";
 import { DocCaretDeleteCb } from "./compo_behavior";
+import {
+  CaretDirection,
+  execute_navigate_caret_from_pos,
+} from "../caret_navigate";
 
 /** 驱使删除的来源。 */
 export enum CaretDeleteSource {
@@ -86,24 +93,21 @@ export async function execute_caret_deletion(
   caret: TreeCaret,
   direction: CaretDeleteDirection,
   src?: CaretDeleteSource
-): Promise<
-  | {
-      selection?: MESelection;
-    }
-  | void
-> {
-  const ecs_ctx = editor.ecs;
+): Promise<{
+  selection?: MESelection;
+} | void> {
+  const { ecs, selection } = editor;
   const caret_ent_id = caret.ent_id;
-  const caret_ent = ecs_ctx.get_ent(caret_ent_id);
+  const caret_ent = ecs.get_ent(caret_ent_id);
   if (!caret_ent) return;
 
   const to_prev = direction === CaretDeleteDirection.Prev;
 
-  const actual_child_compo = get_actual_child_compo(ecs_ctx, caret_ent_id);
+  const actual_child_compo = get_actual_child_compo(ecs, caret_ent_id);
   if (!actual_child_compo) return;
 
   // 执行当前节点的删除处理
-  const decision = await ecs_ctx.run_compo_behavior(
+  const decision = await ecs.run_compo_behavior(
     actual_child_compo,
     DocCaretDeleteCb,
     {
@@ -126,11 +130,11 @@ export async function execute_caret_deletion(
 
   if (!decision || decision.type === "delete_self") {
     // 获取父节点
-    const parent_ent_id = get_parent_ent_id(ecs_ctx, caret_ent_id);
+    const parent_ent_id = get_parent_ent_id(ecs, caret_ent_id);
     if (!parent_ent_id) return; // 到达根节点，结束责任链
 
     // 获取当前节点在父节点中的索引
-    const index_in_parent = get_index_in_parent_ent(ecs_ctx, caret_ent_id);
+    const index_in_parent = get_index_in_parent_ent(ecs, caret_ent_id);
 
     const delete_caret = {
       ent_id: parent_ent_id,
@@ -142,12 +146,12 @@ export async function execute_caret_deletion(
     return { selection: decision.selection };
   } else if (decision.type === "skip") {
     // 处理 Skip 决策：将删除操作交给父节点处理
-    const parent_ent_id = get_parent_ent_id(ecs_ctx, caret_ent_id);
+    const parent_ent_id = get_parent_ent_id(ecs, caret_ent_id);
     if (!parent_ent_id) return; // 到达根节点，结束责任链
 
     // 获取当前节点在父节点中的索引
     const index_in_parent = get_index_of_child_ent(
-      ecs_ctx,
+      ecs,
       parent_ent_id,
       caret_ent_id
     );
@@ -165,11 +169,7 @@ export async function execute_caret_deletion(
     );
   } else if (decision.type === "child") {
     // 处理 Child 决策：将删除操作交给指定子节点处理
-    const child_ent_id = get_child_ent_id(
-      ecs_ctx,
-      caret_ent_id,
-      decision.index
-    );
+    const child_ent_id = get_child_ent_id(ecs, caret_ent_id, decision.index);
 
     if (!child_ent_id) return; // 子节点不存在时终止
 

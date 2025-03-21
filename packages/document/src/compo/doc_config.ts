@@ -202,8 +202,8 @@ export class DocConfigCompo implements Compo {
     return DocConfigCompo.type;
   }
 
-  can_children_enter: WrappedSignal<boolean>;
-  can_enter_self: WrappedSignal<boolean>;
+  allow_enter_children: WrappedSignal<boolean>;
+  allow_enter_self: WrappedSignal<boolean>;
   border_policy: WrappedSignal<BorderType>;
   custom_caret_navigate:
     | ((
@@ -228,8 +228,8 @@ export class DocConfigCompo implements Compo {
     | undefined;
 
   constructor(params: DocConfigParams) {
-    this.can_children_enter = create_Signal(params.allow_enter_children);
-    this.can_enter_self = create_Signal(params.allow_enter_self);
+    this.allow_enter_children = create_Signal(params.allow_enter_children);
+    this.allow_enter_self = create_Signal(params.allow_enter_self);
     this.border_policy = create_Signal(params.border_type);
     this.custom_caret_navigate = params.custom_caret_navigate;
 

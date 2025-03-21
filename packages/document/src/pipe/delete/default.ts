@@ -56,18 +56,27 @@ export const handle_default_caret_delete: MECompoBehaviorMap[typeof DocCaretDele
     const { caret_delete_policy, front_border_strategy, back_border_strategy } =
       doc_config;
     const policy = caret_delete_policy.get();
+    const child_count = get_child_ent_count(ecs, ent_id);
 
     // 根据删除策略进行处理
     if (policy.type === "skip") return CaretDeleteDecision.Done({});
 
-    if (policy.type === "propagate_to_child")
-      return CaretDeleteDecision.Child(
-        direction === CaretDeleteDirection.Prev ? from - 1 : from
-      );
+    if (policy.type === "propagate_to_child") {
+      let delete_index =
+        direction === CaretDeleteDirection.Prev ? from - 1 : from;
+      if (delete_index < 0 && child_count === 0) {
+        return CaretDeleteDecision.DeleteSelf;
+      } else if (delete_index < 0) {
+        return CaretDeleteDecision.Skip;
+      } else if (delete_index > child_count) {
+        return CaretDeleteDecision.Skip;
+      }
+
+      return CaretDeleteDecision.Child(delete_index);
+    }
 
     if (policy.type === "delete_child") {
       const border_type = doc_config.border_policy.get();
-      const child_count = get_child_ent_count(ecs, ent_id);
       const min_index = border_type === BorderType.Closed ? 0 : 1;
       const max_index =
         border_type === BorderType.Closed ? child_count : child_count - 1;
@@ -101,8 +110,11 @@ export const handle_default_caret_delete: MECompoBehaviorMap[typeof DocCaretDele
 
       let delete_index = from;
       if (direction === CaretDeleteDirection.Prev) delete_index--;
-      if (delete_index < 0) delete_index = min_index;
-      else if (delete_index > max_index) delete_index = max_index;
+      if (delete_index < 0) {
+        delete_index = min_index;
+      } else if (delete_index > max_index) {
+        delete_index = max_index;
+      }
 
       // 实际执行删除子实体操作
       await tx.execute(
@@ -207,9 +219,9 @@ export const handle_default_range_delete: MECompoBehaviorMap[typeof DocRangeDele
 
     console.log(
       "[handle_default_range_delete]",
+      ecs.get_ent(ent_id),
       params,
       doc_config,
-      ecs.get_ent(ent_id)?.type
     );
 
     if (doc_config.custom_range_delete) {
@@ -227,17 +239,17 @@ export const handle_default_range_delete: MECompoBehaviorMap[typeof DocRangeDele
         new TreeChildrenDeleteOp(op.gen_id(), ent_id, start, end)
       );
 
-      const new_selection = await execute_navigate_caret_from_pos(
-        ex_ctx,
-        { ent_id, offset: start },
-        CaretDirection.None
-      );
+      // const new_selection = await execute_navigate_caret_from_pos(
+      //   ex_ctx,
+      //   { ent_id, offset: start },
+      //   CaretDirection.None
+      // );
 
-      const decision = new_selection
-        ? RangeDeleteDecision.Done({
-            selection: create_TreeCollapsedSelection(new_selection),
-          })
-        : RangeDeleteDecision.Done({});
+      // const decision = new_selection
+      //   ? RangeDeleteDecision.Done({
+      //       selection: create_TreeCollapsedSelection(new_selection),
+      //     })
+        // : RangeDeleteDecision.Done({});
 
       // 检查是否需要删除自身（如果删除后节点为空）
       if (
@@ -247,7 +259,7 @@ export const handle_default_range_delete: MECompoBehaviorMap[typeof DocRangeDele
         return RangeDeleteDecision.DeleteSelf;
       }
 
-      return decision;
+      return RangeDeleteDecision.Done({});
     }
 
     return RangeDeleteDecision.Done({});

@@ -112,15 +112,15 @@ export async function execute_navigate_caret_from_pos(
       from: caret.offset,
     }
   );
-  // console.log(
-  //   "execute_navigate_caret_from_pos",
-  //   ecs.get_ent(caret_ent_id)?.type,
-  //   actual_child_compo,
-  //   direction,
-  //   src,
-  //   caret.offset,
-  //   decision
-  // );
+  console.log(
+    "[execute_navigate_caret_from_pos]",
+    ecs.get_ent(caret_ent_id)?.type,
+    actual_child_compo,
+    direction,
+    src,
+    caret.offset,
+    decision
+  );
 
   if (!decision || decision.type === "skip") {
     // 跳过当前节点，往下一个节点移动

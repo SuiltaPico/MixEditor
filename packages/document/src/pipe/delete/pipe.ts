@@ -48,7 +48,7 @@ export const directed_delete_pipe_handler: IPipeStageHandler<
       result = await execute_caret_deletion(
         editor,
         tx,
-        { ent_id: selection.caret.ent_id, offset: selection.caret.offset },
+        selection.caret,
         event.direction
       );
       await tx.commit();
@@ -63,8 +63,8 @@ export const directed_delete_pipe_handler: IPipeStageHandler<
     result = await execute_range_deletion(
       editor,
       tx,
-      { ent_id: selection.start.ent_id, offset: selection.start.offset },
-      { ent_id: selection.end.ent_id, offset: selection.end.offset }
+      selection.start,
+      selection.end
     );
 
     await tx.commit();

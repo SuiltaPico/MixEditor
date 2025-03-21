@@ -1,13 +1,10 @@
-import {
-  IChildCompo,
-  MECompoBehaviorMap
-} from "@mixeditor/core";
+import { IChildCompo, MECompoBehaviorMap } from "@mixeditor/core";
 import { BorderType, DocConfigCompo } from "../../compo/doc_config";
 import {
   CaretDirection,
   CaretNavigateDecision,
   CaretNavigateSource,
-  DocCaretNavigateCb
+  DocCaretNavigateCb,
 } from "../../pipe";
 
 /**
@@ -23,13 +20,13 @@ function children_enter_navigation(
   children_count: number
 ) {
   const border_policy = traits.border_policy.get();
-  const can_self_enter = traits.can_enter_self.get();
+  const allow_enter_self = traits.allow_enter_self.get();
   let new_pos;
 
   // 根据导航来源处理不同情况
   if (src === CaretNavigateSource.Child) {
     // 来自子元素的导航
-    if (can_self_enter) {
+    if (allow_enter_self) {
       new_pos = from + (to_next ? 1 : 0);
       const cross_border_in_same_direction_to_prev =
         border_policy === BorderType.Closed
@@ -51,7 +48,7 @@ function children_enter_navigation(
 
       return CaretNavigateDecision.Self(new_pos);
     } else {
-      new_pos = from + (to_prev ? -1 : 0) + (to_next ? 1 : 0);
+      new_pos = from + (to_prev || no_direction ? -1 : 0) + (to_next ? 1 : 0);
       const cross_border_in_same_direction_to_prev = new_pos < 0;
       const cross_border_in_same_direction_to_next =
         new_pos > children_count - 1;
@@ -68,15 +65,15 @@ function children_enter_navigation(
   } else if (src === CaretNavigateSource.Parent) {
     // 从父节点进入是精确的导航，不受 to_prev 影响
     new_pos = from;
-    if (can_self_enter) {
+    if (allow_enter_self) {
       const cross_border_in_same_direction_to_prev =
         border_policy === BorderType.Closed
-          ? (to_prev || no_direction) && new_pos < 0
-          : (to_prev || no_direction) && new_pos <= 0;
+          ? to_prev && new_pos < 0
+          : to_prev && new_pos <= 0;
       const cross_border_in_same_direction_to_next =
         border_policy === BorderType.Closed
-          ? (to_next || no_direction) && new_pos > children_count
-          : (to_next || no_direction) && new_pos >= children_count;
+          ? to_next && new_pos > children_count
+          : to_next && new_pos >= children_count;
 
       if (cross_border_in_same_direction_to_prev)
         return CaretNavigateDecision.Skip({
@@ -89,14 +86,16 @@ function children_enter_navigation(
 
       const cross_border_in_opposite_direction =
         border_policy === BorderType.Closed
-          ? (to_next && new_pos < 0) || (to_prev && new_pos > children_count)
-          : (to_next && new_pos <= 0) || (to_prev && new_pos >= children_count);
+          ? ((to_next || no_direction) && new_pos < 0) ||
+            ((to_prev || no_direction) && new_pos > children_count)
+          : ((to_next || no_direction) && new_pos <= 0) ||
+            ((to_prev || no_direction) && new_pos >= children_count);
 
       if (cross_border_in_opposite_direction) {
         if (border_policy === BorderType.Closed)
-          return CaretNavigateDecision.Self(to_prev ? children_count : 0);
+          return CaretNavigateDecision.Self(to_prev ? 0 : children_count);
 
-        return CaretNavigateDecision.Self(to_prev ? children_count - 1 : 1);
+        return CaretNavigateDecision.Self(to_prev ? 1 : children_count - 1);
       }
       return CaretNavigateDecision.Self(new_pos);
     } else {
@@ -221,7 +220,7 @@ export const handle_default_caret_navigate: MECompoBehaviorMap[typeof DocCaretNa
     const no_direction = direction === CaretDirection.None;
 
     // 根据是否允许进入子节点分发处理逻辑
-    return traits.can_children_enter.get()
+    return traits.allow_enter_children.get()
       ? children_enter_navigation(
           traits,
           from,

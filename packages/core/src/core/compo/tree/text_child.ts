@@ -66,8 +66,8 @@ export function register_TextChildCompo(editor: MixEditor) {
     [TreeChildrenDelete]: async ({ it, start, end, ex_ctx }) => {
       const ecs = ex_ctx.ecs;
       const content = it.content.get();
-      const deleted = content.slice(start, end + 1);
-      it.content.set(content.slice(0, start) + content.slice(end + 1));
+      const deleted = content.slice(start, end);
+      it.content.set(content.slice(0, start) + content.slice(end));
 
       // 创建一个临时文本实体，用于存储删除的文本内容
       const ent = await ecs.create_ent(TempEntType);

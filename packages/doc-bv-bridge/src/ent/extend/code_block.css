@@ -2,6 +2,7 @@
   background-color: #f0f0f0;
   padding: 2px 4px;
   border-radius: 4px;
+  min-height: 1em;
 
   & > code {
     font-size: 0.9em;

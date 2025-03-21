@@ -4,11 +4,16 @@ import {
   BvRenderSelectionDecision,
   from_solidjs_compo,
   NodeRenderer,
-  NodeRendererWrapper
+  NodeRendererWrapper,
 } from "@mixeditor/browser-view";
-import { EntChildCompo, MixEditor } from "@mixeditor/core";
+import {
+  create_TreeCollapsedSelection,
+  EntChildCompo,
+  MixEditor,
+} from "@mixeditor/core";
 import { ParagraphEntInitPipeId } from "@mixeditor/document";
 import { For } from "solid-js";
+import "./paragraph.css";
 
 export const ParagraphEntRenderer: NodeRenderer = (props) => {
   const ent_id = props.ent_id;
@@ -17,15 +22,36 @@ export const ParagraphEntRenderer: NodeRenderer = (props) => {
   const { ecs } = editor;
   const ent_child_compo = ecs.get_compo(ent_id, EntChildCompo.type);
 
-  function handle_pointer_event(event: PointerEvent) {
+  function handle_pointer_down(event: PointerEvent) {
+    if (ent_child_compo.count() === 0) {
+      editor.selection.set_selection(
+        create_TreeCollapsedSelection({
+          ent_id,
+          offset: 0,
+        })
+      );
+    } else {
+      bv_forward_pointer_event(editor, ent_id, event);
+    }
+  }
+
+  function handle_pointer_move(event: PointerEvent) {
     bv_forward_pointer_event(editor, ent_id, event);
+    // if (ent_child_compo.count() === 0) {
+    //   editor.selection.set_selection(
+    //     create_TreeCollapsedSelection({
+    //       ent_id,
+    //       offset: 0,
+    //     })
+    //   );
+    // }
   }
 
   return (
     <p
-      class="_paragraph"
-      onPointerDown={handle_pointer_event}
-      onPointerMove={handle_pointer_event}
+      class="__paragraph"
+      onPointerDown={handle_pointer_down}
+      onPointerMove={handle_pointer_move}
     >
       <For each={ent_child_compo.children.get()}>
         {(child_id) => (
@@ -52,9 +78,18 @@ export function get_paragraph_child_pos(
   if (!render_result) return;
 
   const ent_child_compo = ecs.get_compo(params.ent_id, EntChildCompo.type);
+  if (ent_child_compo.count() === 0) {
+    const self_rect = (
+      render_result.final_node! as HTMLElement
+    ).getBoundingClientRect();
+    return {
+      x: self_rect.left - root_rect.x,
+      y: self_rect.top - root_rect.y,
+      height: self_rect.height,
+    };
+  }
   const children = ent_child_compo.children.get();
 
-  // 简化子元素获取逻辑
   const child_id = children[params.index] ?? children[params.index - 1];
   const is_last_position = params.index === children.length;
 
@@ -67,7 +102,6 @@ export function get_paragraph_child_pos(
   const child_node = child_render_result.node as HTMLElement;
   const child_rects = child_node.getClientRects();
 
-  // 简化矩形计算
   const child_rect = is_last_position
     ? child_rects[child_rects.length - 1]
     : child_rects[0];

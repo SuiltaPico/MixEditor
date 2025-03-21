@@ -15,6 +15,11 @@ import {
 } from "@mixeditor/core";
 import { DocRangeDeleteCb } from "./compo_behavior";
 import { execute_merge_ent } from "../merge";
+import {
+  CaretDirection,
+  CaretNavigateSource,
+  execute_navigate_caret_from_pos,
+} from "../caret_navigate";
 
 /** 节点对删除范围的决策。 */
 export const RangeDeleteDecision = {
@@ -142,7 +147,18 @@ export async function execute_range_deletion(
   if (merge_result.selection) {
     selection = merge_result.selection;
   } else {
-    selection = create_TreeCollapsedSelection(start);
+    console.log("navigate_caret_from_pos", start);
+
+    const new_selection = await execute_navigate_caret_from_pos(
+      editor,
+      start,
+      CaretDirection.None,
+      CaretNavigateSource.Child
+    );
+    if (new_selection) {
+      console.log("navigate_caret_from_pos normalized", new_selection);
+      selection = create_TreeCollapsedSelection(new_selection);
+    }
   }
 
   return { selection };
