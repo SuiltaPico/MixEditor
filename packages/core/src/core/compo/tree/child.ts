@@ -10,7 +10,7 @@ import { RouteCompo } from "../basic/route";
  * 通过关联的源组件（实现IChildEntityCompo接口）管理具体子实体
  */
 export class ChildCompo extends RouteCompo {
-  static readonly type = "child" as const;
+  static readonly type = "tree:child" as const;
   get type() {
     return ChildCompo.type;
   }
@@ -66,18 +66,18 @@ export function find_child_ent_index_default(
   return -1;
 }
 
-export const TreeChildInsert = "tree:child.insert" as const;
-export const TreeChildDelete = "tree:child.delete" as const;
+export const TreeChildrenInsert = "tree:children.insert" as const;
+export const TreeChildrenDelete = "tree:children.delete" as const;
 
 export interface ChildCompoBehaviorMap extends CompoBehaviorMap<MixEditor> {
-  [TreeChildInsert]: MECompoBehaviorHandler<
+  [TreeChildrenInsert]: MECompoBehaviorHandler<
     {
       index: number;
       items: string[];
     },
     void
   >;
-  [TreeChildDelete]: MECompoBehaviorHandler<
+  [TreeChildrenDelete]: MECompoBehaviorHandler<
     {
       start: number;
       end: number;

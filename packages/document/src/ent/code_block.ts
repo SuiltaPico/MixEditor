@@ -11,8 +11,9 @@ import {
   BorderType,
   CaretDeleteStrategy,
   DocConfigCompo,
-  FrontBorderStrategy
+  FrontBorderStrategy,
 } from "../compo/doc_config";
+import { DocCodeBlockCompo } from "../compo";
 
 const default_ChildCompo = new ChildCompo(EntChildCompo.type);
 const default_DocEntTraitsCompo = new DocConfigCompo({
@@ -20,19 +21,17 @@ const default_DocEntTraitsCompo = new DocConfigCompo({
   allow_enter_self: true,
   border_type: BorderType.Closed,
   caret_delete_policy: CaretDeleteStrategy.PropagateToChild,
-  front_border_strategy:
-    FrontBorderStrategy.MergeWithPrev,
-  back_border_strategy:
-    BackBorderStrategy.PropagateToNext,
+  front_border_strategy: FrontBorderStrategy.MergeWithPrev,
+  back_border_strategy: BackBorderStrategy.PropagateToNext,
 });
 
 const {
-  EntType: ParagraphEntType,
-  EntInitPipeId: ParagraphEntInitPipeId,
-  register_ent: register_ParagraphEnt,
+  EntType: CodeBlockEntType,
+  EntInitPipeId: CodeBlockEntInitPipeId,
+  register_ent: register_CodeBlockEnt,
 } = create_ent_registration({
   namespace: "doc",
-  ent_type: "doc:paragraph",
+  ent_type: "doc:code_block",
   init_stage_execute: async (event) => {
     const { it, ex_ctx, init_params } = event;
     const children = init_params?.children ?? [];
@@ -43,12 +42,13 @@ const {
       default_ChildCompo,
       new EntChildCompo(children),
       new ParentCompo(undefined),
+      new DocCodeBlockCompo(),
       default_DocEntTraitsCompo,
     ]);
   },
 });
 
-export { ParagraphEntInitPipeId, ParagraphEntType, register_ParagraphEnt };
-export type ParagraphEntInitPipeEvent = EntInitPipeEvent<
-  typeof ParagraphEntInitPipeId
+export { CodeBlockEntInitPipeId, CodeBlockEntType, register_CodeBlockEnt };
+export type CodeBlockEntInitPipeEvent = EntInitPipeEvent<
+  typeof CodeBlockEntInitPipeId
 >;

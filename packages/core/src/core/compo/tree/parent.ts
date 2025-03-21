@@ -9,10 +9,10 @@ import { MixEditor } from "../../mix_editor";
  * 记录当前实体的父实体ID，与 ChildEntCompo 配合使用
  * 通过信号量实现父子关系的动态更新
  */
-export class ParentEntCompo implements Compo {
-  static readonly type = "parent_ent" as const;
+export class ParentCompo implements Compo {
+  static readonly type = "tree:parent" as const;
   get type() {
-    return ParentEntCompo.type;
+    return ParentCompo.type;
   }
 
   /** 父实体ID的信号包装 */
@@ -30,19 +30,19 @@ export interface ParentEntCompoTDO extends CompoTDO {
 
 export function register_ParentEntCompo(editor: MixEditor) {
   const { ecs } = editor;
-  ecs.set_compo_behaviors(ParentEntCompo.type, {
+  ecs.set_compo_behaviors(ParentCompo.type, {
     [ToTdoCb]({ it, save_with }) {
       const parent_id = it.parent_id.get();
       if (parent_id) {
         save_with([parent_id]);
       }
       return {
-        type: ParentEntCompo.type,
+        type: ParentCompo.type,
         parent: parent_id,
       } satisfies ParentEntCompoTDO;
     },
     from_tdo({ input }) {
-      return new ParentEntCompo((input as ParentEntCompoTDO).parent);
+      return new ParentCompo((input as ParentEntCompoTDO).parent);
     },
   });
 }

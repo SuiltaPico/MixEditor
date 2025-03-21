@@ -9,5 +9,6 @@ export class Ent {
 /** 实体的数据传输对象。 */
 export interface EntTDO extends TDO {
   id: string;
+  type: string;
   compos: CompoTDORecord;
 }

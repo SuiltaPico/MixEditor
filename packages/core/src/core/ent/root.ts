@@ -1,7 +1,7 @@
 import { create_ent_registration, EntInitPipeEvent } from "../../common/ent";
 import { EntChildCompo } from "../compo/tree/ent_child";
 import { ChildCompo } from "../compo/tree/child";
-import { ParentEntCompo } from "../compo";
+import { ParentCompo } from "../compo";
 import { set_children_parent_refs } from "../../common";
 
 const {

@@ -8,7 +8,7 @@ import {
   EntBehaviorHandler,
   EntBehaviorMap,
 } from "../ecs";
-import { OpBehaviorHandler, OpBehaviorMap, OpCtx, OpMap } from "../op";
+import { OpBehaviorHandler, OpBehaviorMap, OpCtx, OpMap, TransactionOp } from "../op";
 import { IPipeEvent, IPipeStageHandler, PipeCtx } from "../pipe";
 import { Plugin, PluginCtx } from "../plugin";
 import { SelectionCtx, SelectionMap } from "../selection/selection";
@@ -21,11 +21,12 @@ import {
   EntChildCompo,
   ChildCompo,
   ChildCompoBehaviorMap,
-  ParentEntCompo,
+  ParentCompo,
   TextChildCompo,
 } from "./compo";
 import { RootEntInitPipeId, RootEntInitPipeEvent } from "./ent";
-import { TreeRangeDeleteOp } from "./op";
+import { TreeChildrenDeleteOp } from "./op";
+import { TreeChildrenMoveOp } from "./op/tree_children_move";
 import { MECorePipeEventMap } from "./pipe";
 import { regist_core_items } from "./regist_core_items";
 import { TreeSelectionMapExtend } from "./selection";
@@ -54,7 +55,7 @@ export interface MECompoMap extends Record<string, Compo> {
   [EntChildCompo.type]: EntChildCompo;
   [ChildCompo.type]: ChildCompo;
   [TextChildCompo.type]: TextChildCompo;
-  [ParentEntCompo.type]: ParentEntCompo;
+  [ParentCompo.type]: ParentCompo;
 }
 /** MixEditor 的实体行为映射表，供插件扩展 */
 export interface MEEntBehaviorMap extends EntBehaviorMap<MixEditor> {}
@@ -65,7 +66,9 @@ export interface MECompoBehaviorMap
 
 /** MixEditor 的操作表，供插件扩展 */
 export interface MEOpMap extends OpMap {
-  [TreeRangeDeleteOp.type]: TreeRangeDeleteOp;
+  [TreeChildrenDeleteOp.type]: TreeChildrenDeleteOp;
+  [TreeChildrenMoveOp.type]: TreeChildrenMoveOp;
+  [TransactionOp.type]: TransactionOp;
 }
 /** MixEditor 的操作行为映射表，供插件扩展 */
 export interface MEOpBehaviorMap extends OpBehaviorMap<MixEditor> {}

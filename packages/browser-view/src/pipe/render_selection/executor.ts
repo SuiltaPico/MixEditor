@@ -48,7 +48,9 @@ export async function execute_render_selection(
       to = length - 1;
     }
     let promises: Promise<void>[] = [];
+
     for (let i = from; i <= to; i++) {
+
       const child_ent_id = actual_child_compo.at(i);
       if (!child_ent_id) continue;
 

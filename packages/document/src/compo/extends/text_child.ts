@@ -1,13 +1,10 @@
 import {
   MixEditor,
   TextChildCompo,
-  TreeRangeDeleteOp
+  TreeChildrenDeleteOp,
 } from "@mixeditor/core";
 import { TextEntType } from "../../ent";
-import {
-  DocRangeDeleteCb,
-  RangeDeleteDecision
-} from "../../pipe";
+import { DocRangeDeleteCb, RangeDeleteDecision } from "../../pipe";
 
 export function register_TextChildCompo_doc_extend(editor: MixEditor) {
   const { ecs } = editor;
@@ -22,7 +19,7 @@ export function register_TextChildCompo_doc_extend(editor: MixEditor) {
         return RangeDeleteDecision.DeleteSelf;
       } else {
         await tx.execute(
-          new TreeRangeDeleteOp(op.gen_id(), ent_id, start, end - 1)
+          new TreeChildrenDeleteOp(op.gen_id(), ent_id, start, end - 1)
         );
         return RangeDeleteDecision.Done({});
       }

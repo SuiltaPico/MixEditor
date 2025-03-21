@@ -1,16 +1,13 @@
 import { get_actual_child_compo } from "../../common";
 import { Op } from "../../op";
-import {
-  TreeChildDelete,
-  TreeChildInsert,
-} from "../compo";
+import { TreeChildrenDelete, TreeChildrenInsert } from "../compo";
 import { MixEditor } from "../mix_editor";
 
 /** 删除树结构中指定范围的子节点操作。 */
-export class TreeRangeDeleteOp implements Op {
-  static type = "tree:range_delete" as const;
+export class TreeChildrenDeleteOp implements Op {
+  static type = "tree:children_delete" as const;
   get type() {
-    return TreeRangeDeleteOp.type;
+    return TreeChildrenDeleteOp.type;
   }
 
   id: string;
@@ -22,8 +19,6 @@ export class TreeRangeDeleteOp implements Op {
   deleted_ents: string[] = [];
 
   constructor(id: string, target: string, start: number, end: number) {
-    console.log("TreeRangeDeleteOp", target, start, end);
-
     this.id = id;
     this.target = target;
     this.start = start;
@@ -31,9 +26,9 @@ export class TreeRangeDeleteOp implements Op {
   }
 }
 
-export function register_TreeRangeDeleteOp(editor: MixEditor) {
+export function register_TreeChildrenDeleteOp(editor: MixEditor) {
   const { op } = editor;
-  op.register_handlers(TreeRangeDeleteOp.type, {
+  op.register_handlers(TreeChildrenDeleteOp.type, {
     execute: async (params) => {
       const { it, ex_ctx } = params;
       const { ecs } = ex_ctx;
@@ -42,7 +37,7 @@ export function register_TreeRangeDeleteOp(editor: MixEditor) {
 
       const deleted_ents = await ecs.run_compo_behavior(
         actual_child_compo,
-        TreeChildDelete,
+        TreeChildrenDelete,
         {
           start: it.start,
           end: it.end,
@@ -57,7 +52,7 @@ export function register_TreeRangeDeleteOp(editor: MixEditor) {
       const actual_child_compo = get_actual_child_compo(ecs, it.target);
       if (!actual_child_compo) return;
 
-      await ecs.run_compo_behavior(actual_child_compo, TreeChildInsert, {
+      await ecs.run_compo_behavior(actual_child_compo, TreeChildrenInsert, {
         index: it.start,
         items: it.deleted_ents,
       });

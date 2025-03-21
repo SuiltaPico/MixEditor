@@ -1,9 +1,11 @@
 import { MixEditor } from "@mixeditor/core";
 
-export interface BvContext {
-  editor: MixEditor;
-  /** 根节点。 */
-  editor_node: HTMLElement;
+export class BvContext {
+
+  constructor(
+    public editor: MixEditor,
+    public editor_node?: HTMLElement,
+  ) {}
 }
 
 export interface BvDomainContext {

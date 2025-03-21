@@ -1,13 +1,13 @@
-import { Op } from "./op";
-import { OpBehaviorMap } from "./op_behavior";
-import { OpCtx } from "./op_ctx";
+import { Op } from "../../op/op";
+import { OpBehaviorMap } from "../../op/op_behavior";
+import { OpCtx } from "../../op/op_ctx";
 import {
   ArrayOpExecutorBuffer,
   IOpExecutor,
   OpExecError,
   OpExecType,
   OpExecutor,
-} from "./op_executor";
+} from "../../op/op_executor";
 
 /** 事务接口。 */
 export interface ITransaction extends IOpExecutor<ArrayOpExecutorBuffer> {
@@ -78,6 +78,11 @@ export class Transaction
   }
 
   async wait_for_commited() {
+    const undo_stack = this.get_undo_stack();
+    while (undo_stack.length > 0) {
+      // 如果事务有操作，则代表是 redo 流程
+      await this.redo();
+    }
     return await this.pwr.promise;
   }
 }
@@ -102,13 +107,13 @@ export class TransactionOp implements Op {
 export function register_TransOp_behavior(
   op_ctx: OpCtx<
     {
-      transaction: TransactionOp;
+      [TransactionOp.type]: TransactionOp;
     },
     OpBehaviorMap<any>,
     any
   >
 ) {
-  op_ctx.register_handlers("transaction", {
+  op_ctx.register_handlers(TransactionOp.type, {
     execute: async (params) => {
       // 如果出错，走 error_recovery 流程
       await params.it.tr.wait_for_commited();

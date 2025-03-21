@@ -2,7 +2,7 @@ import {
   ChildCompo,
   create_ent_registration,
   EntInitPipeEvent,
-  ParentEntCompo,
+  ParentCompo,
   TextChildCompo,
 } from "@mixeditor/core";
 import {
@@ -35,7 +35,7 @@ const {
     ex_ctx.ecs.set_compos(it.id, [
       default_ChildCompo,
       new TextChildCompo(init_params?.text ?? ""),
-      new ParentEntCompo(undefined),
+      new ParentCompo(undefined),
       default_DocEntTraitsCompo,
     ]);
   },

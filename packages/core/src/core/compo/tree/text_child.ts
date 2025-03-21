@@ -1,7 +1,7 @@
 import { create_Signal, WrappedSignal } from "@mixeditor/common";
 import { ToTdoCb, CompoTDO } from "../../../ecs";
 import { MixEditor } from "../../mix_editor";
-import { IChildCompo, TreeChildDelete, TreeChildInsert } from "./child";
+import { IChildCompo, TreeChildrenDelete, TreeChildrenInsert } from "./child";
 import { TempEntType } from "../../ent/temp";
 
 /**
@@ -10,7 +10,7 @@ import { TempEntType } from "../../ent/temp";
  * 主要用于记录文本内容，文本内容视为占位子实体，仅存在，但不能访问。
  */
 export class TextChildCompo implements IChildCompo {
-  static readonly type = "text_child" as const;
+  static readonly type = "tree:text_child" as const;
   get type() {
     return TextChildCompo.type;
   }
@@ -52,7 +52,7 @@ export function register_TextChildCompo(editor: MixEditor) {
     from_tdo({ input }) {
       return new TextChildCompo((input as TextChildCompoTDO).content);
     },
-    [TreeChildInsert]: ({ it, index, items, ex_ctx }) => {
+    [TreeChildrenInsert]: ({ it, index, items, ex_ctx }) => {
       const ecs = ex_ctx.ecs;
       const content = it.content.get();
       let new_content = content.slice(0, index);
@@ -63,7 +63,7 @@ export function register_TextChildCompo(editor: MixEditor) {
       new_content += content.slice(index);
       it.content.set(new_content);
     },
-    [TreeChildDelete]: async ({ it, start, end, ex_ctx }) => {
+    [TreeChildrenDelete]: async ({ it, start, end, ex_ctx }) => {
       const ecs = ex_ctx.ecs;
       const content = it.content.get();
       const deleted = content.slice(start, end + 1);

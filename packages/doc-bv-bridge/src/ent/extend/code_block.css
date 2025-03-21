@@ -1,0 +1,11 @@
+.mix_editor .__code_block {
+  background-color: #f0f0f0;
+  padding: 2px 4px;
+  border-radius: 4px;
+
+  & > code {
+    font-size: 0.9em;
+    font-family: "JetBrains Mono", "Fira Code", "Fira Mono", Menlo, Consolas,
+      "DejaVu Sans Mono", monospace;
+  }
+}

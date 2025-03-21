@@ -7,7 +7,7 @@ import {
   MECompoBehaviorMap,
   MixEditor,
   Transaction,
-  TreeRangeDeleteOp,
+  TreeChildrenDeleteOp,
 } from "@mixeditor/core";
 import {
   CaretDeleteDecision,
@@ -106,7 +106,12 @@ export const handle_default_caret_delete: MECompoBehaviorMap[typeof DocCaretDele
 
       // 实际执行删除子实体操作
       await tx.execute(
-        new TreeRangeDeleteOp(op.gen_id(), ent_id, delete_index, delete_index)
+        new TreeChildrenDeleteOp(
+          op.gen_id(),
+          ent_id,
+          delete_index,
+          delete_index
+        )
       );
 
       // 检查是否需要删除自身（如果删除后节点为空）
@@ -218,7 +223,9 @@ export const handle_default_range_delete: MECompoBehaviorMap[typeof DocRangeDele
       return RangeDeleteDecision.Done({});
 
     if (range_delete_policy.type === "delete_child") {
-      await tx.execute(new TreeRangeDeleteOp(op.gen_id(), ent_id, start, end));
+      await tx.execute(
+        new TreeChildrenDeleteOp(op.gen_id(), ent_id, start, end)
+      );
 
       const new_selection = await execute_navigate_caret_from_pos(
         ex_ctx,

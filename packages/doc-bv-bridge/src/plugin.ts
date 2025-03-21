@@ -12,8 +12,10 @@ import {
 async function handle_key_down(editor: MixEditor, event: KeyboardEvent) {
   if (event.ctrlKey) {
     if (event.key === "z") {
+      console.log("undo");
       await editor.op.executor.undo();
     } else if (event.key === "y") {
+      console.log("redo");
       await editor.op.executor.redo();
     }
   }
@@ -55,20 +57,21 @@ export function DocBvBridgePlugin(): MEPlugin {
       author: "Mixeditor",
     },
     async init(editor) {
-      ({ bv_ctx } = (await editor.plugin.wait_plugin_inited(
-        "browser_view"
-      )) as BrowserViewExposed);
+      const [browser_view_plugin, document_plugin] =
+        await editor.plugin.wait_plugins_inited(["browser_view", "document"]);
+
+      ({ bv_ctx } = browser_view_plugin as BrowserViewExposed);
 
       key_down_listener = (event) => {
         handle_key_down(editor, event);
       };
-      bv_ctx!.editor_node.addEventListener("keydown", key_down_listener);
+      bv_ctx!.editor_node!.addEventListener("keydown", key_down_listener);
 
       register_ents(editor);
       register_compos(editor);
     },
     dispose(editor) {
-      bv_ctx!.editor_node.removeEventListener("keydown", key_down_listener);
+      bv_ctx!.editor_node!.removeEventListener("keydown", key_down_listener);
     },
   } satisfies MEPlugin;
 }

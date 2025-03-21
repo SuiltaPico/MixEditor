@@ -128,6 +128,7 @@ async function handle_pointer_move_base(
     ent_id,
     offset: caret_pos?.offset,
   };
+  
   new_caret = await execute_navigate_caret_from_pos(
     editor,
     new_caret,

@@ -1,7 +1,7 @@
 import { create_Signal, WrappedSignal } from "@mixeditor/common";
-import { IChildCompo, TreeChildDelete, TreeChildInsert } from "./child";
-import { ToTdoCb, CompoTDO, Ent, EntTDO } from "../../../ecs";
+import { CompoTDO, FromTdoCb, ToTdoCb } from "../../../ecs";
 import { MixEditor } from "../../mix_editor";
+import { IChildCompo, TreeChildrenDelete, TreeChildrenInsert } from "./child";
 
 /**
  * 子实体数组组件
@@ -10,7 +10,7 @@ import { MixEditor } from "../../mix_editor";
  * 作为子实体的实际存储容器，通过字符串数组存储子实体ID
  */
 export class EntChildCompo implements IChildCompo {
-  static readonly type = "ent_child" as const;
+  static readonly type = "tree:ent_child" as const;
   get type() {
     return EntChildCompo.type;
   }
@@ -57,18 +57,19 @@ export function register_EntChildCompo(editor: MixEditor) {
       } satisfies EntChildCompoTDO;
     },
     /** 从传输对象反序列化组件 */
-    from_tdo({ input }) {
+    [FromTdoCb]({ input }) {
       return new EntChildCompo((input as EntChildCompoTDO).children);
     },
-    [TreeChildInsert]: ({ it, index, items }) => {
+    [TreeChildrenInsert]: ({ it, index, items }) => {
+      console.log("[EntChildCompo.TreeChildrenInsert]", it, index, items);
       const children = it.children.get();
       children.splice(index, 0, ...items);
       it.children.set(children);
     },
-    [TreeChildDelete]: ({ it, start, end }) => {
+    [TreeChildrenDelete]: ({ it, start, end }) => {
       const children = it.children.get();
       const deleted = children.splice(start, end - start + 1);
-      console.log("[EntChildCompo.TreeChildDelete]", children, deleted);
+      console.log("[EntChildCompo.TreeChildrenDelete]", it, deleted);
       it.children.set(children);
       return deleted;
     },

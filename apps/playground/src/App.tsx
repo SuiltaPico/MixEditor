@@ -8,6 +8,10 @@ import {
   RootEntType,
 } from "@mixeditor/core";
 import {
+  CodeBlockEntType,
+  DocCodeInlineCompo,
+  DocHeadingCompo,
+  DocLinkCompo,
   DocTextBoldCompo,
   DocumentPlugin,
   ParagraphEntType,
@@ -44,46 +48,81 @@ function App() {
       ent_spec(RootEntType, {
         children: array_repeat(
           () => [
+            ent_spec(
+              ParagraphEntType,
+              {
+                children: [
+                  ent_spec(TextEntType, {
+                    text: "深入理解 SQL SELECT 语句",
+                  }),
+                ],
+              },
+              [new DocHeadingCompo(1)]
+            ),
             ent_spec(ParagraphEntType, {
               children: [
                 ent_spec(TextEntType, {
-                  text: "SQL SELECT 语句简介",
-                }),
-              ],
-            }),
-            ent_spec(ParagraphEntType, {
-              children: [
-                ent_spec(TextEntType, {
-                  text: "SQL（Structured Query Language，结构化查询语言）中的 ",
+                  text: "SQL（Structured Query Language）是用于管理和操作关系型数据库的标准语言。在 SQL 中，",
                 }),
                 ent_spec(
                   TextEntType,
                   {
                     text: "SELECT",
                   },
-                  [new DocTextBoldCompo()]
+                  [new DocCodeInlineCompo()]
                 ),
                 ent_spec(TextEntType, {
-                  text: " 语句是用于从数据库中检索数据的最基本且最常用的命令。它允许用户从一张或多张数据库表中提取所需的数据，并支持对数据进行筛选、排序、分组和聚合等操作。",
+                  text: " 句是最常用且功能强大的命令之一。它允许我们从数据库中检索数据，并根据需要进行过滤、排序和分组。本文将详细介绍 ",
+                }),
+                ent_spec(
+                  TextEntType,
+                  {
+                    text: "SELECT",
+                  },
+                  [new DocCodeInlineCompo()]
+                ),
+                ent_spec(TextEntType, {
+                  text: " 语句的语法、用法以及一些高级特性。",
+                }),
+              ],
+            }),
+            ent_spec(
+              ParagraphEntType,
+              {
+                children: [
+                  ent_spec(TextEntType, {
+                    text: "基本语法",
+                  }),
+                ],
+              },
+              [new DocHeadingCompo(2)]
+            ),
+            ent_spec(ParagraphEntType, {
+              children: [
+                ent_spec(
+                  TextEntType,
+                  {
+                    text: "SELECT",
+                  },
+                  [new DocCodeInlineCompo()]
+                ),
+                ent_spec(TextEntType, {
+                  text: " 语句的基本语法如下：",
+                }),
+              ],
+            }),
+            ent_spec(CodeBlockEntType, {
+              children: [
+                ent_spec(TextEntType, {
+                  text: "SELECT column1, column2, ...\nFROM table_name\nWHERE condition",
                 }),
               ],
             }),
             ent_spec(ParagraphEntType, {
               children: [
                 ent_spec(TextEntType, {
-                  text: "基本语法",
+                  text: "● ",
                 }),
-              ],
-            }),
-            ent_spec(ParagraphEntType, {
-              children: [
-                ent_spec(TextEntType, {
-                  text: "SELECT column1, column2 FROM table_name WHERE condition;",
-                }),
-              ],
-            }),
-            ent_spec(ParagraphEntType, {
-              children: [
                 ent_spec(
                   TextEntType,
                   {
@@ -99,7 +138,7 @@ function App() {
                   {
                     text: "*",
                   },
-                  [new DocTextBoldCompo()]
+                  [new DocCodeInlineCompo()]
                 ),
                 ent_spec(TextEntType, {
                   text: " 表示选择所有列。",
@@ -108,6 +147,9 @@ function App() {
             }),
             ent_spec(ParagraphEntType, {
               children: [
+                ent_spec(TextEntType, {
+                  text: "● ",
+                }),
                 ent_spec(
                   TextEntType,
                   {
@@ -122,6 +164,9 @@ function App() {
             }),
             ent_spec(ParagraphEntType, {
               children: [
+                ent_spec(TextEntType, {
+                  text: "● ",
+                }),
                 ent_spec(
                   TextEntType,
                   {
@@ -132,6 +177,45 @@ function App() {
                 ent_spec(TextEntType, {
                   text: "​（可选）：用于指定筛选条件，只有满足条件的行才会被返回。",
                 }),
+              ],
+            }),
+            ent_spec(
+              ParagraphEntType,
+              {
+                children: [
+                  ent_spec(TextEntType, {
+                    text: "参考资料",
+                  }),
+                ],
+              },
+              [new DocHeadingCompo(2)]
+            ),
+            ent_spec(ParagraphEntType, {
+              children: [
+                ent_spec(TextEntType, {
+                  text: "● ",
+                }),
+                ent_spec(
+                  TextEntType,
+                  {
+                    text: "SQL 教程",
+                  },
+                  [new DocLinkCompo("https://www.w3schools.com/sql/")]
+                ),
+              ],
+            }),
+            ent_spec(ParagraphEntType, {
+              children: [
+                ent_spec(TextEntType, {
+                  text: "● ",
+                }),
+                ent_spec(
+                  TextEntType,
+                  {
+                    text: "MySQL 官方文档",
+                  },
+                  [new DocLinkCompo("https://dev.mysql.com/doc/")]
+                ),
               ],
             }),
           ],

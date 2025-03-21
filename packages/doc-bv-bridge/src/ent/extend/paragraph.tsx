@@ -2,11 +2,9 @@ import {
   bv_forward_pointer_event,
   BvRenderableCompo,
   BvRenderSelectionDecision,
-  DOMCaretPos,
   from_solidjs_compo,
-  get_caret_pos_from_point,
   NodeRenderer,
-  NodeRendererWrapper,
+  NodeRendererWrapper
 } from "@mixeditor/browser-view";
 import { EntChildCompo, MixEditor } from "@mixeditor/core";
 import { ParagraphEntInitPipeId } from "@mixeditor/document";
@@ -38,7 +36,7 @@ export const ParagraphEntRenderer: NodeRenderer = (props) => {
   );
 };
 
-function get_child_pos(
+export function get_paragraph_child_pos(
   params: Parameters<
     Exclude<BvRenderableCompo["custom_get_child_pos"], undefined>
   >[0]
@@ -81,7 +79,7 @@ function get_child_pos(
   };
 }
 
-function handle_pointer_event_forward(
+export function handle_paragraph_pointer_event_forward(
   params: Parameters<
     Exclude<BvRenderableCompo["handle_pointer_event_forward"], undefined>
   >[0]
@@ -102,9 +100,9 @@ export function register_ParagraphEnt_extend(editor: MixEditor) {
 
       const bv_renderable_compo = new BvRenderableCompo({
         renderer: from_solidjs_compo(ParagraphEntRenderer),
-        custom_get_child_pos: get_child_pos,
+        custom_get_child_pos: get_paragraph_child_pos,
         render_selection_policy: BvRenderSelectionDecision.Traverse,
-        handle_pointer_event_forward: handle_pointer_event_forward,
+        handle_pointer_event_forward: handle_paragraph_pointer_event_forward,
       });
       ecs.set_compo(it.id, bv_renderable_compo);
     },

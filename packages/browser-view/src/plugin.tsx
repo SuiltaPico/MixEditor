@@ -22,9 +22,7 @@ export const BrowserViewPlugin = (params: { mount_to: HTMLElement }) => {
     init(editor) {
       register_RootEnt_bv_extend(editor);
 
-      let bv_ctx = {
-        editor,
-      } as BvContext;
+      let bv_ctx = new BvContext(editor);
 
       dispose_render_root = render(
         () => <EditorRenderer {...bv_ctx} />,

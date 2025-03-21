@@ -4,7 +4,7 @@ import {
   find_child_ent_index_default,
   IChildCompo,
 } from "../core/compo/tree/child";
-import { ParentEntCompo } from "../core/compo/tree/parent_ent";
+import { ParentCompo } from "../core/compo/tree/parent";
 
 /**
  * 获取目标实体的实际子实体组件。
@@ -42,7 +42,7 @@ export function get_index_in_parent_ent(
 ) {
   // 获取父实体来源组件类型
   const parent_id = ecs_ctx
-    .get_compo(target_ent_id, ParentEntCompo.type)
+    .get_compo(target_ent_id, ParentCompo.type)
     ?.parent_id.get();
   if (!parent_id) return -1;
 
@@ -105,9 +105,9 @@ export function set_children_parent_refs(
   parent_id: string
 ) {
   for (const child of children) {
-    const parent_compo = ecs_ctx.get_compo(child, ParentEntCompo.type);
+    const parent_compo = ecs_ctx.get_compo(child, ParentCompo.type);
     if (!parent_compo) {
-      ecs_ctx.set_compos(child, [new ParentEntCompo(parent_id)]);
+      ecs_ctx.set_compos(child, [new ParentCompo(parent_id)]);
     } else {
       parent_compo.parent_id.set(parent_id);
     }
@@ -122,7 +122,7 @@ export function set_children_parent_refs(
  */
 export function get_parent_ent_id(ecs_ctx: MixEditor["ecs"], ent: string) {
   const parent_id = ecs_ctx
-    .get_compo(ent, ParentEntCompo.type)
+    .get_compo(ent, ParentCompo.type)
     ?.parent_id.get();
   if (!parent_id) return;
   return parent_id;
@@ -369,7 +369,7 @@ export function process_shallow_nodes(
     }
 
     // 处理 end_ent
-    processor(end_ent, start_path[lca_index] + 1, end_offset + 1);
+    processor(end_ent, start_path[lca_index] + 1, end_offset - 1);
   } else {
     process_lca_child_to_start_ent();
     process_lca_child_to_end_ent();
@@ -395,7 +395,6 @@ export function process_shallow_nodes(
   }
 
   function process_lca_child_between_start_and_end() {
-
     // 处理 start_ent_lca_child + 1 到 end_ent_lca_child - 1 之间的所有实体
     processor(lca, start_path[lca_index] + 1, end_path[lca_index] - 1);
   }

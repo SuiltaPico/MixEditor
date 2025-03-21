@@ -1,4 +1,4 @@
-import { register_TransOp_behavior } from "../op/transaction";
+import { register_TransOp_behavior } from "./op/transaction";
 import { register_compos } from "./compo";
 import { register_ents } from "./ent";
 import { MixEditor } from "./mix_editor";

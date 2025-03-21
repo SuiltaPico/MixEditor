@@ -219,6 +219,7 @@ export class OpExecutor<TBuffer extends IOpExecutorBuffer>
     await this.wait_for_idle();
 
     const op = this.undo_stack.pop();
+    console.log("[OpExecutor] redo.pop", op);
     if (!op) return;
 
     const redo_done_pwr = Promise.withResolvers<void>();
