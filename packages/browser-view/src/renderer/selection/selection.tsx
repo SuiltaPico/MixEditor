@@ -64,7 +64,7 @@ async function get_rect_of_extended_selected(
       editor,
       start_ent,
       start_offset,
-      end_offset - 1,
+      end_offset,
       root_rect,
       rects
     );

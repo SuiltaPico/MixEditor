@@ -121,9 +121,7 @@ export function set_children_parent_refs(
  * @returns 父实体或undefined
  */
 export function get_parent_ent_id(ecs_ctx: MixEditor["ecs"], ent: string) {
-  const parent_id = ecs_ctx
-    .get_compo(ent, ParentCompo.type)
-    ?.parent_id.get();
+  const parent_id = ecs_ctx.get_compo(ent, ParentCompo.type)?.parent_id.get();
   if (!parent_id) return;
   return parent_id;
 }
@@ -349,11 +347,11 @@ export function process_shallow_nodes(
   } else if (relation === Relation.Ent1IsAncestorOfEnt2) {
     // start_ent 是 end_ent 的祖先
     // 处理 start_ent
-    processor(start_ent + 1, start_offset, end_path[lca_index] - 1);
+    processor(start_ent, start_offset, end_path[lca_index]);
 
     // 处理从 start_ent 到 end_ent 的路径上的中间节点
     for (let i = lca_index + 1; i < end_ancestors.length - 1; i++) {
-      processor(end_ancestors[i], 0, end_path[i] - 1);
+      processor(end_ancestors[i], 0, end_path[i]);
     }
 
     // 处理 end_ent
@@ -369,7 +367,7 @@ export function process_shallow_nodes(
     }
 
     // 处理 end_ent
-    processor(end_ent, start_path[lca_index] + 1, end_offset - 1);
+    processor(end_ent, start_path[lca_index] + 1, end_offset);
   } else {
     process_lca_child_to_start_ent();
     process_lca_child_to_end_ent();
@@ -388,14 +386,14 @@ export function process_shallow_nodes(
   function process_lca_child_to_end_ent() {
     // 处理 end_ent 的 (lca, end_ent) 之间的祖先
     for (let i = lca_index + 1; i < end_ancestors.length - 1; i++) {
-      processor(end_ancestors[i], 0, end_path[i] - 1);
+      processor(end_ancestors[i], 0, end_path[i]);
     }
     // 处理 end_ent
-    processor(end_ent, 0, end_offset - 1);
+    processor(end_ent, 0, end_offset);
   }
 
   function process_lca_child_between_start_and_end() {
     // 处理 start_ent_lca_child + 1 到 end_ent_lca_child - 1 之间的所有实体
-    processor(lca, start_path[lca_index] + 1, end_path[lca_index] - 1);
+    processor(lca, start_path[lca_index] + 1, end_path[lca_index]);
   }
 }

@@ -58,6 +58,13 @@ export const handle_default_caret_delete: MECompoBehaviorMap[typeof DocCaretDele
     const policy = caret_delete_policy.get();
     const child_count = get_child_ent_count(ecs, ent_id);
 
+    console.log(
+      "[handle_default_caret_delete]",
+      caret_delete_policy.get(),
+      front_border_strategy.get(),
+      back_border_strategy.get()
+    );
+
     // 根据删除策略进行处理
     if (policy.type === "skip") return CaretDeleteDecision.Done({});
 
@@ -122,7 +129,7 @@ export const handle_default_caret_delete: MECompoBehaviorMap[typeof DocCaretDele
           op.gen_id(),
           ent_id,
           delete_index,
-          delete_index
+          delete_index + 1
         )
       );
 
@@ -221,7 +228,7 @@ export const handle_default_range_delete: MECompoBehaviorMap[typeof DocRangeDele
       "[handle_default_range_delete]",
       ecs.get_ent(ent_id),
       params,
-      doc_config,
+      doc_config
     );
 
     if (doc_config.custom_range_delete) {
@@ -238,18 +245,6 @@ export const handle_default_range_delete: MECompoBehaviorMap[typeof DocRangeDele
       await tx.execute(
         new TreeChildrenDeleteOp(op.gen_id(), ent_id, start, end)
       );
-
-      // const new_selection = await execute_navigate_caret_from_pos(
-      //   ex_ctx,
-      //   { ent_id, offset: start },
-      //   CaretDirection.None
-      // );
-
-      // const decision = new_selection
-      //   ? RangeDeleteDecision.Done({
-      //       selection: create_TreeCollapsedSelection(new_selection),
-      //     })
-        // : RangeDeleteDecision.Done({});
 
       // 检查是否需要删除自身（如果删除后节点为空）
       if (

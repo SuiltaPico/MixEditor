@@ -68,7 +68,7 @@ export function register_EntChildCompo(editor: MixEditor) {
     },
     [TreeChildrenDelete]: ({ it, start, end }) => {
       const children = it.children.get();
-      const deleted = children.splice(start, end - start + 1);
+      const deleted = children.splice(start, end - start);
       console.log("[EntChildCompo.TreeChildrenDelete]", it, deleted);
       it.children.set(children);
       return deleted;

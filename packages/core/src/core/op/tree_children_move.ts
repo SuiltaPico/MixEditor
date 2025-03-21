@@ -64,7 +64,7 @@ export function register_TreeChildrenMoveOp(editor: MixEditor) {
         TreeChildrenDelete,
         {
           start: it.target_index,
-          end: it.target_index + (it.src_end - it.src_start + 1),
+          end: it.target_index + (it.src_end - it.src_start),
         }
       );
 

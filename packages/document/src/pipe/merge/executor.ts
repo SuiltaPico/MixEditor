@@ -2,7 +2,9 @@ import {
   create_TreeCollapsedSelection,
   get_child_ent_count,
   get_index_in_parent_ent,
+  get_index_of_child_ent,
   get_lca_of_ent,
+  get_parent_ent_id,
   MESelection,
   MixEditor,
   Transaction,
@@ -102,20 +104,27 @@ export async function execute_merge_ent(
           op.gen_id(),
           source_ancestor,
           0,
-          src_ancestor_child_count - 1,
+          src_ancestor_child_count,
           host_ancestor,
           host_ancestor_child_count
         )
       );
 
       // 删除 source 实体
-      const index_in_parent = get_index_in_parent_ent(ecs, source_ancestor);
+      const source_ancestor_parent = get_parent_ent_id(ecs, source_ancestor);
+      if (!source_ancestor_parent) continue;
+
+      const source_ancestor_index_in_parent = get_index_of_child_ent(
+        ecs,
+        source_ancestor_parent,
+        source_ancestor
+      );
       await tx.execute(
         new TreeChildrenDeleteOp(
           op.gen_id(),
-          source_ancestor,
-          index_in_parent,
-          index_in_parent + src_ancestor_child_count - 1
+          source_ancestor_parent,
+          source_ancestor_index_in_parent,
+          source_ancestor_index_in_parent + 1
         )
       );
 
@@ -127,6 +136,6 @@ export async function execute_merge_ent(
       break;
     }
   }
-  
+
   return { selection };
 }

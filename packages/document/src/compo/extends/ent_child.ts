@@ -19,7 +19,7 @@ export function register_EntChildCompo_doc_extend(editor: MixEditor) {
         return RangeDeleteDecision.DeleteSelf;
       } else {
         await tx.execute(
-          new TreeChildrenDeleteOp(op.gen_id(), ent_id, start, end - 1)
+          new TreeChildrenDeleteOp(op.gen_id(), ent_id, start, end)
         );
         return RangeDeleteDecision.Done({});
       }

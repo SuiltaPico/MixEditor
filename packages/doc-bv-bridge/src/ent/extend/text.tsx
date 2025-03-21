@@ -265,7 +265,7 @@ function get_render_selection_decision(
 
   const child_ent_count = get_child_ent_count(editor.ecs, param.ent_id);
   const start = Math.max(0, from);
-  const end = Math.min(child_ent_count, to + 1);
+  const end = Math.min(child_ent_count, to);
 
   const node = render_result.node as HTMLElement;
   const range = document.createRange();

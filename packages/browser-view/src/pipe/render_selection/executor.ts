@@ -45,11 +45,11 @@ export async function execute_render_selection(
 
     const length = actual_child_compo.count();
     if (to > length) {
-      to = length - 1;
+      to = length;
     }
     let promises: Promise<void>[] = [];
 
-    for (let i = from; i <= to; i++) {
+    for (let i = from; i < to; i++) {
 
       const child_ent_id = actual_child_compo.at(i);
       if (!child_ent_id) continue;
