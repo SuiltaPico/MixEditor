@@ -10,20 +10,16 @@ export class TreeChildrenDeleteOp implements Op {
     return TreeChildrenDeleteOp.type;
   }
 
-  id: string;
-
-  target: string;
-  start: number;
-  end: number;
-
   deleted_ents: string[] = [];
 
-  constructor(id: string, target: string, start: number, end: number) {
-    this.id = id;
-    this.target = target;
-    this.start = start;
-    this.end = end;
-  }
+  constructor(
+    public id: string,
+
+    public target: string,
+    
+    public start: number,
+    public end: number
+  ) {}
 }
 
 export function register_TreeChildrenDeleteOp(editor: MixEditor) {

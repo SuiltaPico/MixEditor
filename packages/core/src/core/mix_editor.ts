@@ -25,7 +25,7 @@ import {
   TextChildCompo,
 } from "./compo";
 import { RootEntInitPipeId, RootEntInitPipeEvent } from "./ent";
-import { TreeChildrenDeleteOp } from "./op";
+import { TreeChildrenDeleteOp, TreeChildrenInsertOp } from "./op";
 import { TreeChildrenMoveOp } from "./op/tree_children_move";
 import { MECorePipeEventMap } from "./pipe";
 import { regist_core_items } from "./regist_core_items";
@@ -67,6 +67,7 @@ export interface MECompoBehaviorMap
 /** MixEditor 的操作表，供插件扩展 */
 export interface MEOpMap extends OpMap {
   [TreeChildrenDeleteOp.type]: TreeChildrenDeleteOp;
+  [TreeChildrenInsertOp.type]: TreeChildrenInsertOp;
   [TreeChildrenMoveOp.type]: TreeChildrenMoveOp;
   [TransactionOp.type]: TransactionOp;
 }
