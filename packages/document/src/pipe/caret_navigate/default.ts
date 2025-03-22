@@ -7,8 +7,7 @@ import {
   DocCaretNavigateCb,
 } from "../../pipe";
 
-/**
- * 处理允许进入子节点时的导航逻辑
+/** 处理允许进入子节点时的导航逻辑
  */
 function children_enter_navigation(
   traits: DocConfigCompo,
@@ -92,11 +91,21 @@ function children_enter_navigation(
             ((to_prev || no_direction) && new_pos >= children_count);
 
       if (cross_border_in_opposite_direction) {
-        if (border_policy === BorderType.Closed)
-          return CaretNavigateDecision.Self(to_prev ? 0 : children_count);
-
-        return CaretNavigateDecision.Self(to_prev ? 1 : children_count - 1);
+        if (border_policy === BorderType.Closed) {
+          if (to_prev || (no_direction && new_pos > children_count)) {
+            new_pos = children_count;
+          } else if (to_next || (no_direction && new_pos < 0)) {
+            new_pos = 0;
+          }
+        } else {
+          if (to_prev || (no_direction && new_pos > children_count - 1)) {
+            new_pos = children_count - 1;
+          } else if (to_next || (no_direction && new_pos < 1)) {
+            new_pos = 1;
+          }
+        }
       }
+      
       return CaretNavigateDecision.Self(new_pos);
     } else {
       new_pos = from;

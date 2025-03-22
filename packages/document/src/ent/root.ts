@@ -1,5 +1,5 @@
 import { MixEditor, RootEntInitPipeId } from "@mixeditor/core";
-import { BorderType, DocConfigCompo } from "../compo/doc_config";
+import { BorderType, CaretDeleteStrategy, DocConfigCompo } from "../compo/doc_config";
 
 export function register_RootEnt_doc_extend(editor: MixEditor) {
   const { pipe } = editor;
@@ -13,6 +13,7 @@ export function register_RootEnt_doc_extend(editor: MixEditor) {
           allow_enter_children: true,
           allow_enter_self: false,
           border_type: BorderType.Open,
+          caret_delete_policy: CaretDeleteStrategy.PropagateToChild,
         }),
       ]);
     },

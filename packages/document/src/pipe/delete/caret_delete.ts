@@ -1,5 +1,4 @@
 import {
-  create_TreeCollapsedSelection,
   get_actual_child_compo,
   get_child_ent_id,
   get_index_in_parent_ent,
@@ -7,18 +6,11 @@ import {
   get_parent_ent_id,
   MESelection,
   MixEditor,
-  Op,
   Transaction,
   TreeCaret,
-  TreeCollapsedSelectionType,
-  TreeExtendedSelectionType,
 } from "@mixeditor/core";
-import { execute_range_deletion } from "./range_delete";
 import { DocCaretDeleteCb } from "./compo_behavior";
-import {
-  CaretDirection,
-  execute_navigate_caret_from_pos,
-} from "../caret_navigate";
+import { execute_range_deletion } from "./range_delete";
 
 /** 驱使删除的来源。 */
 export enum CaretDeleteSource {
@@ -58,10 +50,17 @@ export const CaretDeleteDecision = {
    */
   DeleteSelf: { type: "delete_self" } satisfies CaretDeleteDecision,
   /** 自身节点已经处理了删除，并产生了要执行的操作。 */
-  Done: (props: { selected?: MESelection }) =>
+  Done: (props: { selection?: MESelection }) =>
     ({
       type: "done",
-      selection: props.selected,
+      selection: props.selection,
+    } satisfies CaretDeleteDecision),
+  /** 删除范围。 */
+  DeleteRange: (props: { start: number; end: number }) =>
+    ({
+      type: "delete_range",
+      start: props.start,
+      end: props.end,
     } satisfies CaretDeleteDecision),
 };
 
@@ -70,7 +69,8 @@ export type CaretDeleteDecision =
   | { type: "skip" } // 跳过当前节点
   | { type: "child"; index: number } // 进入子节点
   | { type: "delete_self" } // 删除自身
-  | { type: "done"; selection?: MESelection }; // 已处理完成
+  | { type: "done"; selection?: MESelection } // 已处理完成
+  | { type: "delete_range"; start: number; end: number }; // 删除范围
 
 /** 删除策略上下文。 */
 export interface CaretDeleteContext {
@@ -96,7 +96,7 @@ export async function execute_caret_deletion(
 ): Promise<{
   selection?: MESelection;
 } | void> {
-  const { ecs, selection } = editor;
+  const { ecs } = editor;
   const caret_ent_id = caret.ent_id;
   const caret_ent = ecs.get_ent(caret_ent_id);
   if (!caret_ent) return;
@@ -105,6 +105,18 @@ export async function execute_caret_deletion(
 
   const actual_child_compo = get_actual_child_compo(ecs, caret_ent_id);
   if (!actual_child_compo) return;
+
+  console.log(
+    "光标删除 等待决策",
+    ecs.get_ent(caret_ent_id),
+    "direction:",
+    direction,
+    "src:",
+    src,
+    "offset:",
+    caret.offset,
+    "[execute_caret_deletion]"
+  );
 
   // 执行当前节点的删除处理
   const decision = await ecs.run_compo_behavior(
@@ -120,12 +132,11 @@ export async function execute_caret_deletion(
   );
 
   console.log(
-    "execute_caret_deletion",
-    caret_ent_id,
-    direction,
-    src,
-    caret.offset,
-    decision
+    "光标删除 获得决策",
+    ecs.get_ent(caret_ent_id),
+    "decision:",
+    decision,
+    "[execute_caret_deletion]"
   );
 
   if (!decision || decision.type === "delete_self") {
@@ -136,12 +147,25 @@ export async function execute_caret_deletion(
     // 获取当前节点在父节点中的索引
     const index_in_parent = get_index_in_parent_ent(ecs, caret_ent_id);
 
-    const delete_caret = {
-      ent_id: parent_ent_id,
-      offset: index_in_parent!,
-    };
-
-    return await execute_range_deletion(editor, tx, delete_caret, delete_caret);
+    return await execute_range_deletion(
+      editor,
+      tx,
+      {
+        ent_id: parent_ent_id,
+        offset: index_in_parent!,
+      },
+      {
+        ent_id: parent_ent_id,
+        offset: index_in_parent! + 1,
+      }
+    );
+  } else if (decision.type === "delete_range") {
+    return await execute_range_deletion(
+      editor,
+      tx,
+      { ent_id: caret_ent_id, offset: decision.start },
+      { ent_id: caret_ent_id, offset: decision.end }
+    );
   } else if (decision.type === "done") {
     return { selection: decision.selection };
   } else if (decision.type === "skip") {
@@ -162,7 +186,8 @@ export async function execute_caret_deletion(
       tx,
       {
         ent_id: parent_ent_id,
-        offset: to_prev ? index_in_parent! - 1 : index_in_parent!,
+        // offset: to_prev ? index_in_parent! - 1 : index_in_parent!,
+        offset: index_in_parent!,
       },
       direction,
       CaretDeleteSource.Child

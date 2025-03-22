@@ -11,7 +11,6 @@ import {
 } from "@mixeditor/core";
 import { CaretDeleteDirection, execute_caret_deletion } from "./caret_delete";
 import { execute_range_deletion } from "./range_delete";
-import { execute_navigate_caret_from_pos } from "../caret_navigate";
 
 export const DocDirectedDeletePipeId = "doc:delete_directed" as const;
 

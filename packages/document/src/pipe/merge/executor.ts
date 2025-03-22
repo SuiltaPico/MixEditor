@@ -61,6 +61,7 @@ export async function execute_merge_ent(
     source_ancestors.length
   );
 
+  let merge_success = false;
   for (let i = lca_index + 1; i < min_ancestor_length; i++) {
     const host_ancestor = host_ancestors[i];
     const source_ancestor = source_ancestors[i];
@@ -132,10 +133,15 @@ export async function execute_merge_ent(
         ent_id: host_ancestor,
         offset: host_ancestor_child_count,
       });
+
+      // 完成过一次合并就算合并成功
+      merge_success = true;
     } else {
       break;
     }
   }
 
+  if (!merge_success) return;
+  
   return { selection };
 }

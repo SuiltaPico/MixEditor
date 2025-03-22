@@ -102,6 +102,18 @@ export async function execute_navigate_caret_from_pos(
   const actual_child_compo = get_actual_child_compo(ecs, caret_ent_id);
   if (!actual_child_compo) return;
 
+  console.log(
+    "从光标导航 等待决策",
+    ecs.get_ent(caret_ent_id),
+    "direction:",
+    direction,
+    "src:",
+    src,
+    "offset:",
+    caret.offset,
+    "[execute_navigate_caret_from_pos]"
+  );
+
   const decision = await ecs.run_compo_behavior(
     actual_child_compo,
     DocCaretNavigateCb,
@@ -112,13 +124,11 @@ export async function execute_navigate_caret_from_pos(
       from: caret.offset,
     }
   );
+
   console.log(
-    "[execute_navigate_caret_from_pos]",
-    ecs.get_ent(caret_ent_id)?.type,
-    actual_child_compo,
-    direction,
-    src,
-    caret.offset,
+    "从光标导航 获得决策",
+    ecs.get_ent(caret_ent_id),
+    "decision:",
     decision
   );
 

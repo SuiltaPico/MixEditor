@@ -21,6 +21,10 @@ import { DocBvBridgePlugin } from "@mixeditor/doc-bv-bridge";
 import { onMount } from "solid-js";
 import "./App.css";
 
+setInterval(() => {
+  console.log("tick", Date.now());
+}, 8000);
+
 function array_repeat<T>(arr: () => T[], count: number) {
   return Array.from({ length: count }, () => arr()).flat();
 }

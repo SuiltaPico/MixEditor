@@ -66,16 +66,25 @@ export async function delete_ent_range(
   end_offset: number
 ) {
   console.log(
-    "[delete_ent_range]",
+    "删除单个实体的范围 等待决策",
     editor.ecs.get_ent(ent_id),
-    ent_id,
+    "start_offset:",
     start_offset,
-    end_offset
+    "end_offset:",
+    end_offset,
+    "[delete_ent_range]"
   );
+
+  const result: { caret: TreeCaret } = {
+    caret: {
+      ent_id,
+      offset: start_offset,
+    },
+  };
 
   const ecs_ctx = editor.ecs;
   const actual_child_compo = get_actual_child_compo(ecs_ctx, ent_id);
-  if (!actual_child_compo) return;
+  if (!actual_child_compo) return result;
 
   const decision = await ecs_ctx.run_compo_behavior(
     actual_child_compo,
@@ -88,12 +97,18 @@ export async function delete_ent_range(
     }
   );
 
-  if (!decision || decision.type === "done") {
-    return;
-  } else if (decision.type === "delete_self") {
+  console.log(
+    "删除单个实体的范围 获得决策",
+    editor.ecs.get_ent(ent_id),
+    "decision:",
+    decision,
+    "[delete_ent_range]"
+  );
+
+  if (decision?.type === "delete_self") {
     // 获取父节点
     const parent_ent_id = get_parent_ent_id(ecs_ctx, ent_id);
-    if (!parent_ent_id) return; // 到达根节点，结束责任链
+    if (!parent_ent_id) return result; // 到达根节点，结束责任链
 
     // 获取当前节点在父节点中的索引
     const index_in_parent = get_index_in_parent_ent(ecs_ctx, ent_id);
@@ -103,9 +118,11 @@ export async function delete_ent_range(
       tx,
       parent_ent_id,
       index_in_parent!,
-      index_in_parent!
+      index_in_parent! + 1
     );
   }
+
+  return result;
 }
 
 /** 删除范围，并处理合并逻辑。 */
@@ -115,14 +132,15 @@ export async function execute_range_deletion(
   start: TreeCaret,
   end: TreeCaret
 ) {
-  let selection: MESelection | undefined;
+  let caret: TreeCaret = start;
 
   console.log("[execute_range_deletion]", start, end);
 
   const ecs = editor.ecs;
 
   // 遍历所有浅层节点，并删除
-  const promises: Promise<void>[] = [];
+  let start_ent_promise!: Promise<{ caret: TreeCaret }>;
+  const promises: Promise<any>[] = [];
   process_shallow_nodes(
     ecs,
     start.ent_id,
@@ -130,12 +148,24 @@ export async function execute_range_deletion(
     end.ent_id,
     end.offset,
     (ent_id, start_offset, end_offset) => {
-      promises.push(
-        delete_ent_range(editor, tx, ent_id, start_offset, end_offset)
+      const promise = delete_ent_range(
+        editor,
+        tx,
+        ent_id,
+        start_offset,
+        end_offset
       );
+      if (ent_id === start.ent_id) {
+        start_ent_promise = promise;
+      }
+      promises.push(promise);
     }
   );
   await Promise.all(promises);
+  const result = await start_ent_promise;
+  if (result.caret) {
+    caret = result.caret;
+  }
 
   // 执行合并逻辑
   const merge_result = await execute_merge_ent(
@@ -144,22 +174,22 @@ export async function execute_range_deletion(
     start.ent_id,
     end.ent_id
   );
-  if (merge_result.selection) {
-    selection = merge_result.selection;
+  if (merge_result?.selection) {
+    return { selection: merge_result.selection };
   } else {
-    console.log("navigate_caret_from_pos", start);
+    console.log("navigate_caret_from_pos", caret);
 
-    const new_selection = await execute_navigate_caret_from_pos(
+    const new_caret = await execute_navigate_caret_from_pos(
       editor,
-      start,
+      caret,
       CaretDirection.None,
       CaretNavigateSource.Child
     );
-    if (new_selection) {
-      console.log("navigate_caret_from_pos normalized", new_selection);
-      selection = create_TreeCollapsedSelection(new_selection);
+    if (new_caret) {
+      console.log("navigate_caret_from_pos normalized", new_caret);
+      caret = new_caret;
     }
-  }
 
-  return { selection };
+    return { selection: create_TreeCollapsedSelection(caret) };
+  }
 }
