@@ -4,6 +4,7 @@ import {
   EntInitPipeEvent,
   ParentCompo,
   TextChildCompo,
+  MixEditor,
 } from "@mixeditor/core";
 import {
   BorderType,
@@ -26,20 +27,24 @@ const default_DocEntTraitsCompo = new DocConfigCompo({
 const {
   EntType: TextEntType,
   EntInitPipeId: TextEntInitPipeId,
-  register_ent: register_TextEnt,
+  register_ent: register_TextEnt_init_pipe,
 } = create_ent_registration({
   namespace: "doc",
   ent_type: "doc:text",
   init_stage_execute: async (event) => {
     const { it, ex_ctx, init_params } = event;
     ex_ctx.ecs.set_compos(it.id, [
-      default_ChildCompo,
       new TextChildCompo(init_params?.text ?? ""),
       new ParentCompo(undefined),
-      default_DocEntTraitsCompo,
     ]);
   },
 });
 
-export { register_TextEnt, TextEntInitPipeId, TextEntType };
+function register_TextEnt(editor: MixEditor) {
+  editor.ecs.set_ent_default_compo(TextEntType, default_ChildCompo);
+  editor.ecs.set_ent_default_compo(TextEntType, default_DocEntTraitsCompo);
+  return register_TextEnt_init_pipe(editor);
+}
+
+export { TextEntInitPipeId, TextEntType, register_TextEnt };
 export type TextEntInitPipeEvent = EntInitPipeEvent<typeof TextEntInitPipeId>;

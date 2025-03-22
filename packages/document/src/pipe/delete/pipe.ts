@@ -17,9 +17,7 @@ export const DocDirectedDeletePipeId = "doc:delete_directed" as const;
 /** 带方向删除事件。 */
 export interface DirectedDeleteEvent extends MEEvent {
   pipe_id: typeof DocDirectedDeletePipeId;
-  /** 删除方向。 */
   direction: CaretDeleteDirection;
-  /** 新的选区。 */
   new_selection?: MESelection;
 }
 
@@ -39,35 +37,27 @@ export const directed_delete_pipe_handler: IPipeStageHandler<
   const selection = editor.selection.get_selection();
   if (!selection) return;
 
+  const tx = new Transaction(editor.op, editor.op.executor);
+
   let result;
   if (selection.type === TreeCollapsedSelectionType) {
     // 处理光标位置删除（如按退格键/删除键）
-    try {
-      const tx = new Transaction(editor.op, editor.op.executor);
-      result = await execute_caret_deletion(
-        editor,
-        tx,
-        selection.caret,
-        event.direction
-      );
-      await tx.commit();
-      if (!result) return; // 无有效操作时提前返回
-    } catch (e) {
-      // 删除操作失败时回滚事务
-      return;
-    }
+    result = await execute_caret_deletion(
+      editor,
+      tx,
+      selection.caret,
+      event.direction
+    );
   } else if (selection.type === TreeExtendedSelectionType) {
-    // 处理选中区域删除（如选中文本后按删除键）
-    const tx = new Transaction(editor.op, editor.op.executor);
     result = await execute_range_deletion(
       editor,
       tx,
       selection.start,
       selection.end
     );
-
-    await tx.commit();
   }
+
+  await tx.commit();
 
   // 更新删除后的光标位置
   if (result?.selection) {

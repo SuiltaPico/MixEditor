@@ -19,6 +19,8 @@ import {
 export * from "./life_cycle";
 export * from "./load_and_save";
 export * from "./load_and_save_serialized";
+export * from "./io";
+export * from "./input";
 
 export function register_pipes(editor: MixEditor) {
   register_life_cycle_pipe(editor);

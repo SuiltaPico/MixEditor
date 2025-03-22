@@ -1,6 +1,6 @@
 import { get_actual_child_compo, set_children_parent_refs } from "../../common";
 import { Op } from "../../op";
-import { TreeChildrenDelete, TreeChildrenInsert } from "../compo";
+import { TreeChildrenDeleteCb, TreeChildrenInsertCb } from "../compo";
 import { MixEditor } from "../mix_editor";
 
 /** 移动树结构中指定范围的子节点操作。 */
@@ -35,7 +35,7 @@ export function register_TreeChildrenMoveOp(editor: MixEditor) {
 
       const deleted_ents = await ecs.run_compo_behavior(
         src_child,
-        TreeChildrenDelete,
+        TreeChildrenDeleteCb,
         {
           start: it.src_start,
           end: it.src_end,
@@ -44,7 +44,7 @@ export function register_TreeChildrenMoveOp(editor: MixEditor) {
 
       set_children_parent_refs(ecs, deleted_ents ?? [], it.target);
 
-      await ecs.run_compo_behavior(target_child, TreeChildrenInsert, {
+      await ecs.run_compo_behavior(target_child, TreeChildrenInsertCb, {
         index: it.target_index,
         items: deleted_ents ?? [],
       });
@@ -61,7 +61,7 @@ export function register_TreeChildrenMoveOp(editor: MixEditor) {
 
       const deleted_ents = await ecs.run_compo_behavior(
         target_child,
-        TreeChildrenDelete,
+        TreeChildrenDeleteCb,
         {
           start: it.target_index,
           end: it.target_index + (it.src_end - it.src_start),
@@ -70,7 +70,7 @@ export function register_TreeChildrenMoveOp(editor: MixEditor) {
 
       set_children_parent_refs(ecs, deleted_ents ?? [], it.src);
 
-      await ecs.run_compo_behavior(src_child, TreeChildrenInsert, {
+      await ecs.run_compo_behavior(src_child, TreeChildrenInsertCb, {
         index: it.src_start,
         items: deleted_ents ?? [],
       });

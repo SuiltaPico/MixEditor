@@ -1,7 +1,13 @@
 import { create_Signal, WrappedSignal } from "@mixeditor/common";
 import { ToTdoCb, CompoTDO } from "../../../ecs";
 import { MixEditor } from "../../mix_editor";
-import { IChildCompo, TreeChildrenDelete, TreeChildrenInsert } from "./child";
+import { IChildCompo } from "./child";
+import {
+  TreeChildrenDeleteCb,
+  TreeChildrenInsertCb,
+  TreeChildrenSplitInCb,
+  TreeChildrenSplitOutCb,
+} from "./cb";
 import { TempEntType } from "../../ent/temp";
 
 /**
@@ -52,7 +58,7 @@ export function register_TextChildCompo(editor: MixEditor) {
     from_tdo({ input }) {
       return new TextChildCompo((input as TextChildCompoTDO).content);
     },
-    [TreeChildrenInsert]: ({ it, index, items, ex_ctx }) => {
+    [TreeChildrenInsertCb]: ({ it, index, items, ex_ctx }) => {
       const ecs = ex_ctx.ecs;
       const content = it.content.get();
       let new_content = content.slice(0, index);
@@ -63,7 +69,7 @@ export function register_TextChildCompo(editor: MixEditor) {
       new_content += content.slice(index);
       it.content.set(new_content);
     },
-    [TreeChildrenDelete]: async ({ it, start, end, ex_ctx }) => {
+    [TreeChildrenDeleteCb]: async ({ it, start, end, ex_ctx }) => {
       const ecs = ex_ctx.ecs;
       const content = it.content.get();
       const deleted = content.slice(start, end);
@@ -74,6 +80,17 @@ export function register_TextChildCompo(editor: MixEditor) {
       ecs.set_compo(ent.id, new TextChildCompo(deleted));
 
       return [ent.id];
+    },
+    [TreeChildrenSplitOutCb]: ({ it, index }) => {
+      const content = it.content.get();
+      const left = content.slice(0, index);
+      const right = content.slice(index);
+      it.content.set(left);
+      return right;
+    },
+    [TreeChildrenSplitInCb]: ({ it, data }) => {
+      const content = it.content.get();
+      it.content.set(content + data);
     },
   });
 }

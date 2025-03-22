@@ -1,7 +1,13 @@
 import { create_Signal, WrappedSignal } from "@mixeditor/common";
 import { CompoTDO, FromTdoCb, ToTdoCb } from "../../../ecs";
 import { MixEditor } from "../../mix_editor";
-import { IChildCompo, TreeChildrenDelete, TreeChildrenInsert } from "./child";
+import { IChildCompo } from "./child";
+import {
+  TreeChildrenDeleteCb,
+  TreeChildrenInsertCb,
+  TreeChildrenSplitInCb,
+  TreeChildrenSplitOutCb,
+} from "./cb";
 
 /**
  * 子实体数组组件
@@ -60,18 +66,30 @@ export function register_EntChildCompo(editor: MixEditor) {
     [FromTdoCb]({ input }) {
       return new EntChildCompo((input as EntChildCompoTDO).children);
     },
-    [TreeChildrenInsert]: ({ it, index, items }) => {
-      console.log("[EntChildCompo.TreeChildrenInsert]", it, index, items);
+    [TreeChildrenInsertCb]: ({ it, index, items }) => {
+      console.log("[EntChildCompo.TreeChildrenInsertCb]", it, index, items);
       const children = it.children.get();
       children.splice(index, 0, ...items);
       it.children.set(children);
     },
-    [TreeChildrenDelete]: ({ it, start, end }) => {
+    [TreeChildrenDeleteCb]: ({ it, start, end }) => {
       const children = it.children.get();
       const deleted = children.splice(start, end - start);
-      console.log("[EntChildCompo.TreeChildrenDelete]", it, deleted);
+      console.log("[EntChildCompo.TreeChildrenDeleteCb]", it, deleted);
       it.children.set(children);
       return deleted;
+    },
+    [TreeChildrenSplitOutCb]: ({ it, index }) => {
+      const children = it.children.get();
+      const left = children.slice(0, index);
+      const right = children.slice(index);
+      it.children.set(left);
+      return right;
+    },
+    [TreeChildrenSplitInCb]: ({ it, data }) => {
+      const children = it.children.get();
+      children.push(...data);
+      it.children.set(children);
     },
   });
 }

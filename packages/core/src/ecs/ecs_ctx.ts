@@ -200,7 +200,7 @@ export class ECSCtx<
 
     // 获取所有组件的 TDO
     const compos: CompoTDORecord = {};
-    const curr_compos = this.get_compos(ent.id);
+    const curr_compos = this.get_own_compos(ent.id);
     if (curr_compos) {
       await Promise.all(
         Array.from(curr_compos.values()).map(async (compo) => {
@@ -220,22 +220,24 @@ export class ECSCtx<
   }
 
   // ------- 组件方法 -------
+  static EmptyCompos = new Map<string, Compo>();
+
   /** 获取组件。 */
   get_compo<TCompoType extends Extract<keyof TCompoMap, string> | string>(
     ent_id: string,
     compo_type: TCompoType
   ) {
-    let compo: TCompoType extends keyof TCompoMap
-      ? TCompoMap[TCompoType]
-      : unknown;
-    if (this.compos.get(ent_id, compo_type)) {
-      compo = this.compos.get(
-        ent_id,
-        compo_type
-      ) as TCompoType extends keyof TCompoMap ? TCompoMap[TCompoType] : unknown;
-    } else {
+    const ent_type = this.ents.get(ent_id)?.type;
+    if (!ent_type) return;
+
+    let compo = this.compos.get(
+      ent_id,
+      compo_type
+    ) as TCompoType extends keyof TCompoMap ? TCompoMap[TCompoType] : unknown;
+
+    if (!compo) {
       compo = this.ent_default_compos
-        .get(ent_id)
+        .get(ent_type)
         ?.get(compo_type) as TCompoType extends keyof TCompoMap
         ? TCompoMap[TCompoType]
         : unknown;
@@ -243,13 +245,20 @@ export class ECSCtx<
     return compo;
   }
 
+  get_own_compos(ent_id: string) {
+    return this.compos.get_master(ent_id);
+  }
+
   /** 获取组件。 */
   get_compos(ent_id: string) {
+    const ent_type = this.ents.get(ent_id)?.type;
+    if (!ent_type) return ECSCtx.EmptyCompos;
+
     const result = new Map<string, Compo>();
     this.compos.get_master(ent_id)?.forEach((compo) => {
       result.set(compo.type, compo);
     });
-    this.ent_default_compos.get(ent_id)?.forEach((compo) => {
+    this.ent_default_compos.get(ent_type)?.forEach((compo) => {
       result.set(compo.type, compo);
     });
     return result;

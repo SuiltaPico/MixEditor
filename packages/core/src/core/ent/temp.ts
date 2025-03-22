@@ -7,7 +7,6 @@ const {
 } = create_ent_registration({
   namespace: "core",
   ent_type: "core:temp",
-  init_stage_execute: async (event) => {},
 });
 
 export { TempEntType, TempEntInitPipeId, register_TempEnt };

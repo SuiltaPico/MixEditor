@@ -2,6 +2,7 @@ import { Component, onMount } from "solid-js";
 import { BvContext } from "../../context";
 import { ContentRenderer } from "./content";
 import { SelectionRenderer } from "../selection";
+import "./editor.css";
 
 /** 编辑器渲染器。
  * 入口组件，负责渲染整个编辑器。

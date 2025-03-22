@@ -5,6 +5,7 @@ import {
   EntInitPipeEvent,
   ParentCompo,
   set_children_parent_refs,
+  MixEditor,
 } from "@mixeditor/core";
 import {
   BackBorderStrategy,
@@ -28,7 +29,7 @@ const default_DocEntTraitsCompo = new DocConfigCompo({
 const {
   EntType: CodeBlockEntType,
   EntInitPipeId: CodeBlockEntInitPipeId,
-  register_ent: register_CodeBlockEnt,
+  register_ent: register_CodeBlockEnt_init_pipe,
 } = create_ent_registration({
   namespace: "doc",
   ent_type: "doc:code_block",
@@ -39,14 +40,19 @@ const {
     set_children_parent_refs(ex_ctx.ecs, children, it.id);
 
     ex_ctx.ecs.set_compos(it.id, [
-      default_ChildCompo,
       new EntChildCompo(children),
       new ParentCompo(undefined),
       new DocCodeBlockCompo(),
-      default_DocEntTraitsCompo,
     ]);
   },
 });
+
+function register_CodeBlockEnt(editor: MixEditor) {
+  register_CodeBlockEnt_init_pipe(editor);
+
+  editor.ecs.set_ent_default_compo(CodeBlockEntType, default_ChildCompo);
+  editor.ecs.set_ent_default_compo(CodeBlockEntType, default_DocEntTraitsCompo);
+}
 
 export { CodeBlockEntInitPipeId, CodeBlockEntType, register_CodeBlockEnt };
 export type CodeBlockEntInitPipeEvent = EntInitPipeEvent<

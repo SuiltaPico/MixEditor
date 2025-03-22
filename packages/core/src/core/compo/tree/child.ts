@@ -1,6 +1,6 @@
 import { IArrayLike } from "../../../common/object";
-import { Compo, ToTdoCb, CompoBehaviorMap, CompoTDO, Ent } from "../../../ecs";
-import { MECompoBehaviorHandler, MixEditor } from "../../mix_editor";
+import { Compo, ToTdoCb, CompoTDO, Ent } from "../../../ecs";
+import { MixEditor } from "../../mix_editor";
 import { RouteCompo } from "../basic/route";
 
 /**
@@ -64,24 +64,4 @@ export function find_child_ent_index_default(
     if (child === target_ent_id) return i;
   }
   return -1;
-}
-
-export const TreeChildrenInsert = "tree:children.insert" as const;
-export const TreeChildrenDelete = "tree:children.delete" as const;
-
-export interface ChildCompoBehaviorMap extends CompoBehaviorMap<MixEditor> {
-  [TreeChildrenInsert]: MECompoBehaviorHandler<
-    {
-      index: number;
-      items: string[];
-    },
-    void
-  >;
-  [TreeChildrenDelete]: MECompoBehaviorHandler<
-    {
-      start: number;
-      end: number;
-    },
-    string[]
-  >;
 }

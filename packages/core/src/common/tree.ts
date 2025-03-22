@@ -5,6 +5,7 @@ import {
   IChildCompo,
 } from "../core/compo/tree/child";
 import { ParentCompo } from "../core/compo/tree/parent";
+import { TreeChildrenSplitOutCb } from "../core";
 
 /**
  * 获取目标实体的实际子实体组件。
@@ -396,4 +397,43 @@ export function process_shallow_nodes(
     // 处理 start_ent_lca_child + 1 到 end_ent_lca_child - 1 之间的所有实体
     processor(lca, start_path[lca_index] + 1, end_path[lca_index]);
   }
+}
+
+export async function split_ent(
+  ecs: MixEditor["ecs"],
+  ent_id: string,
+  index: number
+) {
+  const ent = ecs.get_ent(ent_id);
+  if (!ent) return;
+
+  const new_ent_split_outs = new Map<string, any>();
+
+  const promises = Array.from(ecs.get_compos(ent_id).values()).map(
+    async (compo) => {
+      const result = await ecs.run_compo_behavior(
+        compo,
+        TreeChildrenSplitOutCb,
+        {
+          index,
+        }
+      );
+      if (result) {
+        new_ent_split_outs.set(compo.type, result);
+      }
+    }
+  );
+
+  await Promise.all(promises);
+
+  const new_ent = await ecs.create_ent(ent.type);
+  for (const [compo_type, result] of new_ent_split_outs.entries()) {
+    let new_ent_compo = ecs.get_compo(new_ent.id, compo_type);
+    if (!new_ent_compo) {
+      new_ent_compo = ecs.create_compo(compo_type);
+    }
+    new_ent_compo.set(result);
+  }
+
+  return new_ent.id;
 }

@@ -18,7 +18,7 @@ export interface EntFactoryOptions<
   /** 实体类型 */
   ent_type: TEntType;
   /** 初始化阶段执行函数 */
-  init_stage_execute: (params: InitStageExecuteParams) => Promise<void>;
+  init_stage_execute?: (params: InitStageExecuteParams) => Promise<void>;
 }
 
 export function create_ent_registration<
@@ -39,7 +39,7 @@ export function create_ent_registration<
       wait_deps: () => Promise<void>
     ) => {
       await wait_deps();
-      await init_stage_execute(event as any);
+      await init_stage_execute?.(event as any);
     },
   };
 

@@ -3,4 +3,3 @@ export interface TDO {
   /** 传输数据对象的类型。 */
   type: string;
 }
-

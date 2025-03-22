@@ -1,3 +1,17 @@
+import { create_Signal, Rect } from "@mixeditor/common";
+import {
+  MixEditor,
+  process_shallow_nodes,
+  TreeCollapsedSelectionType,
+  TreeExtendedSelection,
+  TreeExtendedSelectionType,
+  MESelection,
+  create_InputMEPackEvent,
+  create_InputEntsEvent,
+  TempEntType,
+  TextChildCompo,
+  create_InputDataEvent,
+} from "@mixeditor/core";
 import {
   Component,
   createEffect,
@@ -7,22 +21,10 @@ import {
   onMount,
   Show,
 } from "solid-js";
-import { create_Signal, Rect } from "@mixeditor/common";
+import { BvRenderableCompo } from "../../compo";
 import { BvContext } from "../../context";
-import {
-  Ent,
-  get_child_ent_count,
-  get_child_ent_id,
-  get_index_of_child_ent,
-  MixEditor,
-  process_shallow_nodes,
-  TreeCollapsedSelectionType,
-  TreeExtendedSelection,
-  TreeExtendedSelectionType,
-} from "@mixeditor/core";
 import { execute_render_selection } from "../../pipe";
 import "./selection.css";
-import { BvRenderableCompo } from "../../compo";
 
 /** 选区渲染器。
  *
@@ -71,12 +73,6 @@ async function get_rect_of_extended_selected(
     return rects;
   }
 
-  // 如果起始和结束节点不是同一个节点，则要选择它们之间的所有节点
-  // 选择流程分三个阶段：
-  // 1. 从起始节点向上遍历到共同祖先的子节点，期间处理后侧兄弟节点的选区
-  // 2. 从结束节点向上遍历到共同祖先的子节点，期间处理前侧兄弟节点的选区
-  // 3. 从起始节点在共同祖先的子节点下一位开始，到结束节点在共同祖先的子节点上一位结束，期间选择所有子节点的选区
-
   const promises: Promise<void>[] = [];
   process_shallow_nodes(
     ecs,
@@ -85,13 +81,6 @@ async function get_rect_of_extended_selected(
     end_ent,
     end_offset,
     (ent, start_offset, end_offset) => {
-      console.log(
-        "[process_shallow_nodes]",
-        ecs.get_ent(ent),
-        start_offset,
-        end_offset
-      );
-
       promises.push(
         execute_render_selection(
           editor,
@@ -116,21 +105,14 @@ export const TreeRangeRenderer: Component<{
 }> = (props) => {
   const { bv_ctx } = props;
   const { editor } = bv_ctx;
+  const { pipe } = editor;
 
   const selection = editor.selection;
   /** 选区范围。 */
-  const ranges = create_Signal<
-    {
-      start: {
-        x: number;
-        y: number;
-      };
-      end: { x: number; y: number };
-    }[]
-  >([]);
+  const ranges = create_Signal<Rect[]>([]);
   const selected_type = createMemo(() => selection.get_selection()?.type);
 
-  let caret: HTMLDivElement | null = null;
+  let caret_node!: HTMLDivElement;
   /** 选区输入框。用于激活浏览器输入法。 */
   let inputer: HTMLDivElement | null = null;
   let resize_observer: ResizeObserver | undefined;
@@ -139,20 +121,91 @@ export const TreeRangeRenderer: Component<{
     // TODO: 处理输入法结束
   };
 
-  const handle_inputer_input = () => {
+  const handle_inputer_input = async (e: InputEvent) => {
     // TODO: 处理输入
+    // e.preventDefault();
+    console.log("handle_inputer_input", e);
+
+    let s = selection.get_selection();
+    if (!s) return;
+
+    let caret;
+    if (s.type === TreeCollapsedSelectionType) {
+      caret = s.caret;
+    } else if (s.type === TreeExtendedSelectionType) {
+      caret = s.start;
+    }
+    if (!caret) return;
+
+    if (e.data) {
+      const temp_ent = await editor.ecs.create_ent(TempEntType);
+      editor.ecs.set_compo(temp_ent.id, new TextChildCompo(e.data));
+      pipe.execute(create_InputEntsEvent(editor, [temp_ent.id], caret));
+    } else {
+      pipe.execute(create_InputDataEvent(editor, e.dataTransfer!, caret));
+    }
   };
 
   function focus_inputer() {
     inputer?.focus();
   }
 
+  async function update_selection(selection?: MESelection) {
+    if (!selection) {
+      ranges.set([]);
+      return;
+    }
+
+    const root_rect = (
+      bv_ctx.editor.ecs.get_compo(
+        bv_ctx.editor.content.root.get()!,
+        BvRenderableCompo.type
+      )?.render_result?.node as HTMLElement
+    )?.getBoundingClientRect();
+    if (!root_rect) return;
+
+    const caret =
+      selection.type === TreeCollapsedSelectionType
+        ? selection.caret
+        : selection.start;
+    const renderable = editor.ecs.get_compo(
+      caret.ent_id,
+      BvRenderableCompo.type
+    );
+    if (!renderable) return;
+    const result = renderable.get_child_pos({
+      editor,
+      ent_id: caret.ent_id,
+      index: caret.offset,
+      root_rect,
+    });
+    if (!result) return;
+    caret_node.style.left = `${result.x}px`;
+    caret_node.style.top = `${result.y}px`;
+    caret_node.style.height = `${result.height}px`;
+
+    // 让光标从新执行闪烁动画
+    caret_node!.classList.remove("__blink");
+    requestAnimationFrame(() => {
+      caret_node!.classList.add("__blink");
+    });
+
+    if (selection.type === TreeExtendedSelectionType) {
+      const rects = await get_rect_of_extended_selected(
+        editor,
+        selection,
+        root_rect
+      );
+      // 更新选区范围
+      ranges.set(rects);
+    }
+  }
+
   onMount(() => {
     if (!bv_ctx.editor_node) return;
     bv_ctx.editor_node.addEventListener("pointerup", focus_inputer);
     resize_observer = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-      }
+      update_selection(selection.get_selection());
     });
     resize_observer.observe(bv_ctx.editor_node);
   });
@@ -167,76 +220,33 @@ export const TreeRangeRenderer: Component<{
   createEffect(
     on(
       () => selection.get_selection(),
-      async (selected) => {
-        if (selected?.type === TreeCollapsedSelectionType) {
-          console.log("selection changed", selected.type, selected.caret);
-        } else if (selected?.type === TreeExtendedSelectionType) {
+      async (selection) => {
+        // DEBUG: 打印选区变化
+        if (!selection) {
+          console.log("selection changed", selection);
+        } else if (selection.type === TreeCollapsedSelectionType) {
           console.log(
             "selection changed",
-            selected.type,
+            selection.type,
+            editor.ecs.get_ent(selection.caret.ent_id),
+            selection.caret.offset
+          );
+        } else if (selection.type === TreeExtendedSelectionType) {
+          console.log(
+            "selection changed",
+            selection.type,
             "start:",
-            editor.ecs.get_ent(selected.start.ent_id),
-            selected.start.offset,
+            editor.ecs.get_ent(selection.start.ent_id),
+            selection.start.offset,
             "end:",
-            editor.ecs.get_ent(selected.end.ent_id),
-            selected.end.offset,
+            editor.ecs.get_ent(selection.end.ent_id),
+            selection.end.offset,
             "anchor:",
-            selected.anchor
+            selection.anchor
           );
-        } else {
-          console.log("selection changed", selected);
         }
 
-        const root_rect = (
-          bv_ctx.editor.ecs.get_compo(
-            bv_ctx.editor.content.root.get()!,
-            BvRenderableCompo.type
-          )?.render_result?.node as HTMLElement
-        )?.getBoundingClientRect();
-        if (!root_rect) return;
-
-        if (selected) {
-          const info =
-            selected.type === TreeCollapsedSelectionType
-              ? selected.caret
-              : selected.start;
-          const renderable = editor.ecs.get_compo(
-            info.ent_id,
-            BvRenderableCompo.type
-          );
-          if (!renderable) return;
-          const result = renderable.get_child_pos({
-            editor,
-            ent_id: info.ent_id,
-            index: info.offset,
-            root_rect,
-          });
-          if (!result) return;
-          caret!.style.left = `${result.x}px`;
-          caret!.style.top = `${result.y}px`;
-          caret!.style.height = `${result.height}px`;
-          caret!.classList.remove("__blink");
-          requestAnimationFrame(() => {
-            caret!.classList.add("__blink");
-          });
-        }
-
-        if (selected && selected.type === TreeExtendedSelectionType) {
-          const rects = await get_rect_of_extended_selected(
-            editor,
-            selected,
-            root_rect
-          );
-          // 更新选区范围
-          ranges.set(
-            rects.map((rect) => ({
-              start: { x: rect.x, y: rect.y },
-              end: { x: rect.x + rect.width, y: rect.y + rect.height },
-            }))
-          );
-        } else {
-          ranges.set([]);
-        }
+        update_selection(selection);
       }
     )
   );
@@ -249,7 +259,7 @@ export const TreeRangeRenderer: Component<{
           selected_type() === "tree:extended"
         }
       >
-        <div class="_caret" ref={(it) => (caret = it)}>
+        <div class="_caret" ref={(it) => (caret_node = it)}>
           <div
             class="_inputer"
             contentEditable
@@ -269,10 +279,10 @@ export const TreeRangeRenderer: Component<{
             class="_range"
             style={
               {
-                left: `${range.start.x}px`,
-                top: `${range.start.y}px`,
-                width: `${range.end.x - range.start.x}px`,
-                height: `${range.end.y - range.start.y}px`,
+                left: `${range.x}px`,
+                top: `${range.y}px`,
+                width: `${range.width}px`,
+                height: `${range.height}px`,
               } as any
             }
           ></div>

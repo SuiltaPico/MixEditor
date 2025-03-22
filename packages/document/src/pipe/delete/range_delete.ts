@@ -1,25 +1,21 @@
 import {
-  Ent,
   MESelection,
   MixEditor,
-  Op,
   Transaction,
   TreeCaret,
   create_TreeCollapsedSelection,
   get_actual_child_compo,
   get_index_in_parent_ent,
-  get_index_of_child_ent,
-  get_lca_of_ent,
   get_parent_ent_id,
-  process_shallow_nodes,
+  process_shallow_nodes
 } from "@mixeditor/core";
-import { DocRangeDeleteCb } from "./compo_behavior";
-import { execute_merge_ent } from "../merge";
 import {
   CaretDirection,
   CaretNavigateSource,
   execute_navigate_caret_from_pos,
 } from "../caret_navigate";
+import { execute_merge_ent } from "../merge";
+import { DocRangeDeleteCb } from "./compo_behavior";
 
 /** 节点对删除范围的决策。 */
 export const RangeDeleteDecision = {
@@ -65,15 +61,15 @@ export async function delete_ent_range(
   start_offset: number,
   end_offset: number
 ) {
-  console.log(
-    "删除单个实体的范围 等待决策",
-    editor.ecs.get_ent(ent_id),
-    "start_offset:",
-    start_offset,
-    "end_offset:",
-    end_offset,
-    "[delete_ent_range]"
-  );
+  // console.log(
+  //   "删除单个实体的范围 等待决策",
+  //   editor.ecs.get_ent(ent_id),
+  //   "start_offset:",
+  //   start_offset,
+  //   "end_offset:",
+  //   end_offset,
+  //   "[delete_ent_range]"
+  // );
 
   const result: { caret: TreeCaret } = {
     caret: {
@@ -134,7 +130,7 @@ export async function execute_range_deletion(
 ) {
   let caret: TreeCaret = start;
 
-  console.log("[execute_range_deletion]", start, end);
+  // console.log("[execute_range_deletion]", start, end);
 
   const ecs = editor.ecs;
 
@@ -177,8 +173,6 @@ export async function execute_range_deletion(
   if (merge_result?.selection) {
     return { selection: merge_result.selection };
   } else {
-    console.log("navigate_caret_from_pos", caret);
-
     const new_caret = await execute_navigate_caret_from_pos(
       editor,
       caret,
@@ -186,7 +180,6 @@ export async function execute_range_deletion(
       CaretNavigateSource.Child
     );
     if (new_caret) {
-      console.log("navigate_caret_from_pos normalized", new_caret);
       caret = new_caret;
     }
 
