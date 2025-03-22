@@ -8,6 +8,7 @@ import {
   TreeChildrenSplitInCb,
   TreeChildrenSplitOutCb,
 } from "./cb";
+import { CreateCb } from "../basic/cb";
 
 /**
  * 子实体数组组件
@@ -44,6 +45,10 @@ export class EntChildCompo implements IChildCompo {
   }
 }
 
+export interface EntChildCompoCreateParams {
+  children: string[];
+}
+
 /** 子实体数组组件传输对象结构定义 */
 export interface EntChildCompoTDO extends CompoTDO {
   /** 子实体ID列表 */
@@ -65,6 +70,9 @@ export function register_EntChildCompo(editor: MixEditor) {
     /** 从传输对象反序列化组件 */
     [FromTdoCb]({ input }) {
       return new EntChildCompo((input as EntChildCompoTDO).children);
+    },
+    [CreateCb]: ({ it, params }) => {
+      return new EntChildCompo(params.children);
     },
     [TreeChildrenInsertCb]: ({ it, index, items }) => {
       console.log("[EntChildCompo.TreeChildrenInsertCb]", it, index, items);

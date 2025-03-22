@@ -16,3 +16,10 @@ export function register_tree_compos(editor: MixEditor) {
   register_ParentEntCompo(editor);
   register_ChildCompo(editor);
 }
+
+export interface TreeCompoCreateParamsMap {
+  [EntChildCompo.type]: EntChildCompoTDO;
+  [TextChildCompo.type]: TextChildCompoTDO;
+  [ParentEntCompo.type]: ParentEntCompoTDO;
+  [ChildCompo.type]: ChildCompoTDO;
+}

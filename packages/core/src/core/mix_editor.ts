@@ -8,7 +8,13 @@ import {
   EntBehaviorHandler,
   EntBehaviorMap,
 } from "../ecs";
-import { OpBehaviorHandler, OpBehaviorMap, OpCtx, OpMap, TransactionOp } from "../op";
+import {
+  OpBehaviorHandler,
+  OpBehaviorMap,
+  OpCtx,
+  OpMap,
+  TransactionOp,
+} from "../op";
 import { IPipeEvent, IPipeStageHandler, PipeCtx } from "../pipe";
 import { Plugin, PluginCtx } from "../plugin";
 import { SelectionCtx, SelectionMap } from "../selection/selection";
@@ -24,6 +30,7 @@ import {
   ParentCompo,
   TextChildCompo,
 } from "./compo";
+import { BaseCompoBehaviorMap } from "./compo/basic/cb";
 import { RootEntInitPipeId, RootEntInitPipeEvent } from "./ent";
 import { TreeChildrenDeleteOp, TreeChildrenInsertOp } from "./op";
 import { TreeChildrenMoveOp } from "./op/tree_children_move";
@@ -62,6 +69,7 @@ export interface MEEntBehaviorMap extends EntBehaviorMap<MixEditor> {}
 /** MixEditor 的组件行为映射表，供插件扩展 */
 export interface MECompoBehaviorMap
   extends CompoBehaviorMap<MixEditor>,
+    BaseCompoBehaviorMap,
     ChildCompoBehaviorMap {}
 
 /** MixEditor 的操作表，供插件扩展 */
