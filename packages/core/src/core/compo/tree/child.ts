@@ -10,7 +10,7 @@ import {
 } from "../../../ecs";
 import { MixEditor } from "../../mix_editor";
 import { RouteCompo } from "../basic/route";
-import { TreeChildrenSplitInCb, TreeChildrenSplitOutCb } from "./cb";
+import { TreeSplitInCb, TreeSplitOutCb } from "./cb";
 
 /**
  * 子实体来源记录组件

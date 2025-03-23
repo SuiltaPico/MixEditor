@@ -10,10 +10,10 @@ import {
 import { MixEditor } from "../../mix_editor";
 import { IChildCompo } from "./child";
 import {
-  TreeChildrenDeleteCb,
-  TreeChildrenInsertCb,
-  TreeChildrenSplitInCb,
-  TreeChildrenSplitOutCb,
+  TreeDeleteChildrenCb,
+  TreeInsertChildrenCb,
+  TreeSplitInCb,
+  TreeSplitOutCb,
 } from "./cb";
 import { TempEntType } from "../../ent/temp";
 
@@ -69,7 +69,7 @@ export function register_TextChildCompo(editor: MixEditor) {
     [GetCloneParamsCb]({ it }) {
       return { content: it.content.get() };
     },
-    [TreeChildrenInsertCb]({ it, index, items, ex_ctx }) {
+    [TreeInsertChildrenCb]({ it, index, items, ex_ctx }) {
       const ecs = ex_ctx.ecs;
       const content = it.content.get();
       let new_content = content.slice(0, index);
@@ -79,8 +79,9 @@ export function register_TextChildCompo(editor: MixEditor) {
       }
       new_content += content.slice(index);
       it.content.set(new_content);
+      return new_content.length - content.length;
     },
-    async [TreeChildrenDeleteCb]({ it, start, end, ex_ctx }) {
+    async [TreeDeleteChildrenCb]({ it, start, end, ex_ctx }) {
       const ecs = ex_ctx.ecs;
       const content = it.content.get();
       const deleted = content.slice(start, end);
@@ -92,14 +93,14 @@ export function register_TextChildCompo(editor: MixEditor) {
 
       return [ent.id];
     },
-    [TreeChildrenSplitOutCb]({ it, index }) {
+    [TreeSplitOutCb]({ it, index }) {
       const content = it.content.get();
       const left = content.slice(0, index);
       const right = content.slice(index);
       it.content.set(left);
       return right;
     },
-    [TreeChildrenSplitInCb]({ it, data }) {
+    [TreeSplitInCb]({ it, data }) {
       const content = it.content.get();
       it.content.set(content + data);
     },

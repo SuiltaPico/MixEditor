@@ -57,7 +57,7 @@ function App() {
               {
                 children: [
                   ent_spec(TextEntType, {
-                    text: "深入理解 SQL SELECT 语句",
+                    content: "深入理解 SQL SELECT 语句",
                   }),
                 ],
               },
@@ -66,27 +66,27 @@ function App() {
             ent_spec(ParagraphEntType, {
               children: [
                 ent_spec(TextEntType, {
-                  text: "SQL（Structured Query Language）是用于管理和操作关系型数据库的标准语言。在 SQL 中，",
+                  content: "SQL（Structured Query Language）是用于管理和操作关系型数据库的标准语言。在 SQL 中，",
                 }),
                 ent_spec(
                   TextEntType,
                   {
-                    text: "SELECT",
+                    content: "SELECT",
                   },
                   [new DocCodeInlineCompo()]
                 ),
                 ent_spec(TextEntType, {
-                  text: " 句是最常用且功能强大的命令之一。它允许我们从数据库中检索数据，并根据需要进行过滤、排序和分组。本文将详细介绍 ",
+                  content: " 句是最常用且功能强大的命令之一。它允许我们从数据库中检索数据，并根据需要进行过滤、排序和分组。本文将详细介绍 ",
                 }),
                 ent_spec(
                   TextEntType,
                   {
-                    text: "SELECT",
+                    content: "SELECT",
                   },
                   [new DocCodeInlineCompo()]
                 ),
                 ent_spec(TextEntType, {
-                  text: " 语句的语法、用法以及一些高级特性。",
+                  content: " 语句的语法、用法以及一些高级特性。",
                 }),
               ],
             }),
@@ -95,7 +95,7 @@ function App() {
               {
                 children: [
                   ent_spec(TextEntType, {
-                    text: "基本语法",
+                    content: "基本语法",
                   }),
                 ],
               },
@@ -106,80 +106,80 @@ function App() {
                 ent_spec(
                   TextEntType,
                   {
-                    text: "SELECT",
+                    content: "SELECT",
                   },
                   [new DocCodeInlineCompo()]
                 ),
                 ent_spec(TextEntType, {
-                  text: " 语句的基本语法如下：",
+                  content: " 语句的基本语法如下：",
                 }),
               ],
             }),
             ent_spec(CodeBlockEntType, {
               children: [
                 ent_spec(TextEntType, {
-                  text: "SELECT column1, column2, ...\nFROM table_name\nWHERE condition",
+                  content: "SELECT column1, column2, ...\nFROM table_name\nWHERE condition",
                 }),
               ],
             }),
             ent_spec(ParagraphEntType, {
               children: [
                 ent_spec(TextEntType, {
-                  text: "● ",
+                  content: "● ",
                 }),
                 ent_spec(
                   TextEntType,
                   {
-                    text: "SELECT：",
+                    content: "SELECT：",
                   },
                   [new DocTextBoldCompo()]
                 ),
                 ent_spec(TextEntType, {
-                  text: "指定要检索的列。可以使用 ",
+                  content: "指定要检索的列。可以使用 ",
                 }),
                 ent_spec(
                   TextEntType,
                   {
-                    text: "*",
+                    content: "*",
                   },
                   [new DocCodeInlineCompo()]
                 ),
                 ent_spec(TextEntType, {
-                  text: " 表示选择所有列。",
+                  content: " 表示选择所有列。",
                 }),
               ],
             }),
             ent_spec(ParagraphEntType, {
               children: [
                 ent_spec(TextEntType, {
-                  text: "● ",
+                  content: "● ",
                 }),
                 ent_spec(
                   TextEntType,
                   {
-                    text: "FROM：",
+                    content: "FROM：",
                   },
                   [new DocTextBoldCompo()]
                 ),
                 ent_spec(TextEntType, {
-                  text: "指定要从中检索数据的表。",
+                  content: "指定要从中检索数据的表。",
                 }),
               ],
             }),
             ent_spec(ParagraphEntType, {
               children: [
                 ent_spec(TextEntType, {
-                  text: "● ",
+                  content: "● ",
                 }),
                 ent_spec(
                   TextEntType,
                   {
-                    text: "WHERE：",
+                    content: "WHERE：",
                   },
                   [new DocTextBoldCompo()]
                 ),
                 ent_spec(TextEntType, {
-                  text: "​（可选）：用于指定筛选条件，只有满足条件的行才会被返回。",
+                  content: "​（可选）：用于指定筛选条件，只有满足条件的行才会被返回。",
                 }),
               ],
             }),
@@ -188,7 +188,7 @@ function App() {
               {
                 children: [
                   ent_spec(TextEntType, {
-                    text: "参考资料",
+                    content: "参考资料",
                   }),
                 ],
               },
@@ -197,12 +197,12 @@ function App() {
             ent_spec(ParagraphEntType, {
               children: [
                 ent_spec(TextEntType, {
-                  text: "● ",
+                  content: "● ",
                 }),
                 ent_spec(
                   TextEntType,
                   {
-                    text: "SQL 教程",
+                    content: "SQL 教程",
                   },
                   [new DocLinkCompo("https://www.w3schools.com/sql/")]
                 ),
@@ -211,12 +211,12 @@ function App() {
             ent_spec(ParagraphEntType, {
               children: [
                 ent_spec(TextEntType, {
-                  text: "● ",
+                  content: "● ",
                 }),
                 ent_spec(
                   TextEntType,
                   {
-                    text: "MySQL 官方文档",
+                    content: "MySQL 官方文档",
                   },
                   [new DocLinkCompo("https://dev.mysql.com/doc/")]
                 ),

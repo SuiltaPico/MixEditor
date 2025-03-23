@@ -7,7 +7,7 @@ import {
   MECompoBehaviorMap,
   MixEditor,
   Transaction,
-  TreeChildrenDeleteOp,
+  TreeDeleteChildrenOp,
 } from "@mixeditor/core";
 import {
   CaretDeleteDecision,
@@ -173,7 +173,7 @@ export const handle_default_range_delete: MECompoBehaviorMap[typeof DocRangeDele
     if (range_delete_policy.type === "delete_child") {
       // 执行子实体删除操作
       await tx.execute(
-        new TreeChildrenDeleteOp(op.gen_id(), ent_id, start, end)
+        new TreeDeleteChildrenOp(op.gen_id(), ent_id, start, end)
       );
 
       // 检查是否需要删除自身（当边框策略为开放且子实体为空时）

@@ -8,13 +8,7 @@ import {
   EntBehaviorHandler,
   EntBehaviorMap,
 } from "../ecs";
-import {
-  OpBehaviorHandler,
-  OpBehaviorMap,
-  OpCtx,
-  OpMap,
-  TransactionOp,
-} from "../op";
+import { OpBehaviorHandler, OpBehaviorMap, OpCtx } from "../op";
 import { IPipeEvent, IPipeStageHandler, PipeCtx } from "../pipe";
 import { Plugin, PluginCtx } from "../plugin";
 import { SelectionCtx, SelectionMap } from "../selection/selection";
@@ -24,16 +18,15 @@ import {
   TDOSerializerMap,
 } from "../tdo/serialize/serialize_ctx";
 import {
-  EntChildCompo,
   ChildCompo,
   ChildCompoBehaviorMap,
+  EntChildCompo,
   ParentCompo,
   TextChildCompo,
   TreeCompoCreateParamsMap,
 } from "./compo";
-import { RootEntInitPipeId, RootEntInitPipeEvent } from "./ent";
-import { TreeChildrenDeleteOp, TreeChildrenInsertOp } from "./op";
-import { TreeChildrenMoveOp } from "./op/tree_children_move";
+import { RootEntInitPipeEvent, RootEntInitPipeId } from "./ent";
+import { MECoreOpMap } from "./op";
 import { MECorePipeEventMap } from "./pipe";
 import { regist_core_items } from "./regist_core_items";
 import { TreeSelectionMapExtend } from "./selection";
@@ -73,13 +66,7 @@ export interface MECompoBehaviorMap
   extends CompoBehaviorMap<MixEditor>,
     ChildCompoBehaviorMap {}
 
-/** MixEditor 的操作表，供插件扩展 */
-export interface MEOpMap extends OpMap {
-  [TreeChildrenDeleteOp.type]: TreeChildrenDeleteOp;
-  [TreeChildrenInsertOp.type]: TreeChildrenInsertOp;
-  [TreeChildrenMoveOp.type]: TreeChildrenMoveOp;
-  [TransactionOp.type]: TransactionOp;
-}
+export interface MEOpMap extends MECompoMap {}
 /** MixEditor 的操作行为映射表，供插件扩展 */
 export interface MEOpBehaviorMap extends OpBehaviorMap<MixEditor> {}
 
@@ -115,7 +102,7 @@ export class MixEditor {
 
   content: ContentCtx;
 
-  op: OpCtx<MEOpMap, MEOpBehaviorMap, this>;
+  op: OpCtx<MECoreOpMap, MEOpBehaviorMap, this>;
 
   pipe: PipeCtx<MEPipeEventMap, this>;
 

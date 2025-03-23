@@ -1,16 +1,16 @@
 import { create_Signal, Rect } from "@mixeditor/common";
 import {
+  create_InputDataEvent,
+  create_InputEntsEvent,
+  MEDataTransfer,
+  MESelection,
   MixEditor,
   process_shallow_nodes,
+  TempEntType,
+  TextChildCompo,
   TreeCollapsedSelectionType,
   TreeExtendedSelection,
   TreeExtendedSelectionType,
-  MESelection,
-  create_InputMEPackEvent,
-  create_InputEntsEvent,
-  TempEntType,
-  TextChildCompo,
-  create_InputDataEvent,
 } from "@mixeditor/core";
 import {
   Component,
@@ -117,33 +117,60 @@ export const TreeRangeRenderer: Component<{
   let inputer: HTMLDivElement | null = null;
   let resize_observer: ResizeObserver | undefined;
 
-  const handle_inputer_composition_end = () => {
+  const handle_inputer_composition_end = async (e: CompositionEvent) => {
     // TODO: 处理输入法结束
+    let s = selection.get_selection();
+    if (!s) return;
+
+    if (e.data !== null) {
+      await pipe.execute(
+        create_InputDataEvent(
+          editor,
+          {
+            types: ["text/plain"],
+            get_data() {
+              return e.data;
+            },
+          } as MEDataTransfer,
+          s
+        )
+      );
+    }
+
+    e.preventDefault();
   };
 
   const handle_inputer_input = async (e: InputEvent) => {
     // TODO: 处理输入
-    // e.preventDefault();
     console.log("handle_inputer_input", e);
 
     let s = selection.get_selection();
-    if (!s) return;
+    if (e.isComposing || !s) return;
 
-    let caret;
-    if (s.type === TreeCollapsedSelectionType) {
-      caret = s.caret;
-    } else if (s.type === TreeExtendedSelectionType) {
-      caret = s.start;
-    }
-    if (!caret) return;
-
-    if (e.data) {
+    let data_transfer: MEDataTransfer;
+    if (e.data !== null) {
       const temp_ent = await editor.ecs.create_ent(TempEntType);
       editor.ecs.set_compo(temp_ent.id, new TextChildCompo(e.data));
-      pipe.execute(create_InputEntsEvent(editor, [temp_ent.id], caret));
+
+      data_transfer = {
+        types: ["text/plain"],
+        get_data() {
+          return e.data;
+        },
+      } as MEDataTransfer;
     } else {
-      pipe.execute(create_InputDataEvent(editor, e.dataTransfer!, caret));
+      data_transfer = {
+        types: e.dataTransfer!.types,
+        get_data(type: string) {
+          return e.dataTransfer!.getData(type);
+        },
+      } as MEDataTransfer;
     }
+
+    await pipe.execute(create_InputDataEvent(editor, data_transfer, s));
+
+    e.preventDefault();
+    inputer!.textContent = "";
   };
 
   function focus_inputer() {

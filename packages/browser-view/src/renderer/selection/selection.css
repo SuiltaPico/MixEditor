@@ -23,6 +23,8 @@
       }
 
       & > ._inputer {
+        position: absolute;
+        bottom: 0;
         opacity: 0;
       }
     }

@@ -6,3 +6,8 @@ export interface MEPackV1 {
 }
 
 export type MEPack = MEPackV1;
+
+export interface MEDataTransfer {
+  types: string[];
+  get_data(type: string): any;
+}

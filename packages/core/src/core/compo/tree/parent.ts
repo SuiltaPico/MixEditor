@@ -10,7 +10,7 @@ import {
   ToTdoDecision,
 } from "../../../ecs";
 import { MixEditor } from "../../mix_editor";
-import { TreeChildrenSplitInCb, TreeChildrenSplitOutCb } from "./cb";
+import { TreeSplitInCb, TreeSplitOutCb } from "./cb";
 
 /**
  * 父实体记录组件

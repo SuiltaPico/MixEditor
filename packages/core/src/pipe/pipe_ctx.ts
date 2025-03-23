@@ -23,6 +23,18 @@ export class PipeCtx<TPipeEventMap extends PipeEventMap<TExCtx>, TExCtx> {
     this.pipes.set(pipe_id, new_pipe as any);
   }
 
+  set_stage<TPipeId extends Extract<keyof TPipeEventMap, string>>(
+    pipe_id: TPipeId,
+    stage: IPipeStage<TPipeEventMap[TPipeId], TExCtx>
+  ) {
+    let pipe = this.pipes.get(pipe_id);
+    if (!pipe) {
+      pipe = new Pipe(pipe_id);
+      this.pipes.set(pipe_id, pipe as any);
+    }
+    pipe.set_stage(stage as any);
+  }
+
   delete_pipe(pipe_id: string) {
     this.pipes.delete(pipe_id);
   }

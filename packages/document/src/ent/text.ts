@@ -34,7 +34,7 @@ const {
   init_stage_execute: async (event) => {
     const { it, ex_ctx, init_params } = event;
     ex_ctx.ecs.set_compos(it.id, [
-      new TextChildCompo(init_params?.text ?? ""),
+      new TextChildCompo(init_params?.content ?? ""),
       new ParentCompo(undefined),
     ]);
   },

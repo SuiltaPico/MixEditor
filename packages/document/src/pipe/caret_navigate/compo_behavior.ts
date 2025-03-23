@@ -14,7 +14,7 @@ export interface DocCaretNavigateCbMapExtend {
  *
  * 为所有组件添加默认的光标导航行为。
  */
-export function register_DocCaretNavigate(editor: MixEditor) {
+export function register_DocCaretNavigateCb(editor: MixEditor) {
   const { ecs } = editor;
   ecs.set_compo_behaviors("*", {
     [DocCaretNavigateCb]: handle_default_caret_navigate,

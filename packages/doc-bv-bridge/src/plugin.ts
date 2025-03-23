@@ -1,4 +1,13 @@
-import { MEPlugin, MixEditor } from "@mixeditor/core";
+import {
+  create_TreeCollapsedSelection,
+  InputEntsPipeID,
+  MEPlugin,
+  MixEditor,
+  Transaction,
+  TreeCollapsedSelectionType,
+  TreeExtendedSelectionType,
+  TreeInsertChildrenOp,
+} from "@mixeditor/core";
 import { register_ents } from "./ent";
 import { register_compos } from "./compo";
 import { BrowserViewExposed } from "@mixeditor/browser-view";
@@ -7,6 +16,8 @@ import {
   CaretDirection,
   DocCaretNavigatePipeId,
   DocDirectedDeletePipeId,
+  execute_insert,
+  execute_range_deletion,
 } from "@mixeditor/document";
 
 async function handle_key_down(editor: MixEditor, event: KeyboardEvent) {

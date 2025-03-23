@@ -8,10 +8,10 @@ import {
 } from "../../../ecs";
 import { MixEditor } from "../../mix_editor";
 import {
-  TreeChildrenDeleteCb,
-  TreeChildrenInsertCb,
-  TreeChildrenSplitInCb,
-  TreeChildrenSplitOutCb,
+  TreeDeleteChildrenCb,
+  TreeInsertChildrenCb,
+  TreeSplitInCb,
+  TreeSplitOutCb,
 } from "./cb";
 import { IChildCompo } from "./child";
 
@@ -74,25 +74,26 @@ export function register_EntChildCompo(editor: MixEditor) {
     [GetCloneParamsCb]({ it }) {
       return { children: it.children.get() };
     },
-    [TreeChildrenInsertCb]({ it, index, items }) {
+    [TreeInsertChildrenCb]({ it, index, items }) {
       const children = it.children.get();
       children.splice(index, 0, ...items);
       it.children.set(children);
+      return items.length;
     },
-    [TreeChildrenDeleteCb]({ it, start, end }) {
+    [TreeDeleteChildrenCb]({ it, start, end }) {
       const children = it.children.get();
       const deleted = children.splice(start, end - start);
       it.children.set(children);
       return deleted;
     },
-    [TreeChildrenSplitOutCb]({ it, index }) {
+    [TreeSplitOutCb]({ it, index }) {
       const children = it.children.get();
       const left = children.slice(0, index);
       const right = children.slice(index);
       it.children.set(left);
       return right;
     },
-    [TreeChildrenSplitInCb]({ it, data }) {
+    [TreeSplitInCb]({ it, data }) {
       const children = it.children.get();
       children.push(...data);
       it.children.set(children);

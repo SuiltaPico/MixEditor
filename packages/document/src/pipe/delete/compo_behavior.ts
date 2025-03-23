@@ -27,7 +27,7 @@ export interface DocDeleteCbMapExtend {
  *
  * 为所有组件添加默认的光标导航行为。
  */
-export function register_DocCaretDelete(editor: MixEditor) {
+export function register_DocCaretDeleteCb(editor: MixEditor) {
   const { ecs } = editor;
   ecs.set_compo_behaviors("*", {
     [DocCaretDeleteCb]: handle_default_caret_delete,

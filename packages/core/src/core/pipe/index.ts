@@ -1,6 +1,14 @@
 import { PipeEventMap } from "../../pipe";
 import { MixEditor } from "../mix_editor";
 import {
+  InputDataEvent,
+  InputDataPipeID,
+  InputEntsEvent,
+  InputEntsPipeID,
+  InputMEPackEvent,
+  InputMEPackPipeID,
+} from "./input";
+import {
   DestroyEvent,
   InitEvent,
   register_life_cycle_pipe,
@@ -32,6 +40,9 @@ export function register_pipes(editor: MixEditor) {
 export interface MECorePipeEventMap extends PipeEventMap<any> {
   init: InitEvent;
   destroy: DestroyEvent;
+  [InputDataPipeID]: InputDataEvent;
+  [InputMEPackPipeID]: InputMEPackEvent;
+  [InputEntsPipeID]: InputEntsEvent;
   // load: LoadEvent;
   // save: SaveEvent;
   // load_serialized: LoadSerializedEvent;

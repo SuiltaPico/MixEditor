@@ -5,7 +5,7 @@ import {
   IChildCompo,
 } from "../../core/compo/tree/child";
 import { ParentCompo } from "../../core/compo/tree/parent";
-import { TreeChildrenSplitInCb, TreeChildrenSplitOutCb } from "../../core";
+import { TreeSplitInCb, TreeSplitOutCb } from "../../core";
 import { GetCloneParamsCb, Compo } from "../../ecs";
 import { clone_compo } from "./base";
 
@@ -407,19 +407,19 @@ export async function split_ent(
   index: number
 ) {
   const ent = ecs.get_ent(ent_id);
-  if (!ent) return;
+  if (!ent) throw new Error(`无法获取实体 ${ent_id}。`);
 
-  const new_ent_split_outs = new Map<string, any>();
+  const split_outs = new Map<string, any>();
   const new_ent_compos: Compo[] = [];
 
   const get_split_out_promises = Array.from(
     ecs.get_own_compos(ent_id).values()
   ).map(async (compo) => {
-    const result = await ecs.run_compo_behavior(compo, TreeChildrenSplitOutCb, {
+    const result = await ecs.run_compo_behavior(compo, TreeSplitOutCb, {
       index,
     });
     if (result) {
-      new_ent_split_outs.set(compo.type, result);
+      split_outs.set(compo.type, result);
     } else {
       const cloned_compo = await clone_compo(ecs, compo);
       if (cloned_compo) {
@@ -433,20 +433,14 @@ export async function split_ent(
   await Promise.all(get_split_out_promises);
 
   const new_ent = await ecs.create_ent(ent.type);
-  const apply_split_out_promises = Array.from(new_ent_split_outs.entries()).map(
+  const apply_split_out_promises = Array.from(split_outs.entries()).map(
     async ([compo_type, split_out_result]) => {
-      let new_ent_compo = ecs.get_compo(new_ent.id, compo_type);
-      if (!new_ent_compo) {
-        new_ent_compo = await ecs.create_compo(compo_type, {});
-        if (!new_ent_compo) {
-          throw new Error(
-            `在切割的过程中，无法创建新实体的组件 ${compo_type}。`
-          );
-        }
-        ecs.set_compo(new_ent.id, new_ent_compo);
-      }
+      const new_ent_compo = await ecs.get_or_create_compo(
+        new_ent.id,
+        compo_type
+      );
 
-      await ecs.run_compo_behavior(new_ent_compo, TreeChildrenSplitInCb, {
+      await ecs.run_compo_behavior(new_ent_compo, TreeSplitInCb, {
         data: split_out_result,
       });
     }
@@ -454,5 +448,5 @@ export async function split_ent(
 
   await Promise.all(apply_split_out_promises);
 
-  return new_ent.id;
+  return { new_ent_id: new_ent.id, split_outs };
 }
