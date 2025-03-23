@@ -1,5 +1,11 @@
-import { Compo, MixEditor, ToTdoCb, FromTdoCb } from "@mixeditor/core";
-import { DocMergeCb, MergeDecision } from "../../../pipe";
+import {
+  Compo,
+  CreateCb,
+  MixEditor,
+  ToTdoDataCb,
+  ToTdoDecision,
+} from "@mixeditor/core";
+import { DocMergeCb, handle_same_merge, MergeDecision } from "../../../pipe";
 
 export class DocTextBoldCompo implements Compo {
   static type = "doc:text_bold" as const;
@@ -11,24 +17,9 @@ export class DocTextBoldCompo implements Compo {
 export function register_DocTextBoldCompo(editor: MixEditor) {
   const { ecs } = editor;
   ecs.set_compo_behaviors(DocTextBoldCompo.type, {
-    [ToTdoCb]() {
-      return {
-        type: DocTextBoldCompo.type,
-      };
-    },
-    [FromTdoCb]() {
+    [CreateCb]() {
       return new DocTextBoldCompo();
     },
-    [DocMergeCb]({ ent_id, src_id, ex_ctx: editor }) {
-      const { ecs } = editor;
-      const ent_bold = ecs.get_compo(ent_id, DocTextBoldCompo.type);
-      const src_bold = ecs.get_compo(src_id, DocTextBoldCompo.type);
-
-      if ((ent_bold && src_bold) || (!ent_bold && !src_bold)) {
-        return MergeDecision.Allow;
-      }
-
-      return MergeDecision.Reject;
-    },
+    [DocMergeCb]: handle_same_merge,
   });
 }

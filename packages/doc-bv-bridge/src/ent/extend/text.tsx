@@ -128,7 +128,7 @@ async function handle_pointer_move_base(
     ent_id,
     offset: caret_pos?.offset,
   };
-  
+
   new_caret = await execute_navigate_caret_from_pos(
     editor,
     new_caret,
@@ -175,7 +175,7 @@ export const TextEntRenderer: NodeRenderer = (props) => {
   const editor = bv_ctx.editor;
   const { ecs } = editor;
 
-  const text_compo = ecs.get_compo(ent_id, TextChildCompo.type);
+  const text_compo = ecs.get_compo(ent_id, TextChildCompo.type)!;
 
   async function handle_pointer_down(event: PointerEvent) {
     // @ts-ignore

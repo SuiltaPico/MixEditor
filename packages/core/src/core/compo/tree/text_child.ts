@@ -1,5 +1,12 @@
 import { create_Signal, WrappedSignal } from "@mixeditor/common";
-import { ToTdoCb, CompoTDO } from "../../../ecs";
+import {
+  ToTdoDataCb,
+  CompoTDO,
+  FromTdoDataCb,
+  CreateCb,
+  GetCloneParamsCb,
+  ToTdoDecision,
+} from "../../../ecs";
 import { MixEditor } from "../../mix_editor";
 import { IChildCompo } from "./child";
 import {
@@ -40,7 +47,9 @@ export class TextChildCompo implements IChildCompo {
 }
 
 /** 文本内容组件传输对象结构定义 */
-export interface TextChildCompoTDO extends CompoTDO {
+export type TextChildCompoTDOData = string;
+
+export interface TextChildCompoCreateParams {
   content: string;
 }
 
@@ -48,17 +57,19 @@ export interface TextChildCompoTDO extends CompoTDO {
 export function register_TextChildCompo(editor: MixEditor) {
   const { ecs } = editor;
   ecs.set_compo_behaviors(TextChildCompo.type, {
-    [ToTdoCb]({ it }) {
-      const content = it.content.get();
-      return {
-        type: TextChildCompo.type,
-        content: content,
-      } satisfies TextChildCompoTDO;
+    [FromTdoDataCb]({ data: input }) {
+      return new TextChildCompo(input as TextChildCompoTDOData);
     },
-    from_tdo({ input }) {
-      return new TextChildCompo((input as TextChildCompoTDO).content);
+    [ToTdoDataCb]({ it }) {
+      return ToTdoDecision.Done({ data: it.content.get() });
     },
-    [TreeChildrenInsertCb]: ({ it, index, items, ex_ctx }) => {
+    [CreateCb]({ params }) {
+      return new TextChildCompo(params.content);
+    },
+    [GetCloneParamsCb]({ it }) {
+      return { content: it.content.get() };
+    },
+    [TreeChildrenInsertCb]({ it, index, items, ex_ctx }) {
       const ecs = ex_ctx.ecs;
       const content = it.content.get();
       let new_content = content.slice(0, index);
@@ -69,7 +80,7 @@ export function register_TextChildCompo(editor: MixEditor) {
       new_content += content.slice(index);
       it.content.set(new_content);
     },
-    [TreeChildrenDeleteCb]: async ({ it, start, end, ex_ctx }) => {
+    async [TreeChildrenDeleteCb]({ it, start, end, ex_ctx }) {
       const ecs = ex_ctx.ecs;
       const content = it.content.get();
       const deleted = content.slice(start, end);
@@ -81,14 +92,14 @@ export function register_TextChildCompo(editor: MixEditor) {
 
       return [ent.id];
     },
-    [TreeChildrenSplitOutCb]: ({ it, index }) => {
+    [TreeChildrenSplitOutCb]({ it, index }) {
       const content = it.content.get();
       const left = content.slice(0, index);
       const right = content.slice(index);
       it.content.set(left);
       return right;
     },
-    [TreeChildrenSplitInCb]: ({ it, data }) => {
+    [TreeChildrenSplitInCb]({ it, data }) {
       const content = it.content.get();
       it.content.set(content + data);
     },

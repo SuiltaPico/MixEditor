@@ -1,8 +1,8 @@
 import { UlidIdGenerator } from "@mixeditor/common";
-import { Ent, EntTDO } from "./ent";
-import { Compo, CompoTDO, CompoTDORecord } from "./compo";
 import { BehaviorHandler, BehaviorHandlerManager } from "../common/behavior";
 import { TwoLevelTypeMap } from "../common/data_struct/two_level_type_map";
+import { Compo, CompoTDOList, CompoTDO } from "./compo";
+import { Ent, EntTDO } from "./ent";
 
 export type CompoBehaviorHandler<
   TParams extends object,
@@ -44,27 +44,65 @@ export type EntBehaviorMap<TExCtx> = Record<
   [AfterLoadTdoEb]: EntBehaviorHandler<{}, void, TExCtx>;
 };
 
-export const ToTdoCb = "to_tdo";
-export const FromTdoCb = "from_tdo";
+/** 创建组件。
+ * @param params 创建参数
+ * @returns 新组件
+ * @requires
+ */
+export const CreateCb = "core:create";
+/** 组件转换为 TDO。
+ * 若组件未实现此行为，视为返回了 `ToTDODecision.Done({})`。
+ */
+export const ToTdoDataCb = "core:to_tdo_data";
+/** 将 TDO 转换为新组件的创建参数。
+ * 若组件未实现此行为，则视为返回了输入参数的 `input`。
+ */
+export const FromTdoDataCb = "core:from_tdo_data";
+/** 获取可以克隆当前组件的，新组件的创建参数。
+ * 若组件未实现此行为，视为返回了 `undefined`。
+ */
+export const GetCloneParamsCb = "core:get_clone_params";
+
+export const ToTdoDecisionReject = { type: "reject" } as const;
+export const ToTdoDecision = {
+  Done(params: { data?: any }) {
+    const p = params as ToTDODecision & { type: "done" };
+    p.type = "done";
+    return p;
+  },
+  Reject() {
+    return ToTdoDecisionReject;
+  },
+} as const;
+export type ToTDODecision =
+  | {
+      type: "done";
+      data: any;
+    }
+  | {
+      type: "reject";
+    };
+
 export type CompoBehaviorMap<TExCtx> = Record<
   string,
   CompoBehaviorHandler<any, any, TExCtx>
 > & {
-  /** 组件转换为 TDO。 */
-  [ToTdoCb]: CompoBehaviorHandler<
+  [CreateCb]: CompoBehaviorHandler<{ params: any }, Compo, TExCtx>;
+  [ToTdoDataCb]: CompoBehaviorHandler<
     {
       save_with: (ents: string[]) => void;
     },
-    CompoTDO,
+    ToTDODecision,
     TExCtx
   >;
-  /** TDO 转换为组件。 */
-  [FromTdoCb]: CompoBehaviorHandler<{ input: CompoTDO }, Compo, TExCtx>;
+  [FromTdoDataCb]: CompoBehaviorHandler<{ data: any }, any, TExCtx>;
+  [GetCloneParamsCb]: CompoBehaviorHandler<{}, any, TExCtx>;
 };
 
 /** 实体上下文。 */
 export class ECSCtx<
   TCompoMap extends Record<string, Compo>,
+  TCompoCreateParamsMap extends Record<string, any>,
   TCompoBehaviorMap extends CompoBehaviorMap<TExCtx>,
   TEntBehaviorMap extends EntBehaviorMap<TExCtx>,
   TExCtx extends any
@@ -153,8 +191,9 @@ export class ECSCtx<
 
   // ------- 实体TDO方法 -------
   /** 加载实体TDO。 */
-  async load_ent_tdo(tdo: EntTDO) {
-    const empty_ent = new Ent(tdo.id, tdo.type);
+  async load_ent_tdo(pack: EntTDO) {
+    const [id, type, compos] = pack;
+    const empty_ent = new Ent(id, type);
     this.ents.set(empty_ent.id, empty_ent); // 提前注册实体
     try {
       type BehaviorParams = Omit<
@@ -164,9 +203,9 @@ export class ECSCtx<
 
       // 加载所有 CompoTDO 到 ECS 系统
       await Promise.all(
-        Object.values(tdo.compos).map(async (compo_tdo) => {
+        compos.map(async (compo_tdo) => {
           const compo = await this.run_compo_behavior(empty_ent, "from_tdo", {
-            input: compo_tdo,
+            input: compo_tdo[1],
           } as BehaviorParams);
           if (compo) {
             this.set_compo(empty_ent.id, compo);
@@ -199,24 +238,20 @@ export class ECSCtx<
     await this.run_ent_behavior(ent, "before_save_tdo", {} as BehaviorParams);
 
     // 获取所有组件的 TDO
-    const compos: CompoTDORecord = {};
+    const compos: CompoTDOList = [];
     const curr_compos = this.get_own_compos(ent.id);
     if (curr_compos) {
       await Promise.all(
         Array.from(curr_compos.values()).map(async (compo) => {
-          const tdo = await this.run_compo_behavior(compo, ToTdoCb, {
+          const tdo_data = await this.run_compo_behavior(compo, ToTdoDataCb, {
             save_with,
           } as BehaviorParams);
-          if (tdo) compos[compo.type] = tdo;
+          if (tdo_data) compos.push([compo.type, tdo_data]);
         })
       );
     }
 
-    return {
-      id: ent.id,
-      type: ent.type,
-      compos,
-    } satisfies EntTDO;
+    return [ent.id, ent.type, compos] satisfies EntTDO;
   }
 
   // ------- 组件方法 -------
@@ -246,7 +281,7 @@ export class ECSCtx<
   }
 
   get_own_compos(ent_id: string) {
-    return this.compos.get_master(ent_id);
+    return this.compos.get_master(ent_id) ?? ECSCtx.EmptyCompos;
   }
 
   /** 获取组件。 */
@@ -284,6 +319,18 @@ export class ECSCtx<
       this.ent_default_compos.set(ent_type, compo_map);
     }
     compo_map.set(compo.type, compo);
+  }
+
+  async create_compo<
+    TCompoType extends Extract<keyof TCompoMap, string> | string
+  >(compo_type: TCompoType, params: TCompoCreateParamsMap[TCompoType]) {
+    return await this.run_compo_behavior(
+      { type: compo_type } as any,
+      CreateCb as any,
+      {
+        params,
+      } as any
+    );
   }
 
   /** 删除组件。 */

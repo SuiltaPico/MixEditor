@@ -20,7 +20,7 @@ export const CodeBlockEntRenderer: NodeRenderer = (props) => {
   const bv_ctx = props.bv_ctx;
   const editor = bv_ctx.editor;
   const { ecs } = editor;
-  const ent_child_compo = ecs.get_compo(ent_id, EntChildCompo.type);
+  const ent_child_compo = ecs.get_compo(ent_id, EntChildCompo.type)!;
 
   function handle_pointer_event(event: PointerEvent) {
     bv_forward_pointer_event(editor, ent_id, event);

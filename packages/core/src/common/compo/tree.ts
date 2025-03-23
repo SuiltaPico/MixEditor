@@ -1,11 +1,13 @@
-import { MixEditor } from "../core/mix_editor";
+import { MixEditor } from "../../core/mix_editor";
 import {
   ChildCompo,
   find_child_ent_index_default,
   IChildCompo,
-} from "../core/compo/tree/child";
-import { ParentCompo } from "../core/compo/tree/parent";
-import { TreeChildrenSplitOutCb } from "../core";
+} from "../../core/compo/tree/child";
+import { ParentCompo } from "../../core/compo/tree/parent";
+import { TreeChildrenSplitInCb, TreeChildrenSplitOutCb } from "../../core";
+import { GetCloneParamsCb, Compo } from "../../ecs";
+import { clone_compo } from "./base";
 
 /**
  * 获取目标实体的实际子实体组件。
@@ -408,32 +410,49 @@ export async function split_ent(
   if (!ent) return;
 
   const new_ent_split_outs = new Map<string, any>();
+  const new_ent_compos: Compo[] = [];
 
-  const promises = Array.from(ecs.get_compos(ent_id).values()).map(
-    async (compo) => {
-      const result = await ecs.run_compo_behavior(
-        compo,
-        TreeChildrenSplitOutCb,
-        {
-          index,
-        }
-      );
-      if (result) {
-        new_ent_split_outs.set(compo.type, result);
+  const get_split_out_promises = Array.from(
+    ecs.get_own_compos(ent_id).values()
+  ).map(async (compo) => {
+    const result = await ecs.run_compo_behavior(compo, TreeChildrenSplitOutCb, {
+      index,
+    });
+    if (result) {
+      new_ent_split_outs.set(compo.type, result);
+    } else {
+      const cloned_compo = await clone_compo(ecs, compo);
+      if (cloned_compo) {
+        new_ent_compos.push(cloned_compo);
+      } else {
+        // TODO: 需要决定无法分割和克隆的组件如何处理
       }
+    }
+  });
+
+  await Promise.all(get_split_out_promises);
+
+  const new_ent = await ecs.create_ent(ent.type);
+  const apply_split_out_promises = Array.from(new_ent_split_outs.entries()).map(
+    async ([compo_type, split_out_result]) => {
+      let new_ent_compo = ecs.get_compo(new_ent.id, compo_type);
+      if (!new_ent_compo) {
+        new_ent_compo = await ecs.create_compo(compo_type, {});
+        if (!new_ent_compo) {
+          throw new Error(
+            `在切割的过程中，无法创建新实体的组件 ${compo_type}。`
+          );
+        }
+        ecs.set_compo(new_ent.id, new_ent_compo);
+      }
+
+      await ecs.run_compo_behavior(new_ent_compo, TreeChildrenSplitInCb, {
+        data: split_out_result,
+      });
     }
   );
 
-  await Promise.all(promises);
-
-  const new_ent = await ecs.create_ent(ent.type);
-  for (const [compo_type, result] of new_ent_split_outs.entries()) {
-    let new_ent_compo = ecs.get_compo(new_ent.id, compo_type);
-    if (!new_ent_compo) {
-      new_ent_compo = ecs.create_compo(compo_type);
-    }
-    new_ent_compo.set(result);
-  }
+  await Promise.all(apply_split_out_promises);
 
   return new_ent.id;
 }

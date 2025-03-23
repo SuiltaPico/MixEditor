@@ -20,7 +20,7 @@ export const ParagraphEntRenderer: NodeRenderer = (props) => {
   const bv_ctx = props.bv_ctx;
   const editor = bv_ctx.editor;
   const { ecs } = editor;
-  const ent_child_compo = ecs.get_compo(ent_id, EntChildCompo.type);
+  const ent_child_compo = ecs.get_compo(ent_id, EntChildCompo.type)!;
 
   function handle_pointer_down(event: PointerEvent) {
     if (ent_child_compo.count() === 0) {
@@ -77,7 +77,7 @@ export function get_paragraph_child_pos(
   const render_result = bv_renderable_compo.render_result;
   if (!render_result) return;
 
-  const ent_child_compo = ecs.get_compo(params.ent_id, EntChildCompo.type);
+  const ent_child_compo = ecs.get_compo(params.ent_id, EntChildCompo.type)!;
   if (ent_child_compo.count() === 0) {
     const self_rect = (
       render_result.final_node! as HTMLElement

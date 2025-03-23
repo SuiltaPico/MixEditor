@@ -29,8 +29,8 @@ import {
   ChildCompoBehaviorMap,
   ParentCompo,
   TextChildCompo,
+  TreeCompoCreateParamsMap,
 } from "./compo";
-import { BaseCompoBehaviorMap } from "./compo/basic/cb";
 import { RootEntInitPipeId, RootEntInitPipeEvent } from "./ent";
 import { TreeChildrenDeleteOp, TreeChildrenInsertOp } from "./op";
 import { TreeChildrenMoveOp } from "./op/tree_children_move";
@@ -64,12 +64,13 @@ export interface MECompoMap extends Record<string, Compo> {
   [TextChildCompo.type]: TextChildCompo;
   [ParentCompo.type]: ParentCompo;
 }
+export interface MECompoCreateParamsMap extends TreeCompoCreateParamsMap {}
+
 /** MixEditor 的实体行为映射表，供插件扩展 */
 export interface MEEntBehaviorMap extends EntBehaviorMap<MixEditor> {}
 /** MixEditor 的组件行为映射表，供插件扩展 */
 export interface MECompoBehaviorMap
   extends CompoBehaviorMap<MixEditor>,
-    BaseCompoBehaviorMap,
     ChildCompoBehaviorMap {}
 
 /** MixEditor 的操作表，供插件扩展 */
@@ -104,7 +105,13 @@ export interface InitParams {
 
 /** MixEditor 的上下文。 */
 export class MixEditor {
-  ecs: ECSCtx<MECompoMap, MECompoBehaviorMap, MEEntBehaviorMap, this>;
+  ecs: ECSCtx<
+    MECompoMap,
+    MECompoCreateParamsMap,
+    MECompoBehaviorMap,
+    MEEntBehaviorMap,
+    this
+  >;
 
   content: ContentCtx;
 

@@ -1,7 +1,16 @@
 import { IArrayLike } from "../../../common/object";
-import { Compo, ToTdoCb, CompoTDO, Ent } from "../../../ecs";
+import {
+  GetCloneParamsCb,
+  Compo,
+  CompoTDO,
+  CreateCb,
+  FromTdoDataCb,
+  ToTdoDataCb,
+  ToTdoDecision,
+} from "../../../ecs";
 import { MixEditor } from "../../mix_editor";
 import { RouteCompo } from "../basic/route";
+import { TreeChildrenSplitInCb, TreeChildrenSplitOutCb } from "./cb";
 
 /**
  * 子实体来源记录组件
@@ -17,8 +26,9 @@ export class ChildCompo extends RouteCompo {
 }
 
 /** 子实体组件传输对象结构定义 */
-export interface ChildCompoTDO extends CompoTDO {
-  /** 来源组件的类型名称（如"children_ent_array"） */
+export type ChildCompoTDOData = string;
+
+export interface ChildCompoCreateParams {
   src: string;
 }
 
@@ -26,17 +36,18 @@ export interface ChildCompoTDO extends CompoTDO {
 export function register_ChildCompo(editor: MixEditor) {
   const { ecs } = editor;
   ecs.set_compo_behaviors(ChildCompo.type, {
-    /** 序列化组件为传输对象 */
-    async [ToTdoCb]({ it }) {
-      const src = it.src.get();
-      return {
-        type: ChildCompo.type,
-        src,
-      };
+    [CreateCb]({ params }) {
+      return new ChildCompo(params.src);
     },
-    /** 从传输对象反序列化组件 */
-    from_tdo({ input }) {
-      return new ChildCompo((input as ChildCompoTDO).src);
+    [ToTdoDataCb]({ it }) {
+      const src = it.src.get();
+      return ToTdoDecision.Done({ data: src });
+    },
+    [FromTdoDataCb]({ data: input }) {
+      return { src: input as ChildCompoTDOData };
+    },
+    [GetCloneParamsCb]({ it }) {
+      return { src: it.src.get() };
     },
   });
 }

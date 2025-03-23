@@ -1,14 +1,19 @@
 import { create_Signal, WrappedSignal } from "@mixeditor/common";
-import { CompoTDO, FromTdoCb, ToTdoCb } from "../../../ecs";
+import {
+  GetCloneParamsCb,
+  CreateCb,
+  FromTdoDataCb,
+  ToTdoDataCb,
+  ToTdoDecision,
+} from "../../../ecs";
 import { MixEditor } from "../../mix_editor";
-import { IChildCompo } from "./child";
 import {
   TreeChildrenDeleteCb,
   TreeChildrenInsertCb,
   TreeChildrenSplitInCb,
   TreeChildrenSplitOutCb,
 } from "./cb";
-import { CreateCb } from "../basic/cb";
+import { IChildCompo } from "./child";
 
 /**
  * 子实体数组组件
@@ -50,51 +55,44 @@ export interface EntChildCompoCreateParams {
 }
 
 /** 子实体数组组件传输对象结构定义 */
-export interface EntChildCompoTDO extends CompoTDO {
-  /** 子实体ID列表 */
-  children: string[];
-}
+export type EntChildCompoTDOData = string[];
 
 export function register_EntChildCompo(editor: MixEditor) {
   const { ecs } = editor;
   ecs.set_compo_behaviors(EntChildCompo.type, {
-    /** 序列化组件为传输对象 */
-    [ToTdoCb]({ it, save_with }) {
-      const children = it.children.get();
-      save_with(children);
-      return {
-        type: EntChildCompo.type,
-        children: children,
-      } satisfies EntChildCompoTDO;
-    },
-    /** 从传输对象反序列化组件 */
-    [FromTdoCb]({ input }) {
-      return new EntChildCompo((input as EntChildCompoTDO).children);
-    },
-    [CreateCb]: ({ it, params }) => {
+    [CreateCb]({ params }) {
       return new EntChildCompo(params.children);
     },
-    [TreeChildrenInsertCb]: ({ it, index, items }) => {
-      console.log("[EntChildCompo.TreeChildrenInsertCb]", it, index, items);
+    [ToTdoDataCb]({ it, save_with }) {
+      const children = it.children.get();
+      save_with(children);
+      return ToTdoDecision.Done({ data: children });
+    },
+    [FromTdoDataCb]({ data: input }) {
+      return { children: input as EntChildCompoTDOData };
+    },
+    [GetCloneParamsCb]({ it }) {
+      return { children: it.children.get() };
+    },
+    [TreeChildrenInsertCb]({ it, index, items }) {
       const children = it.children.get();
       children.splice(index, 0, ...items);
       it.children.set(children);
     },
-    [TreeChildrenDeleteCb]: ({ it, start, end }) => {
+    [TreeChildrenDeleteCb]({ it, start, end }) {
       const children = it.children.get();
       const deleted = children.splice(start, end - start);
-      console.log("[EntChildCompo.TreeChildrenDeleteCb]", it, deleted);
       it.children.set(children);
       return deleted;
     },
-    [TreeChildrenSplitOutCb]: ({ it, index }) => {
+    [TreeChildrenSplitOutCb]({ it, index }) {
       const children = it.children.get();
       const left = children.slice(0, index);
       const right = children.slice(index);
       it.children.set(left);
       return right;
     },
-    [TreeChildrenSplitInCb]: ({ it, data }) => {
+    [TreeChildrenSplitInCb]({ it, data }) {
       const children = it.children.get();
       children.push(...data);
       it.children.set(children);

@@ -1,4 +1,3 @@
-
 export type ParametersExceptFirst<F> = F extends (
   arg0: any,
   ...rest: infer R

@@ -1,7 +1,16 @@
 import { create_Signal, WrappedSignal } from "@mixeditor/common";
 import { IArrayLike } from "../../../common/object";
-import { Compo, ToTdoCb, CompoTDO } from "../../../ecs";
+import {
+  GetCloneParamsCb,
+  Compo,
+  CompoTDO,
+  CreateCb,
+  FromTdoDataCb,
+  ToTdoDataCb,
+  ToTdoDecision,
+} from "../../../ecs";
 import { MixEditor } from "../../mix_editor";
+import { TreeChildrenSplitInCb, TreeChildrenSplitOutCb } from "./cb";
 
 /**
  * 父实体记录组件
@@ -24,25 +33,30 @@ export class ParentCompo implements Compo {
 }
 
 /** 父实体组件传输对象结构定义 */
-export interface ParentEntCompoTDO extends CompoTDO {
+export type ParentEntCompoTDOData = string | undefined;
+
+export interface ParentCompoCreateParams {
   parent: string | undefined;
 }
 
 export function register_ParentEntCompo(editor: MixEditor) {
   const { ecs } = editor;
   ecs.set_compo_behaviors(ParentCompo.type, {
-    [ToTdoCb]({ it, save_with }) {
+    [CreateCb]({ params }) {
+      return new ParentCompo(params.parent);
+    },
+    [ToTdoDataCb]({ it, save_with }) {
       const parent_id = it.parent_id.get();
       if (parent_id) {
         save_with([parent_id]);
       }
-      return {
-        type: ParentCompo.type,
-        parent: parent_id,
-      } satisfies ParentEntCompoTDO;
+      return ToTdoDecision.Done({ data: parent_id });
     },
-    from_tdo({ input }) {
-      return new ParentCompo((input as ParentEntCompoTDO).parent);
+    [FromTdoDataCb]({ data: input }) {
+      return { parent: input as ParentEntCompoTDOData };
+    },
+    [GetCloneParamsCb]({ it }) {
+      return { parent: it.parent_id.get() };
     },
   });
 }

@@ -17,6 +17,6 @@ export const register_ents = (editor: MixEditor) => {
     register_RootEnt_doc_extend(editor),
   ];
   return () => {
-    disposers.forEach((disposer) => disposer());
+    disposers.forEach((disposer) => disposer?.());
   };
 };

@@ -13,7 +13,7 @@ import {
   DocDirectedDeletePipeId,
   register_DocCaretDelete,
 } from "./delete";
-import { register_DocMerge, DocMergeCbMapExtend } from "./merge";
+import { register_DocMergeCb, DocMergeCbMapExtend } from "./merge";
 
 export * from "./caret_navigate";
 export * from "./delete";
@@ -35,7 +35,7 @@ export const register_pipes_and_compo_behaviors = (editor: MixEditor) => {
     register_directed_delete_pipe(editor),
     register_DocCaretDelete(editor),
     register_DocCaretNavigate(editor),
-    register_DocMerge(editor),
+    register_DocMergeCb(editor),
   ];
 
   return () => {

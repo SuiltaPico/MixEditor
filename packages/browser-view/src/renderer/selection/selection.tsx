@@ -152,8 +152,9 @@ export const TreeRangeRenderer: Component<{
 
   async function update_selection(selection?: MESelection) {
     if (!selection) {
-      ranges.set([]);
       return;
+    } else if (selection.type !== TreeExtendedSelectionType) {
+      ranges.set([]);
     }
 
     const root_rect = (
