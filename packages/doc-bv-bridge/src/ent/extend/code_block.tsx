@@ -6,7 +6,7 @@ import {
   NodeRenderer,
   NodeRendererWrapper,
 } from "@mixeditor/browser-view";
-import { EntChildCompo, MixEditor } from "@mixeditor/core";
+import { EntChildCompo, MixEditor, TextChildCompo } from "@mixeditor/core";
 import { CodeBlockEntInitPipeId } from "@mixeditor/document";
 import { For } from "solid-js";
 import "./code_block.css";
@@ -20,7 +20,7 @@ export const CodeBlockEntRenderer: NodeRenderer = (props) => {
   const bv_ctx = props.bv_ctx;
   const editor = bv_ctx.editor;
   const { ecs } = editor;
-  const ent_child_compo = ecs.get_compo(ent_id, EntChildCompo.type)!;
+  const ent_child_compo = ecs.get_compo(ent_id, TextChildCompo.type)!;
 
   function handle_pointer_event(event: PointerEvent) {
     bv_forward_pointer_event(editor, ent_id, event);
@@ -32,11 +32,7 @@ export const CodeBlockEntRenderer: NodeRenderer = (props) => {
         onPointerDown={handle_pointer_event}
         onPointerMove={handle_pointer_event}
       >
-        <For each={ent_child_compo.children.get()}>
-          {(child_id) => (
-            <NodeRendererWrapper ent_id={child_id} bv_ctx={props.bv_ctx} />
-          )}
-        </For>
+        {ent_child_compo.content.get()}
       </code>
     </pre>
   );

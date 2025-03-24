@@ -9,7 +9,7 @@ import {
   Transaction,
   TreeCaret,
 } from "@mixeditor/core";
-import { DocCaretDeleteCb } from "./compo_behavior";
+import { DocCaretDeleteCb } from "./cb";
 import { execute_range_deletion } from "./range_delete";
 
 /** 驱使删除的来源。 */

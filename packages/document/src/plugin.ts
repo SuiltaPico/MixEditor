@@ -1,10 +1,13 @@
 import {
+  ChildCompo,
   create_InputEntsEvent,
   create_TreeCollapsedSelection,
+  EntChildCompo,
   InputDataPipeID,
   InputEntsPipeID,
   MEPlugin,
   MixEditor,
+  TempEntType,
   Transaction,
   TreeCollapsedSelectionType,
   TreeExtendedSelectionType,
@@ -35,7 +38,7 @@ function handle_input(editor: MixEditor) {
         const ents = await Promise.all(
           text.split(/(?:(?:\r?\n)|\r)+/).map(async (it) => {
             console.log(it);
-            
+
             const text = await ecs.create_ent(TextEntType, {
               content: it,
             });
@@ -72,6 +75,7 @@ function handle_input(editor: MixEditor) {
           new_selection.caret,
           ents
         );
+        console.log("[handle_input]", "插入结果", insert_result);
         if (insert_result?.caret) {
           selection.set_selection(
             create_TreeCollapsedSelection(insert_result.caret)

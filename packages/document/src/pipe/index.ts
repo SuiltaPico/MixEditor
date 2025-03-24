@@ -13,14 +13,13 @@ import {
   register_directed_delete_pipe,
   register_DocCaretDeleteCb,
 } from "./delete";
-import { DocInsertCbMapExtend } from "./insert";
+import { DocInsertCbMapExtend, register_DocInsertCb } from "./insert";
 import { DocMergeCbMapExtend, register_DocMergeCb } from "./merge";
 
 export * from "./caret_navigate";
 export * from "./delete";
 export * from "./insert";
 export * from "./merge";
-
 
 export interface DocCompoBehaviorMapExtend
   extends DocCaretNavigateCbMapExtend,
@@ -40,6 +39,7 @@ export const register_pipes_and_compo_behaviors = (editor: MixEditor) => {
     register_DocCaretDeleteCb(editor),
     register_DocCaretNavigateCb(editor),
     register_DocMergeCb(editor),
+    register_DocInsertCb(editor),
   ];
 
   return () => {

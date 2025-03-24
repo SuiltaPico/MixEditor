@@ -1,6 +1,6 @@
 {
   "name": "@mixeditor/doc-bv-bridge",
-  "version": "0.0.0",
+  "version": "0.0.0-exp.2",
   "type": "module",
   "scripts": {
     "build": "concurrently \"node esbuild.mjs\" \"rollup -c rollup.config.mjs\"",

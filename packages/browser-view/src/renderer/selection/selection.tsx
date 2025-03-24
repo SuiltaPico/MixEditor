@@ -147,27 +147,30 @@ export const TreeRangeRenderer: Component<{
     let s = selection.get_selection();
     if (e.isComposing || !s) return;
 
-    let data_transfer: MEDataTransfer;
-    if (e.data !== null) {
-      const temp_ent = await editor.ecs.create_ent(TempEntType);
-      editor.ecs.set_compo(temp_ent.id, new TextChildCompo(e.data));
+    if (e.data || e.dataTransfer) {
+      let data_transfer!: MEDataTransfer;
 
-      data_transfer = {
-        types: ["text/plain"],
-        get_data() {
-          return e.data;
-        },
-      } as MEDataTransfer;
-    } else {
-      data_transfer = {
-        types: e.dataTransfer!.types,
-        get_data(type: string) {
-          return e.dataTransfer!.getData(type);
-        },
-      } as MEDataTransfer;
+      if (typeof e.data === "string") {
+        const temp_ent = await editor.ecs.create_ent(TempEntType);
+        editor.ecs.set_compo(temp_ent.id, new TextChildCompo(e.data));
+
+        data_transfer = {
+          types: ["text/plain"],
+          get_data() {
+            return e.data;
+          },
+        } as MEDataTransfer;
+      } else if (e.dataTransfer) {
+        data_transfer = {
+          types: e.dataTransfer!.types,
+          get_data(type: string) {
+            return e.dataTransfer!.getData(type);
+          },
+        } as MEDataTransfer;
+      }
+
+      await pipe.execute(create_InputDataEvent(editor, data_transfer, s));
     }
-
-    await pipe.execute(create_InputDataEvent(editor, data_transfer, s));
 
     e.preventDefault();
     inputer!.textContent = "";

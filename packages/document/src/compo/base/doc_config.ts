@@ -6,12 +6,21 @@ import {
   DocCaretNavigateCb,
   DocRangeDeleteCb,
   RangeDeleteDecision,
-} from "../pipe";
+} from "../../pipe";
 import {
   Compo,
   CustomDecisionFnParams,
   MECompoBehaviorMap,
+  WalkDecision,
 } from "@mixeditor/core";
+
+export interface DocBoxTypeMap {
+  block: "block";
+  inline: "inline";
+  container: "container";
+}
+
+export type BoxType = DocBoxTypeMap[keyof DocBoxTypeMap];
 
 /** 边界处理策略。 */
 export enum BorderType {
@@ -151,7 +160,20 @@ export type BackBorderStrategy =
       handler: (params: CustomDecisionFnParams<{}>) => CaretDeleteDecision;
     };
 
+export type InsertFilter = (
+  params: CustomDecisionFnParams<{
+    curr_ent_id: string;
+    direction: "forward" | "backward";
+    state: {
+      [key: string]: any;
+    };
+  }>
+) => WalkDecision | void;
+
 export type DocConfigParams = {
+  box_type: BoxType;
+
+  // ----- 光标移动 -----
   /**
    * 是否允许进入子实体。
    * - true: 允许包含子节点
@@ -169,6 +191,7 @@ export type DocConfigParams = {
   /** 自定义光标跳转处理逻辑。 */
   custom_caret_navigate?: DocConfigCompo["custom_caret_navigate"];
 
+  // ----- 删除 -----
   /** 光标删除策略。
    * - 默认值为 CaretDeletePolicy.Skip
    */
@@ -190,6 +213,10 @@ export type DocConfigParams = {
   custom_caret_delete?: DocConfigCompo["custom_caret_delete"];
   /** 自定义光标删除处理逻辑。 */
   custom_range_delete?: DocConfigCompo["custom_range_delete"];
+
+  // ----- 插入 -----
+  /** 插入筛选策略。 */
+  insert_filter?: InsertFilter;
 };
 
 /** 文档实体特性组件。
@@ -201,6 +228,8 @@ export class DocConfigCompo implements Compo {
   get type() {
     return DocConfigCompo.type;
   }
+
+  box_type: BoxType;
 
   allow_enter_children: WrappedSignal<boolean>;
   allow_enter_self: WrappedSignal<boolean>;
@@ -227,7 +256,10 @@ export class DocConfigCompo implements Compo {
       ) => RangeDeleteDecision)
     | undefined;
 
+  insert_filter: InsertFilter | undefined;
+
   constructor(params: DocConfigParams) {
+    this.box_type = params.box_type;
     this.allow_enter_children = create_Signal(params.allow_enter_children);
     this.allow_enter_self = create_Signal(params.allow_enter_self);
     this.border_policy = create_Signal(params.border_type);
@@ -247,5 +279,7 @@ export class DocConfigCompo implements Compo {
     );
     this.custom_caret_delete = params.custom_caret_delete;
     this.custom_range_delete = params.custom_range_delete;
+
+    this.insert_filter = params.insert_filter;
   }
 }

@@ -1,5 +1,5 @@
 import { IChildCompo, MECompoBehaviorMap } from "@mixeditor/core";
-import { BorderType, DocConfigCompo } from "../../compo/doc_config";
+import { BorderType, DocConfigCompo } from "../../compo/base/doc_config";
 import {
   CaretDirection,
   CaretNavigateDecision,

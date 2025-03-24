@@ -58,7 +58,10 @@ export function register_ChildCompo(editor: MixEditor) {
  * 需要同时实现组件和类数组接口
  * 符合此接口的组件可以作为子实体源（如ChildEntArrayCompo）
  */
-export type IChildCompo = IArrayLike<string> & Compo;
+export type IChildCompo = IArrayLike<string> &
+  Compo & {
+    is_leaf(): boolean;
+  };
 
 /**
  * 默认子实体索引查找实现：线性遍历查找实体ID

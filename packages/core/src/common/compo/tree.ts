@@ -1,12 +1,16 @@
-import { MixEditor } from "../../core/mix_editor";
+import {
+  TreeInsertChildrenCb,
+  TreeSplitInCb,
+  TreeSplitOutCb,
+} from "../../core";
 import {
   ChildCompo,
   find_child_ent_index_default,
   IChildCompo,
 } from "../../core/compo/tree/child";
 import { ParentCompo } from "../../core/compo/tree/parent";
-import { TreeSplitInCb, TreeSplitOutCb } from "../../core";
-import { GetCloneParamsCb, Compo } from "../../ecs";
+import { MixEditor } from "../../core/mix_editor";
+import { Compo } from "../../ecs";
 import { clone_compo } from "./base";
 
 /**
@@ -143,7 +147,7 @@ export function get_ent_path(ecs_ctx: MixEditor["ecs"], ent_id: string) {
   // 自底向上遍历父级链
   while (parent_ent_id) {
     const child_index = get_index_in_parent_ent(ecs_ctx, child_ent);
-    path_indices.push(child_index ?? 0);
+    path_indices.push(child_index);
     child_ent = parent_ent_id;
     parent_ent_id = get_parent_ent_id(ecs_ctx, parent_ent_id);
   }
@@ -410,7 +414,7 @@ export async function split_ent(
   if (!ent) throw new Error(`无法获取实体 ${ent_id}。`);
 
   const split_outs = new Map<string, any>();
-  const new_ent_compos: Compo[] = [];
+  const cloned_compos: Compo[] = [];
 
   const get_split_out_promises = Array.from(
     ecs.get_own_compos(ent_id).values()
@@ -423,7 +427,7 @@ export async function split_ent(
     } else {
       const cloned_compo = await clone_compo(ecs, compo);
       if (cloned_compo) {
-        new_ent_compos.push(cloned_compo);
+        cloned_compos.push(cloned_compo);
       } else {
         // TODO: 需要决定无法分割和克隆的组件如何处理
       }
@@ -448,5 +452,176 @@ export async function split_ent(
 
   await Promise.all(apply_split_out_promises);
 
+  // 将克隆的组件添加到新实体
+  ecs.set_compos(new_ent.id, cloned_compos);
+
   return { new_ent_id: new_ent.id, split_outs };
+}
+
+/** 根据路径分割 `ent_id` 实体。*/
+export async function split_ent_by_path(
+  ecs: MixEditor["ecs"],
+  ent_id: string,
+  /** 分割路径，前面是实体索引，最后一位是位置索引。
+   *
+   * 长度至少为1，因为至少需要指定一个位置索引。
+   *
+   * 例如，[4, 2] 表示以 `ent_id` 的第4个子实体的第2个位置作为分割点。
+   */
+  path: number[]
+) {
+  if (path.length < 1) throw new Error("分割路径至少需要包含一个位置索引。");
+
+  /** 根实体到最后一个待分割实体的实体 ID 列表，长度为 path.length - 1 */
+  const ent_list: string[] = [ent_id];
+  const split_outs: Map<string, any>[] = [];
+  let splited_root_ent_id!: string;
+
+  // 获取从根实体到最后一个待分割实体的实体 ID 列表
+  // 循环到倒数第二个，也就是最后一个实体索引
+  for (let i = 0; i < path.length - 2; i++) {
+    const child_index = path[i];
+    const child_ent = get_child_ent_id(ecs, ent_list[i], child_index);
+    if (!child_ent)
+      throw new Error(
+        `无法获取实体 ${ent_list[i]} 的第 ${child_index} 个子实体。`
+      );
+    ent_list.push(child_ent);
+  }
+
+  let pos_index = path[path.length - 1];
+
+  // 从内到外分割
+  for (let i = path.length - 1; i >= 0; i--) {
+    /** 待分割的位置索引 */
+    const ent_to_split = ent_list[i];
+    const ent = ecs.get_ent(ent_to_split);
+    if (!ent) throw new Error(`无法获取实体 ${ent_to_split}。`);
+    const { new_ent_id, split_outs: new_split_outs } = await split_ent(
+      ecs,
+      ent_to_split,
+      pos_index
+    );
+
+    // 将分割结果放到自己父元素
+    if (i === 0) {
+      splited_root_ent_id = new_ent_id;
+    } else {
+      const self_pos_index_in_parent = path[i];
+      const parent_ent = ent_list[i - 1];
+      const parent_actual_child_compo = get_actual_child_compo(ecs, parent_ent);
+      if (!parent_actual_child_compo)
+        throw new Error(`无法获取实体 ${parent_ent} 的实际子实体组件。`);
+
+      // 将新实体插入到自己后面
+      ecs.run_compo_behavior(parent_actual_child_compo, TreeInsertChildrenCb, {
+        items: [new_ent_id],
+        index: self_pos_index_in_parent + 1,
+      });
+
+      // 下一次分割应该在新旧实体之间
+      pos_index = self_pos_index_in_parent + 1;
+    }
+
+    split_outs.push(new_split_outs);
+  }
+
+  return {
+    new_ent_id: splited_root_ent_id,
+    /** 分割结果，是按从内到外的顺序排列的。*/
+    split_outs,
+  };
+}
+
+export enum WalkDecision {
+  /** 继续向下遍历。 */
+  Continue = "continue",
+  /** 停止遍历。 */
+  StopWalk = "stop_walk",
+  /** 停止遍历，并返回当前实体。 */
+  StopDrive = "stop_drive",
+}
+
+export const WalkDone = Symbol("walk_done");
+
+export function walk(
+  ecs: MixEditor["ecs"],
+  ent_id: string,
+  processor: (ent_id: string) => WalkDecision | void
+) {
+  // 使用数组作为栈
+  const stack: string[] = [ent_id];
+
+  // 当栈不为空时继续遍历
+  while (stack.length > 0) {
+    // 弹出栈顶元素
+    const current_ent = stack.pop()!;
+
+    // 处理当前实体
+    const decision = processor(current_ent);
+
+    // 如果决定停止遍历，则跳过该节点的子节点
+    if (decision === WalkDecision.StopDrive) continue;
+    else if (decision === WalkDecision.StopWalk) {
+      return current_ent;
+    }
+
+    const actual_child_compo = get_actual_child_compo(ecs, current_ent);
+    if (!actual_child_compo || actual_child_compo.is_leaf()) continue;
+
+    // 获取子实体数量
+    const child_count = actual_child_compo.count();
+
+    // 逆序遍历子实体（这样出栈时顺序会是正序）
+    for (let i = child_count - 1; i >= 0; i--) {
+      const child_id = get_child_ent_id(ecs, current_ent, i);
+      if (child_id) {
+        // 将子实体压入栈中
+        stack.push(child_id);
+      }
+    }
+  }
+
+  return WalkDone;
+}
+
+export function reverse_walk(
+  ecs: MixEditor["ecs"],
+  ent_id: string,
+  processor: (ent_id: string) => WalkDecision | void
+) {
+  // 使用数组作为栈
+  const stack: string[] = [ent_id];
+
+  // 当栈不为空时继续遍历
+  while (stack.length > 0) {
+    // 弹出栈顶元素
+    const current_ent = stack.pop()!;
+
+    // 处理当前实体
+    const decision = processor(current_ent);
+
+    // 如果决定停止遍历，则跳过该节点的子节点
+    if (decision === WalkDecision.StopDrive) continue;
+    else if (decision === WalkDecision.StopWalk) {
+      return current_ent;
+    }
+
+    const actual_child_compo = get_actual_child_compo(ecs, current_ent);
+    if (!actual_child_compo || actual_child_compo.is_leaf()) continue;
+
+    // 获取子实体数量
+    const child_count = actual_child_compo.count();
+
+    // 正序遍历子实体（这样最后一个子实体会最先被处理）
+    for (let i = 0; i < child_count; i++) {
+      const child_id = get_child_ent_id(ecs, current_ent, i);
+      if (child_id) {
+        // 将子实体压入栈中
+        stack.push(child_id);
+      }
+    }
+  }
+
+  return WalkDone;
 }

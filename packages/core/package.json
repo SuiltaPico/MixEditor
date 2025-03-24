@@ -1,6 +1,6 @@
 {
 	"name": "@mixeditor/core",
-	"version": "0.0.0",
+  "version": "0.0.0-exp.2",
 	"scripts": {
 		"build": "concurrently \"node esbuild.mjs\" \"rollup -c rollup.config.mjs\"",
 		"test": "jest"

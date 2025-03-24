@@ -6,6 +6,7 @@ import {
   ParentCompo,
   set_children_parent_refs,
   MixEditor,
+  TextChildCompo,
 } from "@mixeditor/core";
 import {
   BackBorderStrategy,
@@ -13,11 +14,12 @@ import {
   CaretDeleteStrategy,
   DocConfigCompo,
   FrontBorderStrategy,
-} from "../compo/doc_config";
-import { DocCodeBlockCompo } from "../compo";
+} from "../compo/base/doc_config";
+import {  DocCodeBlockCompo } from "../compo";
 
-const default_ChildCompo = new ChildCompo(EntChildCompo.type);
+const default_ChildCompo = new ChildCompo(TextChildCompo.type);
 const default_DocEntTraitsCompo = new DocConfigCompo({
+  box_type: "block",
   allow_enter_children: true,
   allow_enter_self: true,
   border_type: BorderType.Closed,
@@ -35,23 +37,19 @@ const {
   ent_type: "doc:code_block",
   init_stage_execute: async (event) => {
     const { it, ex_ctx, init_params } = event;
-    const children = init_params?.children ?? [];
-
-    set_children_parent_refs(ex_ctx.ecs, children, it.id);
+    const content = init_params?.content ?? "";
 
     ex_ctx.ecs.set_compos(it.id, [
-      new EntChildCompo(children),
-      new ParentCompo(undefined),
+      new TextChildCompo(content),
       new DocCodeBlockCompo(),
     ]);
   },
 });
 
 function register_CodeBlockEnt(editor: MixEditor) {
-  register_CodeBlockEnt_init_pipe(editor);
-
   editor.ecs.set_ent_default_compo(CodeBlockEntType, default_ChildCompo);
   editor.ecs.set_ent_default_compo(CodeBlockEntType, default_DocEntTraitsCompo);
+  return register_CodeBlockEnt_init_pipe(editor);
 }
 
 export { CodeBlockEntInitPipeId, CodeBlockEntType, register_CodeBlockEnt };

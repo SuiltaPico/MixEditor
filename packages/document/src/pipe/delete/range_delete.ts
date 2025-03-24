@@ -15,7 +15,7 @@ import {
   execute_navigate_caret_from_pos,
 } from "../caret_navigate";
 import { execute_merge_ent } from "../merge";
-import { DocRangeDeleteCb } from "./compo_behavior";
+import { DocRangeDeleteCb } from "./cb";
 
 /** 节点对删除范围的决策。 */
 export const RangeDeleteDecision = {

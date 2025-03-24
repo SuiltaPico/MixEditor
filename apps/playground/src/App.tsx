@@ -66,7 +66,8 @@ function App() {
             ent_spec(ParagraphEntType, {
               children: [
                 ent_spec(TextEntType, {
-                  content: "SQL（Structured Query Language）是用于管理和操作关系型数据库的标准语言。在 SQL 中，",
+                  content:
+                    "SQL（Structured Query Language）是用于管理和操作关系型数据库的标准语言。在 SQL 中，",
                 }),
                 ent_spec(
                   TextEntType,
@@ -76,7 +77,8 @@ function App() {
                   [new DocCodeInlineCompo()]
                 ),
                 ent_spec(TextEntType, {
-                  content: " 句是最常用且功能强大的命令之一。它允许我们从数据库中检索数据，并根据需要进行过滤、排序和分组。本文将详细介绍 ",
+                  content:
+                    " 句是最常用且功能强大的命令之一。它允许我们从数据库中检索数据，并根据需要进行过滤、排序和分组。本文将详细介绍 ",
                 }),
                 ent_spec(
                   TextEntType,
@@ -116,11 +118,8 @@ function App() {
               ],
             }),
             ent_spec(CodeBlockEntType, {
-              children: [
-                ent_spec(TextEntType, {
-                  content: "SELECT column1, column2, ...\nFROM table_name\nWHERE condition",
-                }),
-              ],
+              content:
+                "SELECT column1, column2, ...\nFROM table_name\nWHERE condition",
             }),
             ent_spec(ParagraphEntType, {
               children: [
@@ -179,7 +178,8 @@ function App() {
                   [new DocTextBoldCompo()]
                 ),
                 ent_spec(TextEntType, {
-                  content: "​（可选）：用于指定筛选条件，只有满足条件的行才会被返回。",
+                  content:
+                    "​（可选）：用于指定筛选条件，只有满足条件的行才会被返回。",
                 }),
               ],
             }),

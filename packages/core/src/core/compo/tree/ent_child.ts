@@ -31,6 +31,9 @@ export class EntChildCompo implements IChildCompo {
   children: WrappedSignal<string[]>;
 
   // ----- 实现 IChildEntityCompo 接口 -----
+  is_leaf() {
+    return false;
+  }
   count() {
     return this.children.get().length;
   }

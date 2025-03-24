@@ -1,8 +1,12 @@
-import { MixEditor, RootEntInitPipeId } from "@mixeditor/core";
-import { BorderType, CaretDeleteStrategy, DocConfigCompo } from "../compo/doc_config";
+import { MixEditor, RootEntInitPipeId, RootEntType } from "@mixeditor/core";
+import {
+  BorderType,
+  CaretDeleteStrategy,
+  DocConfigCompo,
+} from "../compo/base/doc_config";
 
 export function register_RootEnt_doc_extend(editor: MixEditor) {
-  const { pipe } = editor;
+  const { pipe, ecs } = editor;
   const init_pipe = pipe.get_pipe(RootEntInitPipeId)!;
   init_pipe.set_stage({
     id: "doc",
@@ -10,6 +14,7 @@ export function register_RootEnt_doc_extend(editor: MixEditor) {
       const { it, ex_ctx } = event;
       ex_ctx.ecs.set_compos(it.id, [
         new DocConfigCompo({
+          box_type: "container",
           allow_enter_children: true,
           allow_enter_self: false,
           border_type: BorderType.Open,

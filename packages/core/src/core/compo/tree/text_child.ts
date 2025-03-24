@@ -16,6 +16,7 @@ import {
   TreeSplitOutCb,
 } from "./cb";
 import { TempEntType } from "../../ent/temp";
+import { walk } from "../../../common";
 
 /**
  * 文本内容组件
@@ -31,6 +32,9 @@ export class TextChildCompo implements IChildCompo {
   content: WrappedSignal<string>;
 
   // ----- 实现 IChildEntityCompo 接口 -----
+  is_leaf() {
+    return true;
+  }
   count() {
     return this.content.get().length;
   }
@@ -74,8 +78,12 @@ export function register_TextChildCompo(editor: MixEditor) {
       const content = it.content.get();
       let new_content = content.slice(0, index);
       for (const item of items) {
-        new_content +=
-          ecs.get_compo(item, TextChildCompo.type)?.content.get() ?? "";
+        walk(ecs, item, (ent_id) => {
+          const text_compo = ecs.get_compo(ent_id, TextChildCompo.type);
+          if (text_compo) {
+            new_content += text_compo.content.get();
+          }
+        });
       }
       new_content += content.slice(index);
       it.content.set(new_content);
