@@ -4,6 +4,8 @@ import {
   CaretDeleteStrategy,
   DocConfigCompo,
 } from "../compo/base/doc_config";
+import { InsertMethod } from "../pipe";
+import { LoopDecision } from "@mixeditor/common";
 
 export function register_RootEnt_doc_extend(editor: MixEditor) {
   const { pipe, ecs } = editor;
@@ -19,6 +21,25 @@ export function register_RootEnt_doc_extend(editor: MixEditor) {
           allow_enter_self: false,
           border_type: BorderType.Open,
           caret_delete_policy: CaretDeleteStrategy.PropagateToChild,
+          get_insert_method: async (params) => {
+            const { curr_ent_id, editor } = params;
+            const { ecs } = editor;
+
+            const doc_config_compo = ecs.get_compo(
+              curr_ent_id,
+              DocConfigCompo.type
+            );
+
+            if (!doc_config_compo) {
+              return LoopDecision.Break;
+            }
+
+            if (doc_config_compo.box_type === "block") {
+              return InsertMethod.Insert();
+            }
+
+            return LoopDecision.Break;
+          },
         }),
       ]);
     },

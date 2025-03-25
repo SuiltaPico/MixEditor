@@ -126,7 +126,9 @@ export async function execute_full_insert_ents(
     "decision",
     decision,
     "items",
-    items
+    items,
+    "child_split_caret",
+    child_split_caret
   );
 
   async function insert_items_to_ent(
@@ -145,6 +147,14 @@ export async function execute_full_insert_ents(
         i
       ];
       if (method.type === "merge") {
+        console.log(
+          "[insert_items_to_ent]",
+          "merge",
+          ent_id,
+          caret.offset + i + ex_offset,
+          item
+        );
+
         await execute_merge_ent(
           editor,
           tx,
@@ -153,6 +163,14 @@ export async function execute_full_insert_ents(
           item
         );
       } else if (method.type === "insert") {
+        console.log(
+          "[insert_items_to_ent]",
+          "insert",
+          ent_id,
+          caret.offset + i + ex_offset,
+          item
+        );
+
         await tx.execute(
           new TreeInsertChildrenOp(
             op.gen_id(),

@@ -1,4 +1,6 @@
 import {
+  EntChildCompo,
+  TextChildCompo,
   TreeInsertChildrenCb,
   TreeSplitInCb,
   TreeSplitOutCb,
@@ -479,7 +481,7 @@ export async function deep_split_ent(
 
   // 获取从根实体到最后一个待分割实体的实体 ID 列表
   // 循环到倒数第二个，也就是最后一个实体索引
-  for (let i = 0; i < path.length - 2; i++) {
+  for (let i = 0; i < path.length - 1; i++) {
     const child_index = path[i];
     const child_ent = get_child_ent_id(ecs, ent_list[i], child_index);
     if (!child_ent)
@@ -625,3 +627,27 @@ export function reverse_walk(
 
   return WalkDone;
 }
+
+export const print_tree = async (
+  editor: MixEditor,
+  id: string
+): Promise<any> => {
+  const ecs = editor.ecs;
+  const ent = ecs.get_ent(id);
+  const actual_child_compo = get_actual_child_compo(ecs, id);
+  return {
+    // id: ent?.id,
+    type: ent?.type,
+    compo: ecs.get_compos(id).keys(),
+    children:
+      actual_child_compo instanceof EntChildCompo
+        ? await Promise.all(
+            actual_child_compo.children.get().map(async (it) => {
+              return await print_tree(editor, it);
+            })
+          )
+        : actual_child_compo instanceof TextChildCompo
+        ? actual_child_compo.content.get()
+        : undefined,
+  };
+};

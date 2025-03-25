@@ -5,9 +5,11 @@ import {
   TreeCaret,
   create_TreeCollapsedSelection,
   get_actual_child_compo,
+  get_child_ent_count,
   get_index_in_parent_ent,
   get_parent_ent_id,
-  process_shallow_nodes
+  print_tree,
+  process_shallow_nodes,
 } from "@mixeditor/core";
 import {
   CaretDirection,
@@ -61,6 +63,7 @@ export async function delete_ent_range(
   start_offset: number,
   end_offset: number
 ) {
+  const { ecs } = editor;
   // console.log(
   //   "删除单个实体的范围 等待决策",
   //   editor.ecs.get_ent(ent_id),
@@ -82,6 +85,17 @@ export async function delete_ent_range(
   const actual_child_compo = get_actual_child_compo(ecs_ctx, ent_id);
   if (!actual_child_compo) return result;
 
+  console.log(
+    "删除单个实体的范围 等待决策",
+    ent_id,
+    await print_tree(editor, ent_id),
+    "start_offset:",
+    start_offset,
+    "end_offset:",
+    end_offset,
+    "[delete_ent_range]"
+  );
+
   const decision = await ecs_ctx.run_compo_behavior(
     actual_child_compo,
     DocRangeDeleteCb,
@@ -95,7 +109,8 @@ export async function delete_ent_range(
 
   console.log(
     "删除单个实体的范围 获得决策",
-    editor.ecs.get_ent(ent_id),
+    ent_id,
+    await print_tree(editor, ent_id),
     "decision:",
     decision,
     "[delete_ent_range]"
@@ -168,6 +183,7 @@ export async function execute_range_deletion(
     editor,
     tx,
     start.ent_id,
+    get_child_ent_count(ecs, start.ent_id),
     end.ent_id
   );
   if (merge_result?.selection) {

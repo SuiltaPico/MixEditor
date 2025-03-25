@@ -15,7 +15,7 @@ import {
   BackBorderStrategy,
 } from "../compo/base/doc_config";
 import { LoopDecision } from "@mixeditor/common";
-import { get_merge_decision } from "../pipe";
+import { get_merge_decision, InsertMethod } from "../pipe";
 const default_ChildCompo = new ChildCompo(TextChildCompo.type);
 const default_DocEntTraitsCompo = new DocConfigCompo({
   box_type: "inline",
@@ -25,8 +25,8 @@ const default_DocEntTraitsCompo = new DocConfigCompo({
   caret_delete_policy: CaretDeleteStrategy.DeleteChild,
   front_border_strategy: FrontBorderStrategy.MergeWithPrev,
   back_border_strategy: BackBorderStrategy.PropagateToNext,
-  insert_filter: async (params) => {
-    const { curr_ent_id, editor } = params;
+  get_insert_method: async (params) => {
+    const { curr_ent_id, editor, ent_id } = params;
     const { ecs } = editor;
 
     const doc_config_compo = ecs.get_compo(curr_ent_id, DocConfigCompo.type);
@@ -36,13 +36,15 @@ const default_DocEntTraitsCompo = new DocConfigCompo({
 
     const decision = await get_merge_decision(
       editor,
-      curr_ent_id,
+      ent_id,
       curr_ent_id,
       true
     );
     if (decision.type === "reject") {
       return LoopDecision.Break;
     }
+
+    return InsertMethod.Insert();
   },
 });
 

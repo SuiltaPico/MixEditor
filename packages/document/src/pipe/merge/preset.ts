@@ -11,12 +11,12 @@ export const handle_merge_always_allow: MECompoBehaviorHandler<
 export const handle_merge_allow_when_same_or_loose: MECompoBehaviorHandler<
   MergeContext,
   MergeDecision
-> = async ({ src_id, ex_ctx: editor, it, loose }) => {
+> = async ({ ent_id, src_id, ex_ctx: editor, it, loose }) => {
   const { ecs } = editor;
 
   // 处理代码块合并逻辑
-  const ent_compo = it;
-  const src_compo = ecs.get_compo(src_id, ent_compo.type);
+  const ent_compo = ecs.get_compo(ent_id, it.type);
+  const src_compo = ecs.get_compo(src_id, it.type);
   if ((ent_compo && src_compo) || loose) return MergeDecision.Allow;
 
   return MergeDecision.Reject;
@@ -27,12 +27,12 @@ export function handle_merge_allow_when_same_with_cond_or_loose<
 >(
   cond: (host: TCompo, src: TCompo, editor: MixEditor) => boolean
 ): MECompoBehaviorHandler<MergeContext, MergeDecision> {
-  return async ({ src_id, ex_ctx: editor, it, loose }) => {
+  return async ({ ent_id, src_id, ex_ctx: editor, it, loose }) => {
     const { ecs } = editor;
 
     // 处理代码块合并逻辑
-    const ent_compo = it;
-    const src_compo = ecs.get_compo(src_id, ent_compo.type);
+    const ent_compo = ecs.get_compo(ent_id, it.type);
+    const src_compo = ecs.get_compo(src_id, it.type);
     if (
       (ent_compo &&
         src_compo &&

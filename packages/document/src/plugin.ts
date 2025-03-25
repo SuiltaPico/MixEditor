@@ -1,24 +1,21 @@
 import {
-  ChildCompo,
   create_InputEntsEvent,
   create_TreeCollapsedSelection,
-  EntChildCompo,
   InputDataPipeID,
   InputEntsPipeID,
   MEPlugin,
   MixEditor,
-  TempEntType,
   Transaction,
   TreeCollapsedSelectionType,
-  TreeExtendedSelectionType,
+  TreeExtendedSelectionType
 } from "@mixeditor/core";
+import { register_compos } from "./compo";
+import { ParagraphEntType, register_ents, TextEntType } from "./ent";
 import {
   execute_full_insert_ents,
   execute_range_deletion,
   register_pipes_and_compo_behaviors,
 } from "./pipe";
-import { ParagraphEntType, register_ents, TextEntType } from "./ent";
-import { register_compos } from "./compo";
 
 export const InputDataPipeMapToDocEntStage = "doc:to_doc_ent";
 export const InputEntsPipeMapToDocInsertStage = "doc:to_doc_insert";

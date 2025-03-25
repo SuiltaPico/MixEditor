@@ -222,7 +222,7 @@ export type DocConfigParams = {
 
   // ----- 插入 -----
   /** 插入筛选策略。 */
-  insert_filter?: InsertMethodGetter;
+  get_insert_method?: InsertMethodGetter;
 };
 
 /** 文档实体特性组件。
@@ -286,6 +286,6 @@ export class DocConfigCompo implements Compo {
     this.custom_caret_delete = params.custom_caret_delete;
     this.custom_range_delete = params.custom_range_delete;
 
-    this.get_insert_method = params.insert_filter;
+    this.get_insert_method = params.get_insert_method;
   }
 }

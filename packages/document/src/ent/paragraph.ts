@@ -16,6 +16,7 @@ import {
   FrontBorderStrategy,
 } from "../compo/base/doc_config";
 import { LoopDecision } from "@mixeditor/common";
+import { InsertMethod } from "../pipe";
 
 const default_ChildCompo = new ChildCompo(EntChildCompo.type);
 const default_DocEntTraitsCompo = new DocConfigCompo({
@@ -26,20 +27,17 @@ const default_DocEntTraitsCompo = new DocConfigCompo({
   caret_delete_policy: CaretDeleteStrategy.PropagateToChild,
   front_border_strategy: FrontBorderStrategy.MergeWithPrev,
   back_border_strategy: BackBorderStrategy.PropagateToNext,
-  insert_filter: (params) => {
+  get_insert_method: async (params) => {
     const { curr_ent_id, editor } = params;
     const { ecs } = editor;
 
     const doc_config_compo = ecs.get_compo(curr_ent_id, DocConfigCompo.type);
 
     if (!doc_config_compo || doc_config_compo.box_type !== "inline") {
-      const child_compo = ecs.get_compo(curr_ent_id, EntChildCompo.type);
-      if (!child_compo) {
-        return LoopDecision.Break;
-      }
-    } else {
       return LoopDecision.Break;
     }
+
+    return InsertMethod.Insert();
   },
 });
 

@@ -6,6 +6,7 @@ import {
   get_lca_of_ent,
   get_parent_ent_id,
   MixEditor,
+  print_tree,
   Transaction,
   TreeCaret,
   TreeDeleteChildrenOp,
@@ -97,6 +98,19 @@ export async function execute_merge_single_layer_ent(
 
   // 默认允许合并
   const decision = await get_merge_decision(editor, host, source);
+  console.log(
+    "单层合并",
+    "host",
+    host,
+    await print_tree(editor, host),
+    "host_offset",
+    host_offset,
+    "source",
+    source,
+    await print_tree(editor, source),
+    "decision",
+    decision
+  );
 
   // 如果最终决策是允许合并
   if (decision.type === "allow") {

@@ -1,24 +1,16 @@
-import {
-  create_TreeCollapsedSelection,
-  InputEntsPipeID,
-  MEPlugin,
-  MixEditor,
-  Transaction,
-  TreeCollapsedSelectionType,
-  TreeExtendedSelectionType,
-  TreeInsertChildrenOp,
-} from "@mixeditor/core";
-import { register_ents } from "./ent";
-import { register_compos } from "./compo";
 import { BrowserViewExposed } from "@mixeditor/browser-view";
+import {
+  MEPlugin,
+  MixEditor
+} from "@mixeditor/core";
 import {
   CaretDeleteDirection,
   CaretDirection,
   DocCaretNavigatePipeId,
-  DocDirectedDeletePipeId,
-  execute_insert,
-  execute_range_deletion,
+  DocDirectedDeletePipeId
 } from "@mixeditor/document";
+import { register_compos } from "./compo";
+import { register_ents } from "./ent";
 
 async function handle_key_down(editor: MixEditor, event: KeyboardEvent) {
   if (event.ctrlKey) {

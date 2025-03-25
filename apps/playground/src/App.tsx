@@ -4,8 +4,11 @@ import "@mixeditor/doc-bv-bridge/index.css";
 import {
   build_ent_specs,
   ent_spec,
+  EntChildCompo,
+  get_actual_child_compo,
   MixEditor,
   RootEntType,
+  TextChildCompo,
 } from "@mixeditor/core";
 import {
   CodeBlockEntType,
@@ -44,6 +47,29 @@ function App() {
     });
     // @ts-ignore
     window.editor = editor;
+    const print_tree = async (id: string): Promise<any> => {
+      const ecs = editor.ecs;
+      const ent = ecs.get_ent(id);
+      const actual_child_compo = get_actual_child_compo(ecs, id);
+      return {
+        // id: ent?.id,
+        type: ent?.type,
+        compo: ecs.get_compos(id).keys(),
+        children:
+          actual_child_compo instanceof EntChildCompo
+            ? await Promise.all(
+                actual_child_compo.children.get().map(async (it) => {
+                  return await print_tree(it);
+                })
+              )
+            : actual_child_compo instanceof TextChildCompo
+            ? actual_child_compo.content.get()
+            : undefined,
+      };
+    };
+    // @ts-ignore
+    window.print_tree = print_tree;
+
     await editor.init({});
 
     console.time("build_ent_specs");
