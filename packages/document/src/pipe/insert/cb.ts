@@ -1,5 +1,5 @@
 import { MECompoBehaviorHandler, MixEditor } from "@mixeditor/core";
-import { InsertContext, InsertDecision } from "./executor";
+import { InsertContext, InsertDecision } from "./executor.ts";
 import { handle_two_direction_scan_ent_for_insert } from "./default";
 
 /** 文档插入行为。

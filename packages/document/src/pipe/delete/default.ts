@@ -22,7 +22,7 @@ import {
   DocConfigCompo,
   FrontBorderStrategy,
 } from "../../compo";
-import { execute_merge_ent } from "../merge";
+import { execute_cross_parent_merge_ent } from "../merge";
 
 /** 默认的光标删除处理逻辑。
  *
@@ -134,7 +134,7 @@ async function handle_border_strategy(
         ? [target_ent_id, ent_id] // 向前合并
         : [ent_id, target_ent_id]; // 向后合并
 
-    const result = await execute_merge_ent(editor, tx, first_ent, second_ent);
+    const result = await execute_cross_parent_merge_ent(editor, tx, first_ent, second_ent);
     if (result) return CaretDeleteDecision.Done(result);
     else {
       // 若合并失败，则跳过

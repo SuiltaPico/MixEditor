@@ -289,13 +289,13 @@ function handle_pointer_event_forward(
   >[0]
 ) {
   const { editor, pos, event } = params;
-  const handlerMap = {
+  const handler_map = {
     pointerdown: handle_pointer_down_base,
     pointermove: handle_pointer_move_base,
   };
 
-  if (event.type in handlerMap) {
-    handlerMap[event.type as keyof typeof handlerMap](
+  if (event.type in handler_map) {
+    handler_map[event.type as keyof typeof handler_map](
       editor,
       params.ent_id,
       event,

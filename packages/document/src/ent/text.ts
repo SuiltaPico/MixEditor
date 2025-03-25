@@ -14,7 +14,8 @@ import {
   FrontBorderStrategy,
   BackBorderStrategy,
 } from "../compo/base/doc_config";
-
+import { LoopDecision } from "@mixeditor/common";
+import { get_merge_decision } from "../pipe";
 const default_ChildCompo = new ChildCompo(TextChildCompo.type);
 const default_DocEntTraitsCompo = new DocConfigCompo({
   box_type: "inline",
@@ -24,22 +25,23 @@ const default_DocEntTraitsCompo = new DocConfigCompo({
   caret_delete_policy: CaretDeleteStrategy.DeleteChild,
   front_border_strategy: FrontBorderStrategy.MergeWithPrev,
   back_border_strategy: BackBorderStrategy.PropagateToNext,
-  insert_filter: (params) => {
+  insert_filter: async (params) => {
     const { curr_ent_id, editor } = params;
-    const { ecs } = editor;;
+    const { ecs } = editor;
 
     const doc_config_compo = ecs.get_compo(curr_ent_id, DocConfigCompo.type);
-    if (!doc_config_compo) {
-      return WalkDecision.StopWalk;
+    if (!doc_config_compo || doc_config_compo.box_type !== "inline") {
+      return LoopDecision.Break;
     }
 
-    if (doc_config_compo.box_type === "inline") {
-      const text_compo = ecs.get_compo(curr_ent_id, TextChildCompo.type);
-      if (!text_compo) {
-        return WalkDecision.StopWalk;
-      }
-    } else {
-      return WalkDecision.StopWalk;
+    const decision = await get_merge_decision(
+      editor,
+      curr_ent_id,
+      curr_ent_id,
+      true
+    );
+    if (decision.type === "reject") {
+      return LoopDecision.Break;
     }
   },
 });

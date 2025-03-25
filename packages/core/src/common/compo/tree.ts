@@ -459,7 +459,7 @@ export async function split_ent(
 }
 
 /** 根据路径分割 `ent_id` 实体。*/
-export async function split_ent_by_path(
+export async function deep_split_ent(
   ecs: MixEditor["ecs"],
   ent_id: string,
   /** 分割路径，前面是实体索引，最后一位是位置索引。

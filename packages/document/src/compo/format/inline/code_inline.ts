@@ -5,7 +5,7 @@ import {
   ToTdoDataCb,
   ToTdoDecision,
 } from "@mixeditor/core";
-import { DocMergeCb, handle_same_merge, MergeDecision } from "../../../pipe";
+import { DocMergeCb, handle_merge_allow_when_same_or_loose, MergeDecision } from "../../../pipe";
 
 export class DocCodeInlineCompo implements Compo {
   static type = "doc:code_inline" as const;
@@ -20,6 +20,6 @@ export function register_DocCodeInlineCompo(editor: MixEditor) {
     [CreateCb]() {
       return new DocCodeInlineCompo();
     },
-    [DocMergeCb]: handle_same_merge,
+    [DocMergeCb]: handle_merge_allow_when_same_or_loose,
   });
 }

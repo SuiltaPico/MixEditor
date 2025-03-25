@@ -1,4 +1,7 @@
-import { get_actual_child_compo, split_ent } from "../../../common";
+import {
+  deep_split_ent,
+  get_actual_child_compo
+} from "../../../common";
 import { Op } from "../../../op";
 import {
   TreeDeleteChildrenCb,
@@ -9,30 +12,30 @@ import { MixEditor } from "../../mix_editor";
 import { TreeCaret } from "../../selection";
 
 /** 删除树结构中指定范围的子节点操作。 */
-export class TreeSplitOp implements Op {
-  static type = "tree:split" as const;
+export class TreeDeepSplitOp implements Op {
+  static type = "tree:deep_split" as const;
   get type() {
-    return TreeSplitOp.type;
+    return TreeDeepSplitOp.type;
   }
 
-  split_result!: Awaited<ReturnType<typeof split_ent>>;
+  split_result!: Awaited<ReturnType<typeof deep_split_ent>>;
 
   constructor(
     public id: string,
     public target: string,
-    public target_index: number,
+    public path: number[],
     public insert_to: TreeCaret
   ) {}
 }
 
-export function register_TreeSplitOp(editor: MixEditor) {
+export function register_TreeDeepSplitOp(editor: MixEditor) {
   const { op } = editor;
-  op.register_handlers(TreeSplitOp.type, {
+  op.register_handlers(TreeDeepSplitOp.type, {
     execute: async (params) => {
       const { it, ex_ctx } = params;
       const { ecs } = ex_ctx;
 
-      const split_result = await split_ent(ecs, it.target, it.target_index);
+      const split_result = await deep_split_ent(ecs, it.target, it.path);
       it.split_result = split_result;
 
       const new_ent_insert_to_actual_child_compo = get_actual_child_compo(
@@ -74,17 +77,19 @@ export function register_TreeSplitOp(editor: MixEditor) {
 
       // 还原分割结果
       const split_outs = it.split_result.split_outs;
-      const apply_split_out_promises = Array.from(split_outs.entries()).map(
-        async ([compo_type, split_out_result]) => {
-          const old_ent_compo = await ecs.get_or_create_compo(
-            it.target,
-            compo_type
-          );
+      const apply_split_out_promises = split_outs.flatMap((split_out) =>
+        Array.from(split_out.entries()).map(
+          async ([compo_type, split_out_result]) => {
+            const old_ent_compo = await ecs.get_or_create_compo(
+              it.target,
+              compo_type
+            );
 
-          await ecs.run_compo_behavior(old_ent_compo, TreeSplitInCb, {
-            data: split_out_result,
-          });
-        }
+            await ecs.run_compo_behavior(old_ent_compo, TreeSplitInCb, {
+              data: split_out_result,
+            });
+          }
+        )
       );
 
       await Promise.all(apply_split_out_promises);

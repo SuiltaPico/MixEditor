@@ -5,7 +5,7 @@ import {
   CreateCb,
   ToTdoDecision,
 } from "@mixeditor/core";
-import { DocMergeCb, handle_default_merge, MergeDecision } from "../../../pipe";
+import { DocMergeCb, handle_merge_always_allow, MergeDecision } from "../../../pipe";
 
 export class DocCodeBlockCompo implements Compo {
   static type = "doc:code_block" as const;
@@ -20,6 +20,6 @@ export function register_DocCodeBlockCompo(editor: MixEditor) {
     [CreateCb]() {
       return new DocCodeBlockCompo();
     },
-    [DocMergeCb]: handle_default_merge,
+    [DocMergeCb]: handle_merge_always_allow,
   });
 }

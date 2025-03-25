@@ -14,7 +14,7 @@ import {
   CaretNavigateSource,
   execute_navigate_caret_from_pos,
 } from "../caret_navigate";
-import { execute_merge_ent } from "../merge";
+import { execute_cross_parent_merge_ent } from "../merge";
 import { DocRangeDeleteCb } from "./cb";
 
 /** 节点对删除范围的决策。 */
@@ -164,7 +164,7 @@ export async function execute_range_deletion(
   }
 
   // 执行合并逻辑
-  const merge_result = await execute_merge_ent(
+  const merge_result = await execute_cross_parent_merge_ent(
     editor,
     tx,
     start.ent_id,

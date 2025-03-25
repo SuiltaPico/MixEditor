@@ -7,20 +7,18 @@
     ],
     "module": "ESNext",
     "skipLibCheck": true,
-
     /* Bundler mode */
     "moduleResolution": "Bundler",
     "allowImportingTsExtensions": true,
     "isolatedModules": true,
     "moduleDetection": "force",
     "noEmit": true,
-
     /* Linting */
     "strict": true,
     "noFallthroughCasesInSwitch": true,
   },
   "include": [
     "src/**/*.ts",
-    "__tests__/**/*.ts", "src/compo/format/inline/code_inline.ts",
+    "__tests__/**/*.ts",
   ],
 }

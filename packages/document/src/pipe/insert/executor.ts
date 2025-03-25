@@ -1,43 +1,37 @@
 import {
-  ChildCompo,
-  EntChildCompo,
   get_actual_child_compo,
   get_child_ent_count,
   get_child_ent_id,
   get_index_of_child_ent,
   get_parent_ent_id,
   MixEditor,
-  path_compare,
-  split_ent_by_path,
-  TempEntType,
   Transaction,
   TreeCaret,
+  TreeDeepSplitOp,
   TreeInsertChildrenOp,
   TreeSplitOp,
 } from "@mixeditor/core";
+import { execute_merge_ent } from "../merge";
 import { DocInsertCb } from "./cb";
 
-export const InsertDecisionAccepted = {
-  type: "accept",
-} as const;
-export const InsertDecisionNoneAccepted = {
-  type: "partial_accept",
-  rejected_from: [0],
-  rejected_to: [Number.MAX_SAFE_INTEGER],
+export const InsertDecisionReject = {
+  type: "reject",
 } satisfies InsertDecision;
-export const InsertDecisionPrevent = { type: "prevent" } as const;
+export const InsertDecisionPrevent = {
+  type: "prevent",
+} satisfies InsertDecision;
 
 /** 插入决策。 */
 export const InsertDecision = {
   /** 允许插入。 */
-  Accept() {
-    return InsertDecisionAccepted;
-  },
-  /** 允许部分插入。*/
-  PartialAccept(params: { rejected_from: number[]; rejected_to: number[] }) {
-    const p = params as InsertDecision & { type: "partial_accept" };
-    p.type = "partial_accept";
+  Accept(params: { methods: InsertMethod[] }) {
+    const p = params as InsertDecision & { type: "accept" };
+    p.type = "accept";
     return p;
+  },
+  /** 拒绝插入。 */
+  Reject() {
+    return InsertDecisionReject;
   },
   /** 阻止插入。 */
   Prevent() {
@@ -46,15 +40,36 @@ export const InsertDecision = {
 } as const;
 
 export type InsertDecision =
-  | { type: "accept" }
-  | {
-      type: "partial_accept";
-      /** 被拒绝插入的实体的起始路径。 */
-      rejected_from: number[];
-      /** 被拒绝插入的实体的结束路径。 */
-      rejected_to: number[];
-    }
+  /** 允许插入。 */
+  | { type: "accept"; methods: InsertMethod[] }
+  /** 拒绝插入。 */
+  | { type: "reject" }
+  /** 阻止插入。 */
   | { type: "prevent" };
+
+export const InsertMethodMerge = {
+  type: "merge",
+} satisfies InsertMethod;
+export const InsertMethodInsert = {
+  type: "insert",
+} satisfies InsertMethod;
+
+/** 插入方法。 */
+export const InsertMethod = {
+  /** 合并到实体。 */
+  Merge() {
+    return InsertMethodMerge;
+  },
+  /** 插入到实体。 */
+  Insert() {
+    return InsertMethodInsert;
+  },
+} as const;
+export type InsertMethod =
+  /** 合并到实体的 `index` 位置。 */
+  | { type: "merge" }
+  /** 插入到实体的 `index` 位置。 */
+  | { type: "insert" };
 
 export interface InsertContext {
   /** 当前导航实体 */
@@ -73,11 +88,12 @@ export interface InsertContext {
  *
  * 返回没有被任何实体接受的实体。
  */
-export async function execute_insert(
+export async function execute_full_insert_ents(
   editor: MixEditor,
   tx: Transaction,
   caret: TreeCaret,
-  items: string[]
+  items: string[],
+  child_split_caret?: number[]
 ): Promise<
   | {
       rejected?: string[];
@@ -85,6 +101,8 @@ export async function execute_insert(
     }
   | undefined
 > {
+  let result_caret: TreeCaret | undefined = caret;
+
   const { ecs, op } = editor;
   const { ent_id, offset } = caret;
 
@@ -95,14 +113,12 @@ export async function execute_insert(
       caret: caret,
     };
 
-  let decision = await ecs.run_compo_behavior(actual_child_compo, DocInsertCb, {
-    ent_id,
-    index: offset,
-    items: items,
-  });
-  if (!decision) {
-    decision = InsertDecisionNoneAccepted;
-  }
+  const decision =
+    (await ecs.run_compo_behavior(actual_child_compo, DocInsertCb, {
+      ent_id,
+      index: offset,
+      items: items,
+    })) ?? InsertDecisionReject;
 
   console.log(
     "[execute_insert]",
@@ -113,67 +129,77 @@ export async function execute_insert(
     items
   );
 
+  async function insert_items_to_ent(
+    ent_id: string,
+    ex_offset: number,
+    ent_after_inserted?: string
+  ) {
+    const child_count_before_insert = get_child_ent_count(ecs, ent_id);
+    // 将 items 每一项与自己合并
+    // 例如源文档是 `Paragraph [Text [A] Text [B]]`，
+    // 插入 `Text[C D]` 到 `A` 后面，因为 execute_merge_ent 会尝试向前深度合并
+    // 则结果应该是 `Paragraph [Text [A C D] Text [B]]`
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      const method = (decision as InsertDecision & { type: "accept" }).methods[
+        i
+      ];
+      if (method.type === "merge") {
+        await execute_merge_ent(
+          editor,
+          tx,
+          ent_id,
+          caret.offset + i + ex_offset,
+          item
+        );
+      } else if (method.type === "insert") {
+        await tx.execute(
+          new TreeInsertChildrenOp(
+            op.gen_id(),
+            ent_id,
+            caret.offset + i + ex_offset,
+            [item]
+          )
+        );
+      }
+    }
+    const child_count_after_insert = get_child_ent_count(ecs, ent_id);
+
+    result_caret = {
+      ent_id,
+      offset:
+        caret.offset +
+        ex_offset +
+        (child_count_after_insert - child_count_before_insert),
+    };
+
+    // 如果合并区域右侧有子实体，则尝试合并 items 最后一项和合并区域右侧的子实体
+    // 这是为了完成上一个例子中，`Text [A C D]` 和 `Text [B]` 的合并
+    // 最终我们可以得到 `Paragraph [Text [A C D B]]`
+    if (ent_after_inserted) {
+      const last_item = items[items.length - 1];
+      const merge_result = await execute_merge_ent(
+        editor,
+        tx,
+        last_item,
+        get_child_ent_count(ecs, last_item),
+        ent_after_inserted
+      );
+      if (merge_result.caret) {
+        result_caret = merge_result.caret;
+      }
+    }
+  }
+
   if (decision.type === "prevent") {
+    // 阻止整个插入流程
+
     return {
       rejected: items,
       caret,
     };
-  } else if (decision.type === "accept") {
-    const ori_child_count = get_child_ent_count(ecs, ent_id);
-    await tx.execute(
-      new TreeInsertChildrenOp(op.gen_id(), ent_id, offset, items)
-    );
-    const new_child_count = get_child_ent_count(ecs, ent_id);
-    return {
-      rejected: undefined,
-      caret: {
-        ent_id: ent_id,
-        offset: offset + new_child_count - ori_child_count,
-      },
-    };
-  } else if (decision.type === "partial_accept") {
-    if (path_compare(decision.rejected_from, decision.rejected_to) >= 0) {
-      console.log("[execute_insert]", "部分接受 -> 全接受");
-      const ori_child_count = get_child_ent_count(ecs, ent_id);
-      // 视为全接受
-      await tx.execute(
-        new TreeInsertChildrenOp(op.gen_id(), ent_id, offset, items)
-      );
-      const new_child_count = get_child_ent_count(ecs, ent_id);
-      return {
-        rejected: undefined,
-        caret: {
-          ent_id: ent_id,
-          offset: offset + new_child_count - ori_child_count,
-        },
-      };
-    }
-
-    const items_temp_root = await ecs.create_ent(TempEntType);
-    const items_temp_root_ent_child_compo = new EntChildCompo(items);
-    ecs.set_compos(items_temp_root.id, [
-      new ChildCompo(EntChildCompo.type),
-      items_temp_root_ent_child_compo,
-    ]);
-
-    // 先分割后面的部分，再分割前面的部分，避免影响索引
-    const right_split_result = await split_ent_by_path(
-      ecs,
-      items_temp_root.id,
-      decision.rejected_to
-    );
-    const right_splited_items = ecs
-      .get_compo(right_split_result.new_ent_id, EntChildCompo.type)!
-      .children.get();
-    const left_split_result = await split_ent_by_path(
-      ecs,
-      items_temp_root.id,
-      decision.rejected_from
-    );
-    const remained_items = ecs
-      .get_compo(left_split_result.new_ent_id, EntChildCompo.type)!
-      .children.get();
-    const left_splited_items = items_temp_root_ent_child_compo.children.get();
+  } else if (decision.type === "reject") {
+    // 拒绝插入则交由父实体处理，并记录自己的分割位置
 
     const parent_ent_id = get_parent_ent_id(ecs, ent_id);
     if (!parent_ent_id)
@@ -182,62 +208,75 @@ export async function execute_insert(
         caret: caret,
       };
     const index_in_parent = get_index_of_child_ent(ecs, parent_ent_id, ent_id);
-    if (index_in_parent < 0)
-      return {
-        rejected: items,
-        caret: caret,
-      };
 
-    // 分割父实体
-    await tx.execute(
-      new TreeSplitOp(op.gen_id(), ent_id, index_in_parent, {
-        ent_id: parent_ent_id,
-        offset: index_in_parent + 1,
-      })
-    );
+    const _child_split_caret = child_split_caret ?? [];
+    _child_split_caret.unshift(caret.offset);
 
-    const splited_ent_id = get_child_ent_id(
-      ecs,
-      parent_ent_id,
-      index_in_parent + 1
-    );
-    if (!splited_ent_id)
-      return {
-        rejected: items,
-        caret: caret,
-      };
-
-    await tx.execute(
-      new TreeInsertChildrenOp(
-        op.gen_id(),
-        splited_ent_id,
-        get_child_ent_count(ecs, ent_id),
-        left_splited_items
-      )
-    );
-
-    await tx.execute(
-      new TreeInsertChildrenOp(
-        op.gen_id(),
-        splited_ent_id,
-        0,
-        right_splited_items
-      )
-    );
-
-    // 让父节点处理剩余的实体
-    const result = await execute_insert(
+    return await execute_full_insert_ents(
       editor,
       tx,
       {
         ent_id: parent_ent_id,
-        offset: index_in_parent + 1,
+        offset: index_in_parent,
       },
-      remained_items
+      items,
+      _child_split_caret
     );
-    ecs.delete_ent(items_temp_root.id);
-    ecs.delete_ent(left_split_result.new_ent_id);
-    ecs.delete_ent(right_split_result.new_ent_id);
-    return result;
+  } else if (decision.type === "accept") {
+    let ex_offset = 0;
+    if (child_split_caret && child_split_caret.length > 0) {
+      // 如果有 `child_split_caret`，则将子实体分割
+      // 例如源文档是 `Paragraph [Text [A B]]`
+      // 一开始插入 `Paragraph[Text[C D] Text[E F]]` 到 `A` 后面，A 不能接受，则设置 `child_split_caret` 为 `[1]`，让 Paragraph 处理
+      // Paragraph 能接受插入内容，则先分割 `A` 和 `B`，文档按照 `child_split_caret` 分割为 `Paragraph [Text [A] Text [B]]`
+      // 然后让 `Paragraph` 合并完 `items` 后，得到 `Paragraph [Text [A] Text [C D] Text [E F] Text [B]]`
+      // insert_items_to_ent 的处理会尝试合并所有可以合并的实体，最终得到 `Paragraph [Text [A C D E F B]]`
+
+      // 因为要在分割后的两个实体之间插入，所以需要加偏移 1
+      ex_offset = 1;
+
+      const split_to = {
+        ent_id: ent_id,
+        offset: caret.offset + 1,
+      };
+      const child_to_split_id = get_child_ent_id(ecs, ent_id, caret.offset);
+      if (!child_to_split_id)
+        return {
+          rejected: items,
+          caret: caret,
+        };
+      if (child_split_caret.length === 1) {
+        // 分割子实体
+        await tx.execute(
+          new TreeSplitOp(
+            op.gen_id(),
+            child_to_split_id,
+            child_split_caret[0],
+            split_to
+          )
+        );
+      } else {
+        // 深度分割子实体
+        await tx.execute(
+          new TreeDeepSplitOp(
+            op.gen_id(),
+            child_to_split_id,
+            child_split_caret,
+            split_to
+          )
+        );
+      }
+    }
+
+    await insert_items_to_ent(
+      ent_id,
+      ex_offset,
+      get_child_ent_id(ecs, ent_id, caret.offset + 1)
+    );
   }
+
+  return {
+    rejected: items,
+    caret: result_caret,
+  };
 }

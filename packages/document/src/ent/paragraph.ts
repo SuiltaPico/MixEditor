@@ -15,6 +15,7 @@ import {
   DocConfigCompo,
   FrontBorderStrategy,
 } from "../compo/base/doc_config";
+import { LoopDecision } from "@mixeditor/common";
 
 const default_ChildCompo = new ChildCompo(EntChildCompo.type);
 const default_DocEntTraitsCompo = new DocConfigCompo({
@@ -30,17 +31,14 @@ const default_DocEntTraitsCompo = new DocConfigCompo({
     const { ecs } = editor;
 
     const doc_config_compo = ecs.get_compo(curr_ent_id, DocConfigCompo.type);
-    if (!doc_config_compo) {
-      return WalkDecision.StopWalk;
-    }
 
-    if (doc_config_compo.box_type === "block") {
+    if (!doc_config_compo || doc_config_compo.box_type !== "inline") {
       const child_compo = ecs.get_compo(curr_ent_id, EntChildCompo.type);
       if (!child_compo) {
-        return WalkDecision.StopWalk;
+        return LoopDecision.Break;
       }
     } else {
-      return WalkDecision.StopWalk;
+      return LoopDecision.Break;
     }
   },
 });

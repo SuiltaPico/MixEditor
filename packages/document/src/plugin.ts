@@ -13,7 +13,7 @@ import {
   TreeExtendedSelectionType,
 } from "@mixeditor/core";
 import {
-  execute_insert,
+  execute_full_insert_ents,
   execute_range_deletion,
   register_pipes_and_compo_behaviors,
 } from "./pipe";
@@ -35,20 +35,28 @@ function handle_input(editor: MixEditor) {
         const text = data.get_data("text/plain") as string;
         if (!text) return;
 
-        const ents = await Promise.all(
-          text.split(/(?:(?:\r?\n)|\r)+/).map(async (it) => {
-            console.log(it);
+        const splited_text = text.split(/(?:(?:\r?\n)|\r)+/);
+        let ents: string[];
 
-            const text = await ecs.create_ent(TextEntType, {
-              content: it,
-            });
-            return (
-              await ecs.create_ent(ParagraphEntType, {
-                children: [text.id],
-              })
-            ).id;
-          })
-        );
+        if (splited_text.length === 1) {
+          const text_ent = await ecs.create_ent(TextEntType, {
+            content: splited_text[0],
+          });
+          ents = [text_ent.id];
+        } else {
+          ents = await Promise.all(
+            splited_text.map(async (it) => {
+              const text = await ecs.create_ent(TextEntType, {
+                content: it,
+              });
+              return (
+                await ecs.create_ent(ParagraphEntType, {
+                  children: [text.id],
+                })
+              ).id;
+            })
+          );
+        }
 
         await pipe.execute(create_InputEntsEvent(editor, ents, s));
       }
@@ -69,7 +77,7 @@ function handle_input(editor: MixEditor) {
 
       const new_selection = selection.get_selection();
       if (new_selection?.type === TreeCollapsedSelectionType) {
-        const insert_result = await execute_insert(
+        const insert_result = await execute_full_insert_ents(
           editor,
           tx,
           new_selection.caret,

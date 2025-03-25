@@ -1,6 +1,6 @@
 import { MECompoBehaviorHandler, MixEditor } from "@mixeditor/core";
 import { MergeContext, MergeDecision } from "./executor";
-import { handle_default_merge } from "./preset";
+import { handle_merge_always_allow } from "./preset";
 
 /** 文档合并行为。
  *
@@ -14,6 +14,6 @@ export interface DocMergeCbMapExtend {
 export function register_DocMergeCb(editor: MixEditor) {
   const { ecs } = editor;
   ecs.set_compo_behaviors("*", {
-    [DocMergeCb]: handle_default_merge,
+    [DocMergeCb]: handle_merge_always_allow,
   });
 }

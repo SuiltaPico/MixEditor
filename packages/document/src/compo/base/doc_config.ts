@@ -1,10 +1,17 @@
-import { create_Signal, WrappedSignal } from "@mixeditor/common";
+import {
+  create_Signal,
+  LoopDecision,
+  MaybePromise,
+  WrappedSignal,
+} from "@mixeditor/common";
 import {
   CaretDeleteDecision,
   CaretNavigateDecision,
   DocCaretDeleteCb,
   DocCaretNavigateCb,
   DocRangeDeleteCb,
+  InsertDecision,
+  InsertMethod,
   RangeDeleteDecision,
 } from "../../pipe";
 import {
@@ -160,15 +167,14 @@ export type BackBorderStrategy =
       handler: (params: CustomDecisionFnParams<{}>) => CaretDeleteDecision;
     };
 
-export type InsertFilter = (
+export type InsertMethodGetter = (
   params: CustomDecisionFnParams<{
     curr_ent_id: string;
-    direction: "forward" | "backward";
     state: {
       [key: string]: any;
     };
   }>
-) => WalkDecision | void;
+) => MaybePromise<InsertMethod | typeof LoopDecision.Break>;
 
 export type DocConfigParams = {
   box_type: BoxType;
@@ -216,7 +222,7 @@ export type DocConfigParams = {
 
   // ----- 插入 -----
   /** 插入筛选策略。 */
-  insert_filter?: InsertFilter;
+  insert_filter?: InsertMethodGetter;
 };
 
 /** 文档实体特性组件。
@@ -256,7 +262,7 @@ export class DocConfigCompo implements Compo {
       ) => RangeDeleteDecision)
     | undefined;
 
-  insert_filter: InsertFilter | undefined;
+  get_insert_method: InsertMethodGetter | undefined;
 
   constructor(params: DocConfigParams) {
     this.box_type = params.box_type;
@@ -280,6 +286,6 @@ export class DocConfigCompo implements Compo {
     this.custom_caret_delete = params.custom_caret_delete;
     this.custom_range_delete = params.custom_range_delete;
 
-    this.insert_filter = params.insert_filter;
+    this.get_insert_method = params.insert_filter;
   }
 }

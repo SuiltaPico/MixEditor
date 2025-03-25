@@ -7,7 +7,7 @@ import {
 } from "@mixeditor/core";
 import {
   DocMergeCb,
-  handle_same_merge_with_cond,
+  handle_merge_allow_when_same_with_cond_or_loose,
   MergeDecision,
 } from "../../../pipe";
 
@@ -42,7 +42,7 @@ export function register_DocLinkCompo(editor: MixEditor) {
         },
       });
     },
-    [DocMergeCb]: handle_same_merge_with_cond<DocLinkCompo>(
+    [DocMergeCb]: handle_merge_allow_when_same_with_cond_or_loose<DocLinkCompo>(
       (host, src) => host.uri === src.uri
     ),
   });
