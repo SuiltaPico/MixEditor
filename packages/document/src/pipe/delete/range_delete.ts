@@ -96,6 +96,10 @@ export async function delete_ent_range(
     "[delete_ent_range]"
   );
 
+  console.log(
+    ecs_ctx.get_compo_behavior(actual_child_compo.type, DocRangeDeleteCb)
+  );
+
   const decision = await ecs_ctx.run_compo_behavior(
     actual_child_compo,
     DocRangeDeleteCb,

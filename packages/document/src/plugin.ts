@@ -41,7 +41,9 @@ function handle_input(editor: MixEditor) {
   const { pipe } = editor;
   pipe.set_stage(InputDataPipeID, {
     id: InputDataPipeMapToDocEntStage,
-    async execute(event) {
+    async execute(event, wait_deps) {
+      await wait_deps();
+
       const { data, ex_ctx: editor, selection: s } = event;
       const { ecs } = editor;
 
@@ -89,7 +91,9 @@ function handle_input(editor: MixEditor) {
 
   pipe.set_stage(InputEntsPipeID, {
     id: InputEntsPipeMapToDocInsertStage,
-    async execute(event) {
+    async execute(event, wait_deps) {
+      await wait_deps();
+
       const { ents, ex_ctx: editor, selection: s } = event;
       const { op, selection } = editor;
 
@@ -121,7 +125,9 @@ function handle_input(editor: MixEditor) {
 
   pipe.set_stage(OutputDataPipeID, {
     id: OutputDataPipeMapToDocInsertStage,
-    async execute(event) {
+    async execute(event, wait_deps) {
+      await wait_deps();
+
       const { type, ex_ctx: editor } = event;
       const { content, ecs } = editor;
 

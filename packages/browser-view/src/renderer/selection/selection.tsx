@@ -161,11 +161,19 @@ export const TreeRangeRenderer: Component<{
         },
       } as MEDataTransfer;
     } else if (e.dataTransfer) {
+      const data_map = new Map<string, string>();
+      for (const type of e.dataTransfer!.types) {
+        data_map.set(type, e.dataTransfer!.getData(type));
+        console.log(data_map.get(type)?.slice(0, 500));
+        
+      }
+      
       data_transfer = {
-        types: e.dataTransfer!.types,
+        types: Array.from(data_map.keys()),
         get_data(type: string) {
-          return e.dataTransfer!.getData(type);
+          return data_map.get(type);
         },
+
       } as MEDataTransfer;
     }
 

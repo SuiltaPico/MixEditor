@@ -6,6 +6,7 @@ import {
   get_parent_ent_id,
   MECompoBehaviorMap,
   MixEditor,
+  print_tree,
   Transaction,
   TreeDeleteChildrenOp,
 } from "@mixeditor/core";

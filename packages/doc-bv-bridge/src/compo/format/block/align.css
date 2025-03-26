@@ -1,0 +1,14 @@
+.mixeditor {
+  & > .__align_start {
+    text-align: start;
+  }
+  & > .__align_center {
+    text-align: center;
+  }
+  & > .__align_end {
+    text-align: end;
+  }
+  & > .__align_justify {
+    text-align: justify;
+  }
+}

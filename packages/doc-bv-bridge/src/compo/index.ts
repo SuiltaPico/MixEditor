@@ -2,13 +2,13 @@ import { MixEditor } from "@mixeditor/core";
 import { register_DocLinkCompo_extend } from "./format/common/link";
 import { register_DocTextBoldCompo_extend } from "./format/inline/bold";
 import { register_DocCodeInlineCompo_extend } from "./format/inline/code_inline";
-import { register_DocHeadingCompo_extend } from "./format/inline/heading";
+import { register_DocHeadingCompo_extend } from "./format/block/heading";
 import { register_DocTextItalicCompo_extend } from "./format/inline/italic";
 
 export * from "./format/common/link";
 export * from "./format/inline/bold";
 export * from "./format/inline/code_inline";
-export * from "./format/inline/heading";
+export * from "./format/block/heading";
 export * from "./format/inline/italic";
 
 
