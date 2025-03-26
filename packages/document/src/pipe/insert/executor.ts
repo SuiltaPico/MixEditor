@@ -186,7 +186,7 @@ export async function execute_full_insert_ents(
           ent_id,
           caret.offset + i + ex_offset - 1
         )!;
-        if (prev_child) {
+        if (prev_child && i === 0) {
           await execute_merge_ent(
             editor,
             tx,
