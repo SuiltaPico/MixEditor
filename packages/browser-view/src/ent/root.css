@@ -1,0 +1,6 @@
+.mix_editor {
+  & > ._root {
+    user-select: none;
+    cursor: text;
+  }
+}

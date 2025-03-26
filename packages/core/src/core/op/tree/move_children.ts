@@ -1,10 +1,9 @@
-import { Op } from "../../../op";
-import { MixEditor } from "../../mix_editor";
 import {
-  get_actual_child_compo,
-  set_children_parent_refs,
+  get_actual_child_compo
 } from "../../../common";
+import { Op } from "../../../op";
 import { TreeDeleteChildrenCb, TreeInsertChildrenCb } from "../../compo";
+import { MixEditor } from "../../mix_editor";
 
 /** 移动树结构中指定范围的子节点操作。 */
 export class TreeMoveChildrenOp implements Op {
@@ -69,8 +68,6 @@ export function register_TreeMoveChildrenOp(editor: MixEditor) {
           end: it.target_index + (it.src_end - it.src_start),
         }
       );
-
-      set_children_parent_refs(ecs, deleted_ents ?? [], it.src);
 
       await ecs.run_compo_behavior(src_child, TreeInsertChildrenCb, {
         index: it.src_start,

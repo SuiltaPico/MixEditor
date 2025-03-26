@@ -10,6 +10,7 @@ export function bv_forward_pointer_event(
 ) {
   const { ecs } = editor;
   const ent_child_compo = ecs.get_compo(ent_id, EntChildCompo.type);
+
   if (!ent_child_compo) return;
 
   if (!caret_pos) {

@@ -1,7 +1,6 @@
-import { IPipeEvent } from "../../pipe";
-import { MESelection, MixEditor } from "../mix_editor";
-import { TreeCaret } from "../selection";
-import { MEDataTransfer, MEPack } from "./io";
+import { IPipeEvent } from "../../../pipe";
+import { MESelection, MixEditor } from "../../mix_editor";
+import { MEDataTransfer } from "./io";
 
 export const InputDataPipeID = "core:input_data";
 
@@ -19,24 +18,6 @@ export function create_InputDataEvent(
   selection: MESelection
 ): InputDataEvent {
   return { pipe_id: InputDataPipeID, data, selection, ex_ctx: editor };
-}
-
-export const InputMEPackPipeID = "core:input_mepack";
-
-/** 输入 MEPack 事件。 */
-export interface InputMEPackEvent extends IPipeEvent<MixEditor> {
-  pipe_id: typeof InputMEPackPipeID;
-  input: MEPack;
-  selection: MESelection;
-}
-
-/** 创建输入 MEPack 事件。 */
-export function create_InputMEPackEvent(
-  editor: MixEditor,
-  input: MEPack,
-  selection: MESelection
-): InputMEPackEvent {
-  return { pipe_id: InputMEPackPipeID, input, selection, ex_ctx: editor };
 }
 
 export const InputEntsPipeID = "core:input_ents";

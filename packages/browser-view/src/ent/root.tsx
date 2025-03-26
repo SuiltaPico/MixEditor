@@ -1,17 +1,17 @@
 import {
   EntChildCompo,
   MixEditor,
-  RootEntInitPipeId,
-  RootEntType,
+  RootEntInitPipeId
 } from "@mixeditor/core";
+import { For } from "solid-js";
 import { from_solidjs_compo, NodeRenderer } from "../common/render";
 import {
   BvRenderableCompo,
   BvRenderSelectionDecision,
 } from "../compo/renderable";
-import { NodeRendererWrapper } from "../renderer/framework/content";
-import { For } from "solid-js";
 import { bv_forward_pointer_event } from "../compo/utils";
+import { NodeRendererWrapper } from "../renderer/framework/content";
+import "./root.css";
 
 /** 根节点渲染器。
  *
@@ -20,11 +20,17 @@ import { bv_forward_pointer_event } from "../compo/utils";
 export const RootRenderer: NodeRenderer = (props) => {
   const editor = props.bv_ctx.editor;
   const { ecs } = editor;
-  const child = ecs.get_compo(props.ent_id, EntChildCompo.type);
+  const child = ecs.get_compo(props.ent_id, EntChildCompo.type)!;
   return (
     <div
       class="_root"
       onPointerDown={(event) =>
+        bv_forward_pointer_event(editor, props.ent_id, event)
+      }
+      onPointerMove={(event) =>
+        bv_forward_pointer_event(editor, props.ent_id, event)
+      }
+      onPointerUp={(event) =>
         bv_forward_pointer_event(editor, props.ent_id, event)
       }
     >

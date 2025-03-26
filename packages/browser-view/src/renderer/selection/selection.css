@@ -1,9 +1,4 @@
 .mix_editor {
-  position: relative;
-  min-height: 300px;
-  border: 1px solid #ccc;
-  background: #fff;
-  display: flex;
 
   & > ._bv_selection {
     position: absolute;
@@ -34,12 +29,6 @@
         background-color: #0080ff5a;
       }
     }
-  }
-
-  & > ._root {
-    user-select: none;
-    cursor: text;
-    padding: 10px;
   }
 }
 

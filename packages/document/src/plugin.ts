@@ -1,16 +1,32 @@
 import {
   create_InputEntsEvent,
   create_TreeCollapsedSelection,
+  EntChildCompo,
   InputDataPipeID,
   InputEntsPipeID,
   MEPlugin,
   MixEditor,
+  OutputDataPipeID,
+  RootEntType,
+  TextChildCompo,
   Transaction,
   TreeCollapsedSelectionType,
-  TreeExtendedSelectionType
+  TreeExtendedSelectionType,
 } from "@mixeditor/core";
-import { register_compos } from "./compo";
-import { ParagraphEntType, register_ents, TextEntType } from "./ent";
+import {
+  DocCodeInlineCompo,
+  DocHeadingCompo,
+  DocLinkCompo,
+  DocTextBoldCompo,
+  DocTextItalicCompo,
+  register_compos,
+} from "./compo";
+import {
+  CodeBlockEntType,
+  ParagraphEntType,
+  register_ents,
+  TextEntType,
+} from "./ent";
 import {
   execute_full_insert_ents,
   execute_range_deletion,
@@ -19,6 +35,7 @@ import {
 
 export const InputDataPipeMapToDocEntStage = "doc:to_doc_ent";
 export const InputEntsPipeMapToDocInsertStage = "doc:to_doc_insert";
+export const OutputDataPipeMapToDocInsertStage = "doc:to_doc_insert";
 
 function handle_input(editor: MixEditor) {
   const { pipe } = editor;
@@ -43,12 +60,22 @@ function handle_input(editor: MixEditor) {
         } else {
           ents = await Promise.all(
             splited_text.map(async (it) => {
-              const text = await ecs.create_ent(TextEntType, {
-                content: it,
-              });
+              let child_ent: string[];
+              if (it) {
+                child_ent = [
+                  (
+                    await ecs.create_ent(TextEntType, {
+                      content: it,
+                    })
+                  ).id,
+                ];
+              } else {
+                child_ent = [];
+              }
+
               return (
                 await ecs.create_ent(ParagraphEntType, {
-                  children: [text.id],
+                  children: child_ent,
                 })
               ).id;
             })
@@ -89,6 +116,74 @@ function handle_input(editor: MixEditor) {
       }
 
       await tx.commit();
+    },
+  });
+
+  pipe.set_stage(OutputDataPipeID, {
+    id: OutputDataPipeMapToDocInsertStage,
+    async execute(event) {
+      const { type, ex_ctx: editor } = event;
+      const { content, ecs } = editor;
+
+      function ent_to_markdown(ent: string): string {
+        const ent_compo = ecs.get_ent(ent)!;
+        if (ent_compo.type === TextEntType) {
+          let text = ecs.get_compo(ent, TextChildCompo.type)!.content.get();
+          if (ecs.get_compo(ent, DocCodeInlineCompo.type)) {
+            text = "`" + text + "`";
+          }
+          if (ecs.get_compo(ent, DocTextBoldCompo.type)) {
+            text = "**" + text + "**";
+          }
+          if (ecs.get_compo(ent, DocTextItalicCompo.type)) {
+            text = "*" + text + "*";
+          }
+          const link_compo = ecs.get_compo(ent, DocLinkCompo.type);
+          if (link_compo) {
+            text = "[" + text + "](" + link_compo.uri + ")";
+          }
+
+          return text;
+        } else if (ent_compo.type === ParagraphEntType) {
+          let text = ecs
+            .get_compo(ent, EntChildCompo.type)!
+            .children.get()
+            .map(ent_to_markdown)
+            .join("");
+
+          const heading_compo = ecs.get_compo(ent, DocHeadingCompo.type);
+          if (heading_compo) {
+            text = "#".repeat(heading_compo.level.get()) + " " + text;
+          }
+
+          return text;
+        } else if (ent_compo.type === CodeBlockEntType) {
+          return (
+            "```" +
+            ecs.get_compo(ent, TextChildCompo.type)!.content.get() +
+            "```"
+          );
+        } else if (ent_compo.type === RootEntType) {
+          return ecs
+            .get_compo(ent, EntChildCompo.type)!
+            .children.get()
+            .map(ent_to_markdown)
+            .join("\n\n");
+        }
+        return "";
+      }
+
+      if (type === "text/markdown") {
+        let result = "";
+        const root_ent = content.root.get();
+        if (root_ent) {
+          result = ent_to_markdown(root_ent);
+        } else {
+          result = "";
+        }
+
+        event.data = result;
+      }
     },
   });
 }

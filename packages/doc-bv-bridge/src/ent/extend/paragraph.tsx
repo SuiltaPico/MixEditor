@@ -37,14 +37,12 @@ export const ParagraphEntRenderer: NodeRenderer = (props) => {
 
   function handle_pointer_move(event: PointerEvent) {
     bv_forward_pointer_event(editor, ent_id, event);
-    // if (ent_child_compo.count() === 0) {
-    //   editor.selection.set_selection(
-    //     create_TreeCollapsedSelection({
-    //       ent_id,
-    //       offset: 0,
-    //     })
-    //   );
-    // }
+    // editor.selection.set_selection(
+    //   create_TreeCollapsedSelection({
+    //     ent_id,
+    //     offset: 0,
+    //   })
+    // );
   }
 
   return (
@@ -119,6 +117,15 @@ export function handle_paragraph_pointer_event_forward(
   >[0]
 ) {
   const { editor, ent_id, event, pos } = params;
+  const ent_child_compo = editor.ecs.get_compo(ent_id, EntChildCompo.type)!;
+  if (event.type === "pointerdown" && ent_child_compo.count() === 0) {
+    editor.selection.set_selection(
+      create_TreeCollapsedSelection({
+        ent_id,
+        offset: 0,
+      })
+    );
+  }
   bv_forward_pointer_event(editor, ent_id, event, pos);
 }
 

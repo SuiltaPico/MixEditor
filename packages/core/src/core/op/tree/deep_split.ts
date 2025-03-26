@@ -51,6 +51,7 @@ export function register_TreeDeepSplitOp(editor: MixEditor) {
         {
           index: it.insert_to.offset,
           items: [split_result.new_ent_id],
+          parent_id: it.insert_to.ent_id,
         }
       );
     },

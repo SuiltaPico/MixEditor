@@ -180,6 +180,21 @@ export async function execute_full_insert_ents(
             [item]
           )
         );
+
+        const prev_child = get_child_ent_id(
+          ecs,
+          ent_id,
+          caret.offset + i + ex_offset - 1
+        )!;
+        if (prev_child) {
+          await execute_merge_ent(
+            editor,
+            tx,
+            prev_child,
+            get_child_ent_count(ecs, prev_child),
+            item
+          );
+        }
       }
     }
     const child_count_after_insert = get_child_ent_count(ecs, ent_id);
@@ -307,7 +322,10 @@ export async function execute_full_insert_ents(
 
       console.log(
         "执行完整插入实体 分割后",
-        await print_tree(editor, get_child_ent_id(ecs, ent_id, split_to.offset)!)
+        await print_tree(
+          editor,
+          get_child_ent_id(ecs, ent_id, split_to.offset)!
+        )
       );
     }
 
