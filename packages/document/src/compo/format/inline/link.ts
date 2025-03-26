@@ -7,8 +7,7 @@ import {
 } from "@mixeditor/core";
 import {
   DocMergeCb,
-  handle_merge_allow_when_same_with_cond_or_loose,
-  MergeDecision,
+  handle_merge_allow_when_same_with_cond
 } from "../../../pipe";
 
 export class DocLinkCompo implements Compo {
@@ -42,7 +41,7 @@ export function register_DocLinkCompo(editor: MixEditor) {
         },
       });
     },
-    [DocMergeCb]: handle_merge_allow_when_same_with_cond_or_loose<DocLinkCompo>(
+    [DocMergeCb]: handle_merge_allow_when_same_with_cond<DocLinkCompo>(
       (host, src) => host.uri === src.uri
     ),
   });

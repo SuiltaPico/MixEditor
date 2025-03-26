@@ -8,6 +8,10 @@ import {
   ToTdoDataCb,
   ToTdoDecision,
 } from "@mixeditor/core";
+import {
+  DocMergeCb,
+  handle_merge_allow_when_same_with_cond_or_loose,
+} from "../../../pipe";
 
 export class DocHeadingCompo implements Compo {
   static type = "doc:heading" as const;
@@ -40,5 +44,13 @@ export function register_DocHeadingCompo(editor: MixEditor) {
     [GetCloneParamsCb]({ it }) {
       return { level: it.level.get() };
     },
+    [DocMergeCb]: handle_merge_allow_when_same_with_cond_or_loose(
+      (host, src) => {
+        return (
+          (host as DocHeadingCompo).level.get() ===
+          (src as DocHeadingCompo).level.get()
+        );
+      }
+    ),
   });
 }

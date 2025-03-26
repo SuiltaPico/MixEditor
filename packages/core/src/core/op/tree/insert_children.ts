@@ -37,6 +37,7 @@ export function register_TreeInsertChildrenOp(editor: MixEditor) {
           {
             index: it.index,
             items: it.items,
+            parent_id: it.target,
           }
         )) ?? 0;
     },

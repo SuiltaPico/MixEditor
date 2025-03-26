@@ -139,7 +139,8 @@ async function handle_border_strategy(
       tx,
       first_ent,
       get_child_ent_count(ecs, first_ent),
-      second_ent
+      second_ent,
+      true
     );
     if (result) return CaretDeleteDecision.Done(result);
     else {

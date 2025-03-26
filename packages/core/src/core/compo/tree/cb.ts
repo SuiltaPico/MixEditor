@@ -11,6 +11,7 @@ export interface ChildCompoBehaviorMap extends CompoBehaviorMap<MixEditor> {
     {
       index: number;
       items: string[];
+      parent_id: string;
     },
     number
   >;

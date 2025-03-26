@@ -1,21 +1,21 @@
+import { LoopDecision } from "@mixeditor/common";
 import {
   ChildCompo,
   create_ent_registration,
   EntInitPipeEvent,
-  ParentCompo,
-  TextChildCompo,
   MixEditor,
-  WalkDecision,
+  ParentCompo,
+  TextChildCompo
 } from "@mixeditor/core";
 import {
+  BackBorderStrategy,
   BorderType,
   CaretDeleteStrategy,
   DocConfigCompo,
   FrontBorderStrategy,
-  BackBorderStrategy,
 } from "../compo/base/doc_config";
-import { LoopDecision } from "@mixeditor/common";
 import { get_merge_decision, InsertMethod } from "../pipe";
+
 const default_ChildCompo = new ChildCompo(TextChildCompo.type);
 const default_DocEntTraitsCompo = new DocConfigCompo({
   box_type: "inline",
@@ -70,5 +70,5 @@ function register_TextEnt(editor: MixEditor) {
   return register_TextEnt_init_pipe(editor);
 }
 
-export { TextEntInitPipeId, TextEntType, register_TextEnt };
+export { register_TextEnt, TextEntInitPipeId, TextEntType };
 export type TextEntInitPipeEvent = EntInitPipeEvent<typeof TextEntInitPipeId>;

@@ -55,12 +55,6 @@ async function get_rect_of_extended_selected(
   const end_offset = selection.end.offset;
 
   if (start_ent === end_ent) {
-    console.log(
-      "[get_rect_of_extended_selected] same ent",
-      start_ent,
-      start_offset,
-      end_offset
-    );
     // 如果起始和结束节点是同一个节点，则直接在该节点上进行选择
     await execute_render_selection(
       editor,
@@ -297,9 +291,6 @@ export const TreeRangeRenderer: Component<{
             ref={(it) => (inputer = it)}
             onCompositionEnd={handle_inputer_composition_end}
             onBeforeInput={handle_inputer_input}
-            onPointerDown={(e) => {
-              e.preventDefault();
-            }}
           />
         </div>
       </Show>

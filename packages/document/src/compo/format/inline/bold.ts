@@ -1,11 +1,9 @@
 import {
   Compo,
   CreateCb,
-  MixEditor,
-  ToTdoDataCb,
-  ToTdoDecision,
+  MixEditor
 } from "@mixeditor/core";
-import { DocMergeCb, handle_merge_allow_when_same_or_loose, MergeDecision } from "../../../pipe";
+import { DocMergeCb, handle_merge_allow_when_same } from "../../../pipe";
 
 export class DocTextBoldCompo implements Compo {
   static type = "doc:text_bold" as const;
@@ -20,6 +18,6 @@ export function register_DocTextBoldCompo(editor: MixEditor) {
     [CreateCb]() {
       return new DocTextBoldCompo();
     },
-    [DocMergeCb]: handle_merge_allow_when_same_or_loose,
+    [DocMergeCb]: handle_merge_allow_when_same,
   });
 }

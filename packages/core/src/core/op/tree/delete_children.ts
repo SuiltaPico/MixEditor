@@ -51,6 +51,7 @@ export function register_TreeDeleteChildrenOp(editor: MixEditor) {
       await ecs.run_compo_behavior(actual_child_compo, TreeInsertChildrenCb, {
         index: it.start,
         items: it.deleted_ents,
+        parent_id: it.target,
       });
 
       it.deleted_ents = [];

@@ -14,6 +14,7 @@ import {
   TreeSplitOutCb,
 } from "./cb";
 import { IChildCompo } from "./child";
+import { set_children_parent_refs } from "../../../common";
 
 /**
  * 子实体数组组件
@@ -77,8 +78,9 @@ export function register_EntChildCompo(editor: MixEditor) {
     [GetCloneParamsCb]({ it }) {
       return { children: it.children.get() };
     },
-    [TreeInsertChildrenCb]({ it, index, items }) {
+    [TreeInsertChildrenCb]({ it, index, items, parent_id }) {
       const children = it.children.get();
+      set_children_parent_refs(ecs, items, parent_id);
       children.splice(index, 0, ...items);
       it.children.set(children);
       return items.length;

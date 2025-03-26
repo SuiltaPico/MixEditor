@@ -45,11 +45,10 @@ export function register_TreeMoveChildrenOp(editor: MixEditor) {
         }
       );
 
-      set_children_parent_refs(ecs, deleted_ents ?? [], it.target);
-
       await ecs.run_compo_behavior(target_child, TreeInsertChildrenCb, {
         index: it.target_index,
         items: deleted_ents ?? [],
+        parent_id: it.target,
       });
     },
     undo: async (params) => {
@@ -76,6 +75,7 @@ export function register_TreeMoveChildrenOp(editor: MixEditor) {
       await ecs.run_compo_behavior(src_child, TreeInsertChildrenCb, {
         index: it.src_start,
         items: deleted_ents ?? [],
+        parent_id: it.src,
       });
     },
   });

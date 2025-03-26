@@ -92,12 +92,13 @@ export async function execute_merge_single_layer_ent(
   host: string,
   /** 要合并到的宿主实体的偏移 */
   host_offset: number,
-  source: string
+  source: string,
+  loose?: boolean
 ) {
   const { ecs, op } = editor;
 
   // 默认允许合并
-  const decision = await get_merge_decision(editor, host, source);
+  const decision = await get_merge_decision(editor, host, source, loose);
   console.log(
     "单层合并",
     "host",
@@ -298,7 +299,9 @@ export async function execute_cross_parent_merge_ent(
   host: string,
   /** 要合并到的宿主实体的偏移 */
   host_offset: number,
-  source: string
+  source: string,
+  /** 是否宽松合并。宽松合并会对 `src_id` 的实体进行宽松合并，即使 `src_id` 不携带一些组件，或者组件状态不一致。 */
+  loose?: boolean
 ) {
   let caret: TreeCaret | undefined;
 
@@ -341,8 +344,9 @@ export async function execute_cross_parent_merge_ent(
       editor,
       tx,
       host_ancestor,
-      i === min_ancestor_length - 1 ? host_ancestor_child_count : host_offset,
-      source_ancestor
+      i === min_ancestor_length - 1 ? host_offset : host_ancestor_child_count,
+      source_ancestor,
+      loose
     );
 
     if (!result) break;

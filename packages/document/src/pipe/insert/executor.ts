@@ -5,6 +5,7 @@ import {
   get_index_of_child_ent,
   get_parent_ent_id,
   MixEditor,
+  print_tree,
   Transaction,
   TreeCaret,
   TreeDeepSplitOp,
@@ -121,8 +122,8 @@ export async function execute_full_insert_ents(
     })) ?? InsertDecisionReject;
 
   console.log(
-    "[execute_insert]",
-    ecs.get_ent(ent_id),
+    "执行完整插入实体",
+    await print_tree(editor, ent_id),
     "decision",
     decision,
     "items",
@@ -264,6 +265,16 @@ export async function execute_full_insert_ents(
           caret: caret,
         };
       if (child_split_caret.length === 1) {
+        console.log(
+          "执行完整插入实体 分割单个分割点",
+          "child_split_caret",
+          child_split_caret,
+          "child_to_split_id",
+          child_to_split_id,
+          "split_to",
+          split_to
+        );
+
         // 分割子实体
         await tx.execute(
           new TreeSplitOp(
@@ -274,6 +285,15 @@ export async function execute_full_insert_ents(
           )
         );
       } else {
+        console.log(
+          "执行完整插入实体 分割多个分割点",
+          "child_split_caret",
+          child_split_caret,
+          "child_to_split_id",
+          child_to_split_id,
+          "split_to",
+          split_to
+        );
         // 深度分割子实体
         await tx.execute(
           new TreeDeepSplitOp(
@@ -284,6 +304,11 @@ export async function execute_full_insert_ents(
           )
         );
       }
+
+      console.log(
+        "执行完整插入实体 分割后",
+        await print_tree(editor, get_child_ent_id(ecs, ent_id, split_to.offset)!)
+      );
     }
 
     await insert_items_to_ent(

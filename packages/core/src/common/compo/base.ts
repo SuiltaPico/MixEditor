@@ -8,9 +8,7 @@ export async function clone_compo(ecs: MixEditor["ecs"], compo: Compo) {
     GetCloneParamsCb,
     {}
   );
-  return await ecs.create_compo(compo.type, {
-    params: clone_params,
-  });
+  return await ecs.create_compo(compo.type, clone_params);
 }
 
 export type CustomDecisionFnParams<T> = {

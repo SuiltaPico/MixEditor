@@ -421,10 +421,16 @@ export async function split_ent(
   const get_split_out_promises = Array.from(
     ecs.get_own_compos(ent_id).values()
   ).map(async (compo) => {
-    const result = await ecs.run_compo_behavior(compo, TreeSplitOutCb, {
-      index,
-    });
-    if (result) {
+    const split_out_behavior = ecs.get_compo_behavior(
+      compo.type,
+      TreeSplitOutCb
+    );
+    if (split_out_behavior) {
+      const result = await split_out_behavior({
+        it: compo,
+        ex_ctx: ecs.ex_ctx,
+        index,
+      });
       split_outs.set(compo.type, result);
     } else {
       const cloned_compo = await clone_compo(ecs, compo);
@@ -509,16 +515,16 @@ export async function deep_split_ent(
     if (i === 0) {
       splited_root_ent_id = new_ent_id;
     } else {
-      const self_pos_index_in_parent = path[i];
+      const self_pos_index_in_parent = path[i - 1];
       const parent_ent = ent_list[i - 1];
       const parent_actual_child_compo = get_actual_child_compo(ecs, parent_ent);
       if (!parent_actual_child_compo)
         throw new Error(`无法获取实体 ${parent_ent} 的实际子实体组件。`);
 
-      // 将新实体插入到自己后面
       ecs.run_compo_behavior(parent_actual_child_compo, TreeInsertChildrenCb, {
         items: [new_ent_id],
         index: self_pos_index_in_parent + 1,
+        parent_id: parent_ent,
       });
 
       // 下一次分割应该在新旧实体之间

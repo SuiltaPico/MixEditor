@@ -1,11 +1,9 @@
 import {
   Compo,
   CreateCb,
-  MixEditor,
-  ToTdoDataCb,
-  ToTdoDecision,
+  MixEditor
 } from "@mixeditor/core";
-import { DocMergeCb, handle_merge_allow_when_same_or_loose, MergeDecision } from "../../../pipe";
+import { DocMergeCb, handle_merge_allow_when_same } from "../../../pipe";
 
 export class DocTextItalicCompo implements Compo {
   static type = "doc:text_italic" as const;
@@ -20,6 +18,6 @@ export function register_DocTextItalicCompo(editor: MixEditor) {
     [CreateCb]() {
       return new DocTextItalicCompo();
     },
-    [DocMergeCb]: handle_merge_allow_when_same_or_loose,
+    [DocMergeCb]: handle_merge_allow_when_same,
   });
 }

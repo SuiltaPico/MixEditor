@@ -179,12 +179,28 @@ export async function execute_range_deletion(
   }
 
   // 执行合并逻辑
+  // 例如，源文档是
+  // ```
+  // Paragraph [Text [A] Text [B]]
+  // Paragraph(Heading) [Text [C] Text [D]]
+  // ```
+  // 删除 `A` 和 `B` 之间的内容后，结果是
+  // ```
+  // Paragraph [Text [A]]
+  // Paragraph(Heading) [Text [D]]
+  // ```
+  // 此时应该将 `Text [A]` 和 `Text [D]` 进行仅在父节点合并下宽松的跨父节点合并
+  // 最终得到
+  // ```
+  // Paragraph [Text [A D]]
+  // ```
   const merge_result = await execute_cross_parent_merge_ent(
     editor,
     tx,
     start.ent_id,
     get_child_ent_count(ecs, start.ent_id),
-    end.ent_id
+    end.ent_id,
+    true
   );
   if (merge_result?.selection) {
     return { selection: merge_result.selection };
