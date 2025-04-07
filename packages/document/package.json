@@ -3,8 +3,7 @@
   "version": "0.0.0-exp.2",
 	"scripts": {
 		"build": "concurrently \"node esbuild.mjs\" \"rollup -c rollup.config.mjs\"",
-		"test": "jest",
-		"publish": "npm publish"
+		"test": "jest"
 	},
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
