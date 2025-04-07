@@ -1,6 +1,25 @@
 {
   "name": "@mixeditor/doc-bv-bridge",
   "version": "0.0.0-exp.2",
+  "description": "Mixeditor's bridge module connecting the document model (@mixeditor/document) with the browser view (@mixeditor/browser-view).",
+  "keywords": [
+    "mixeditor",
+    "editor",
+    "document",
+    "rich text",
+    "contenteditable",
+    "browser view",
+    "bridge"
+  ],
+  "license": "MPL-2.0",
+  "bugs": {
+    "url": "https://github.com/suiltapico/mixeditor/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/suiltapico/mixeditor.git"
+  },
+  "author": "suiltapico <suiltapico@gmail.com>",
   "type": "module",
   "scripts": {
     "build": "concurrently \"node esbuild.mjs\" \"rollup -c rollup.config.mjs\"",
@@ -25,10 +44,10 @@
   },
   "devDependencies": {
     "concurrently": "^9.1.2",
-    "esbuild": "^0.25.1",
+    "esbuild": "^0.25.2",
     "esbuild-plugin-solid": "^0.6.0",
-    "rollup": "^4.36.0",
-    "rollup-plugin-dts": "^6.2.0",
-    "typescript": "~5.8.2"
+    "rollup": "^4.39.0",
+    "rollup-plugin-dts": "^6.2.1",
+    "typescript": "~5.8.3"
   }
 }

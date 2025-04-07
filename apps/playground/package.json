@@ -17,11 +17,11 @@
     "solid-js": "^1.9.5"
   },
   "devDependencies": {
-    "@unocss/transformer-directives": "66.1.0-beta.6",
+    "@unocss/transformer-directives": "66.1.0-beta.10",
     "concurrently": "^9.1.2",
-    "typescript": "~5.8.2",
-    "unocss": "66.1.0-beta.6",
-    "vite": "^6.2.2",
+    "typescript": "~5.8.3",
+    "unocss": "66.1.0-beta.10",
+    "vite": "^6.2.5",
     "vite-plugin-solid": "^2.11.6"
   }
 }

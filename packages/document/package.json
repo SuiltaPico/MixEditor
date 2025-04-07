@@ -1,6 +1,23 @@
 {
 	"name": "@mixeditor/document",
-  "version": "0.0.0-exp.2",
+	"version": "0.0.0-exp.2",
+	"description": "Mixeditor's core module for rich text documents, offering a generic model and essential interactions like navigation, editing, and formatting.",
+	"keywords": [
+		"mixeditor",
+		"editor",
+		"document",
+		"rich text",
+		"contenteditable"
+	],
+	"license": "MPL-2.0",
+	"bugs": {
+		"url": "https://github.com/suiltapico/mixeditor/issues"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/suiltapico/mixeditor.git"
+	},
+	"author": "suiltapico <suiltapico@gmail.com>",
 	"scripts": {
 		"build": "concurrently \"node esbuild.mjs\" \"rollup -c rollup.config.mjs\"",
 		"test": "jest"
@@ -19,8 +36,8 @@
 	},
 	"devDependencies": {
 		"concurrently": "^9.1.2",
-		"esbuild": "^0.25.1",
-		"rollup": "^4.36.0",
-		"rollup-plugin-dts": "^6.2.0"
+		"esbuild": "^0.25.2",
+		"rollup": "^4.39.0",
+		"rollup-plugin-dts": "^6.2.1"
 	}
 }

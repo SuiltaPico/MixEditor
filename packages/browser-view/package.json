@@ -1,6 +1,31 @@
 {
   "name": "@mixeditor/browser-view",
   "version": "0.0.0-exp.2",
+  "description": "Mixeditor's browser view plugin, responsible for rendering the document model in the DOM using SolidJS and handling UI interactions.",
+  "keywords": [
+    "mixeditor",
+    "editor",
+    "browser",
+    "view",
+    "render",
+    "DOM",
+    "solidjs",
+    "contenteditable",
+    "selection"
+  ],
+  "license": "MPL-2.0",
+  "bugs": {
+    "url": "https://github.com/suiltapico/mixeditor/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/suiltapico/mixeditor.git",
+    "directory": "packages/browser-view"
+  },
+  "author": "suiltapico <suiltapico@gmail.com>",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "type": "module",
   "scripts": {
     "build": "concurrently \"node esbuild.mjs\" \"rollup -c rollup.config.mjs\"",
@@ -23,10 +48,10 @@
   },
   "devDependencies": {
     "concurrently": "^9.1.2",
-    "esbuild": "^0.25.1",
+    "esbuild": "^0.25.2",
     "esbuild-plugin-solid": "^0.6.0",
-    "rollup": "^4.36.0",
-    "rollup-plugin-dts": "^6.2.0",
-    "typescript": "~5.8.2"
+    "rollup": "^4.39.0",
+    "rollup-plugin-dts": "^6.2.1",
+    "typescript": "~5.8.3"
   }
 }
