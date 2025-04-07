@@ -1,6 +1,6 @@
 {
   "name": "@mixeditor/doc-bv-bridge",
-  "version": "0.0.0-exp.2",
+  "version": "0.0.0-exp.3",
   "description": "Mixeditor's bridge module connecting the document model (@mixeditor/document) with the browser view (@mixeditor/browser-view).",
   "keywords": [
     "mixeditor",

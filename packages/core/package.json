@@ -1,6 +1,6 @@
 {
 	"name": "@mixeditor/core",
-	"version": "0.0.0-exp.2",
+	"version": "0.0.0-exp.3",
 	"description": "The core framework for Mixeditor, providing the foundational architecture including ECS, operation management, plugin system, selection, and data pipes.",
 	"keywords": [
 		"mixeditor",
@@ -24,9 +24,6 @@
 	},
 	"homepage": "https://github.com/suiltapico/mixeditor#readme",
 	"author": "suiltapico <suiltapico@gmail.com>",
-	"engines": {
-		"node": ">=18.0.0"
-	},
 	"scripts": {
 		"build": "concurrently \"node esbuild.mjs\" \"rollup -c rollup.config.mjs\"",
 		"test": "jest"

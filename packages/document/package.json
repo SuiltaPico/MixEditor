@@ -1,6 +1,6 @@
 {
 	"name": "@mixeditor/document",
-	"version": "0.0.0-exp.2",
+	"version": "0.0.0-exp.3",
 	"description": "Mixeditor's core module for rich text documents, offering a generic model and essential interactions like navigation, editing, and formatting.",
 	"keywords": [
 		"mixeditor",

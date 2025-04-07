@@ -1,6 +1,6 @@
 {
 	"name": "@mixeditor/common",
-	"version": "0.0.0-exp.2",
+	"version": "0.0.0-exp.3",
 	"description": "Common utilities for Mixeditor, including signal wrappers (SolidJS), ULID generation, geometry helpers, and functional utilities.",
 	"keywords": [
 		"mixeditor",
@@ -23,9 +23,6 @@
 		"directory": "packages/common"
 	},
 	"author": "suiltapico <suiltapico@gmail.com>",
-	"engines": {
-		"node": ">=18.0.0"
-	},
 	"scripts": {
 		"build": "concurrently \"node esbuild.mjs\" \"rollup -c rollup.config.mjs\"",
 		"test": "jest"
