@@ -13,6 +13,9 @@
     ".": "./dist/index.js",
     "./index.css": "./dist/index.css"
   },
+  "files": [
+    "dist"
+  ],
   "dependencies": {
     "@mixeditor/common": "workspace:*",
     "@mixeditor/core": "workspace:*",

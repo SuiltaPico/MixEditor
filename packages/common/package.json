@@ -10,6 +10,9 @@
 	"exports": {
 		".": "./dist/index.js"
 	},
+	"files": [
+		"dist"
+	],
 	"dependencies": {
 		"solid-js": "^1.9.5",
 		"ulid": "^2.4.0"

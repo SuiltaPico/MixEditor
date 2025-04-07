@@ -11,6 +11,9 @@
 	"exports": {
 		".": "./dist/index.js"
 	},
+	"files": [
+		"dist"
+	],
 	"dependencies": {
 		"@mixeditor/common": "workspace:*",
 		"@mixeditor/core": "workspace:*"
