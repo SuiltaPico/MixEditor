@@ -1,48 +1,17 @@
 import { UlidIdGenerator } from "@mixeditor/common";
 import { BehaviorHandler, BehaviorHandlerManager } from "../common/behavior";
 import { TwoLevelTypeMap } from "../common/data_struct/two_level_type_map";
-import { Compo, CompoTDOList, CompoTDO } from "./compo";
-import { Ent, EntTDO } from "./ent";
+import { Compo, CompoTDOList } from "./compo";
+import { EntTDO } from "./ent";
+
+/** 实体工厂。 */
+export type EntFactory = () => Record<string, Compo>;
 
 export type CompoBehaviorHandler<
   TParams extends object,
   TResult,
   TExCtx
 > = BehaviorHandler<Compo, TParams, TResult, TExCtx>;
-
-export type EntBehaviorHandler<
-  TParams extends object,
-  TResult,
-  TExCtx
-> = BehaviorHandler<Ent, TParams, TResult, TExCtx>;
-
-export type GetEntBehaviorHandlerParams<
-  TEntBehaviorHandler extends EntBehaviorHandler<any, any, any>
-> = TEntBehaviorHandler extends BehaviorHandler<Ent, infer TParams, any, any>
-  ? TParams
-  : never;
-
-export const InitEb = "init";
-export const BeforeSaveTdoEb = "before_save_tdo";
-export const AfterLoadTdoEb = "after_load_tdo";
-
-export type EntBehaviorMap<TExCtx> = Record<
-  string,
-  EntBehaviorHandler<any, any, TExCtx>
-> & {
-  /** 实体初始化。 */
-  [InitEb]: EntBehaviorHandler<
-    {
-      init_params: any;
-    },
-    void,
-    TExCtx
-  >;
-  /** 实体保存为 TDO 前。 */
-  [BeforeSaveTdoEb]: EntBehaviorHandler<{}, void, TExCtx>;
-  /** 实体从 TDO 加载后。 */
-  [AfterLoadTdoEb]: EntBehaviorHandler<{}, void, TExCtx>;
-};
 
 /** 创建组件。
  * @param params 创建参数
@@ -104,17 +73,16 @@ export class ECSCtx<
   TCompoMap extends Record<string, Compo>,
   TCompoCreateParamsMap extends Record<string, any>,
   TCompoBehaviorMap extends CompoBehaviorMap<TExCtx>,
-  TEntBehaviorMap extends EntBehaviorMap<TExCtx>,
   TExCtx extends any
 > {
   /** 实体ID生成器。 */
   protected id_generator = new UlidIdGenerator();
 
   /** 实体表。 */
-  public ents = new Map<string, Ent>();
+  public ents = new Set<string>();
 
   /** 实体默认组件表。`实体类型 -> 组件类型 -> 组件`。 */
-  public ent_default_compos = new Map<string, Map<string, Compo>>();
+  public ent_archetype = new Map<string, Map<string, Compo>>();
 
   /** 实体组件表。`实体ID -> 组件类型 -> 组件`。 */
   // 不使用 `组件类型 -> 实体ID -> 组件` 是因为增减实体ID时
@@ -126,13 +94,6 @@ export class ECSCtx<
     TCompoBehaviorMap,
     Compo,
     TCompoMap,
-    TExCtx
-  >;
-  /** 实体行为表。记录实体的行为。 */
-  protected ent_behaviors: BehaviorHandlerManager<
-    TEntBehaviorMap,
-    Ent,
-    Record<string, Ent>,
     TExCtx
   >;
 
@@ -151,22 +112,8 @@ export class ECSCtx<
   get_compo_behavior!: (typeof this.compo_behaviors)["get_handler"];
   /** 执行组件行为。 */
   run_compo_behavior!: (typeof this.compo_behaviors)["exec_behavior"];
-  // ---- 实体 ----
-  /** 设置实体行为。 */
-  set_ent_behavior!: (typeof this.ent_behaviors)["register_handler"];
-  /** 设置多个实体行为。 */
-  set_ent_behaviors!: (typeof this.ent_behaviors)["register_handlers"];
-  /** 获取实体行为。 */
-  get_ent_behavior!: (typeof this.ent_behaviors)["get_handler"];
-  /** 执行实体行为。 */
-  run_ent_behavior!: (typeof this.ent_behaviors)["exec_behavior"];
 
   // ------- 实体方法 -------
-  /** 获取实体。 */
-  get_ent(ent_id: string) {
-    return this.ents.get(ent_id);
-  }
-
   /** 创建实体。 */
   async create_ent(ent_type: string, params?: any) {
     type BehaviorParams = Omit<
@@ -271,7 +218,7 @@ export class ECSCtx<
     ) as TCompoType extends keyof TCompoMap ? TCompoMap[TCompoType] : unknown;
 
     if (!compo) {
-      compo = this.ent_default_compos
+      compo = this.ent_archetype
         .get(ent_type)
         ?.get(compo_type) as TCompoType extends keyof TCompoMap
         ? TCompoMap[TCompoType]
@@ -306,7 +253,7 @@ export class ECSCtx<
     this.compos.get_master(ent_id)?.forEach((compo) => {
       result.set(compo.type, compo);
     });
-    this.ent_default_compos.get(ent_type)?.forEach((compo) => {
+    this.ent_archetype.get(ent_type)?.forEach((compo) => {
       result.set(compo.type, compo);
     });
     return result;
@@ -326,10 +273,10 @@ export class ECSCtx<
 
   /** 设置实体默认组件。实体默认组件的内容不会被记录到 TDO 中。 */
   set_ent_default_compo(ent_type: string, compo: Compo) {
-    let compo_map = this.ent_default_compos.get(ent_type);
+    let compo_map = this.ent_archetype.get(ent_type);
     if (!compo_map) {
       compo_map = new Map();
-      this.ent_default_compos.set(ent_type, compo_map);
+      this.ent_archetype.set(ent_type, compo_map);
     }
     compo_map.set(compo.type, compo);
   }
@@ -358,26 +305,6 @@ export class ECSCtx<
       TCompoMap,
       TExCtx
     >(this.ex_ctx);
-    this.ent_behaviors = new BehaviorHandlerManager<
-      TEntBehaviorMap,
-      Ent,
-      Record<string, Ent>,
-      TExCtx
-    >(this.ex_ctx);
-
-    // 绑定行为方法
-    this.set_ent_behavior = this.ent_behaviors.register_handler.bind(
-      this.ent_behaviors
-    );
-    this.set_ent_behaviors = this.ent_behaviors.register_handlers.bind(
-      this.ent_behaviors
-    );
-    this.get_ent_behavior = this.ent_behaviors.get_handler.bind(
-      this.ent_behaviors
-    );
-    this.run_ent_behavior = this.ent_behaviors.exec_behavior.bind(
-      this.ent_behaviors
-    );
 
     this.set_compo_behavior = this.compo_behaviors.register_handler.bind(
       this.compo_behaviors
