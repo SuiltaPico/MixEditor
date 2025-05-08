@@ -1,40 +1,29 @@
 import { ContentCtx } from "../content/content_ctx";
 import {
-  Compo,
   CompoBehaviorHandler,
   CompoBehaviorMap,
+  ECSCompoMap,
   ECSCtx,
-  Ent,
-  EntBehaviorHandler,
-  EntBehaviorMap,
+  ECSPipeEventMap
 } from "../ecs";
 import { OpBehaviorHandler, OpBehaviorMap, OpCtx } from "../op";
 import { IPipeEvent, IPipeStageHandler, PipeCtx } from "../pipe";
 import { Plugin, PluginCtx } from "../plugin";
 import { SelectionCtx, SelectionMap } from "../selection/selection";
 import {
-  TDODeserializerMap,
-  TDOSerializeCtx,
-  TDOSerializerMap,
-} from "../tdo/serialize/serialize_ctx";
+  DTODeserializerMap,
+  DTOSerializeCtx,
+  DTOSerializerMap,
+} from "../serialize/serialize_ctx";
 import {
-  ChildCompo,
   ChildCompoBehaviorMap,
-  EntChildCompo,
-  ParentCompo,
-  TextChildCompo,
-  TreeCompoCreateParamsMap,
+  CoreCompoMap
 } from "./compo";
-import { RootEntInitPipeEvent, RootEntInitPipeId } from "./ent";
 import { MECoreOpMap } from "./op";
 import { MECorePipeEventMap } from "./pipe";
 import { regist_core_items } from "./regist_core_items";
 import { TreeSelectionMapExtend } from "./selection";
 
-export type MEEntBehaviorHandler<
-  TParams extends object,
-  TResult
-> = EntBehaviorHandler<TParams, TResult, MixEditor>;
 export type MECompoBehaviorHandler<
   TParams extends object,
   TResult
@@ -51,16 +40,8 @@ export type MEPipeStageHandler<TEvent extends MEEvent> = IPipeStageHandler<
 >;
 
 /** MixEditor 的组件表，供插件扩展 */
-export interface MECompoMap extends Record<string, Compo> {
-  [EntChildCompo.type]: EntChildCompo;
-  [ChildCompo.type]: ChildCompo;
-  [TextChildCompo.type]: TextChildCompo;
-  [ParentCompo.type]: ParentCompo;
-}
-export interface MECompoCreateParamsMap extends TreeCompoCreateParamsMap {}
+export interface MECompoMap extends CoreCompoMap, ECSCompoMap {}
 
-/** MixEditor 的实体行为映射表，供插件扩展 */
-export interface MEEntBehaviorMap extends EntBehaviorMap<MixEditor> {}
 /** MixEditor 的组件行为映射表，供插件扩展 */
 export interface MECompoBehaviorMap
   extends CompoBehaviorMap<MixEditor>,
@@ -74,31 +55,23 @@ export interface MEOpBehaviorMap extends OpBehaviorMap<MixEditor> {}
 export interface MESelectionMap extends SelectionMap, TreeSelectionMapExtend {}
 export type MESelection = MESelectionMap[keyof MESelectionMap];
 
-/** MixEditor 的TDO序列化表，供插件扩展 */
-export interface METDOSerializeMap extends TDOSerializerMap<any> {}
-/** MixEditor 的TDO反序列化表，供插件扩展 */
-export interface METDODeSerializeMap extends TDODeserializerMap<any> {}
+/** MixEditor 的DTO序列化表，供插件扩展 */
+export interface MEDTOSerializeMap extends DTOSerializerMap<any> {}
+/** MixEditor 的DTO反序列化表，供插件扩展 */
+export interface MEDTODeSerializeMap extends DTODeserializerMap<any> {}
 
 /** MixEditor 的管道事件表，供插件扩展 */
-export interface MEPipeEventMap extends MECorePipeEventMap {
-  [RootEntInitPipeId]: RootEntInitPipeEvent;
-}
+export interface MEPipeEventMap extends MECorePipeEventMap, ECSPipeEventMap {}
 
 export type MEPlugin = Plugin<MixEditor>;
 
 export interface InitParams {
-  root_ent?: Ent;
+  root_ent?: string;
 }
 
 /** MixEditor 的上下文。 */
 export class MixEditor {
-  ecs: ECSCtx<
-    MECompoMap,
-    MECompoCreateParamsMap,
-    MECompoBehaviorMap,
-    MEEntBehaviorMap,
-    this
-  >;
+  ecs: ECSCtx<MECompoMap, MECompoBehaviorMap>;
 
   content: ContentCtx;
 
@@ -108,9 +81,9 @@ export class MixEditor {
 
   selection: SelectionCtx<MESelectionMap>;
 
-  tdo_serialize: TDOSerializeCtx<
-    METDOSerializeMap,
-    METDODeSerializeMap,
+  serialize: DTOSerializeCtx<
+    MEDTOSerializeMap,
+    MEDTODeSerializeMap,
     ThisType<this>
   >;
 
@@ -122,7 +95,7 @@ export class MixEditor {
     await this.pipe.execute({ pipe_id: "init" }); // 初始化插件
 
     if (params.root_ent) {
-      this.content.root.set(params.root_ent.id);
+      this.content.root.set(params.root_ent);
     }
   }
 
@@ -136,9 +109,9 @@ export class MixEditor {
     this.op = new OpCtx(this);
     this.pipe = new PipeCtx<MEPipeEventMap, this>(this);
     this.selection = new SelectionCtx();
-    this.tdo_serialize = new TDOSerializeCtx<
-      METDOSerializeMap,
-      METDODeSerializeMap,
+    this.serialize = new DTOSerializeCtx<
+      MEDTOSerializeMap,
+      MEDTODeSerializeMap,
       ThisType<this>
     >(this);
     this.plugin = new PluginCtx(this);

@@ -1,6 +1,6 @@
 import { MaybePromise } from "@mixeditor/common";
-import { TDO } from "../tdo";
-import { MEPack } from "../../core";
+import { DTO } from "../dto";
+import { MEPack } from "../core";
 
 export type SerializerHandler<TConfig, TOutput, TExCtx> = (params: {
   input: MEPack;
@@ -13,7 +13,7 @@ export type DeserializerHandler<TConfig, TInput, TExCtx> = (params: {
   ex_ctx: TExCtx;
 }) => MaybePromise<MEPack>;
 
-export type TDOSerializerMap<TExCtx> = Record<
+export type DTOSerializerMap<TExCtx> = Record<
   string,
   {
     output: any;
@@ -22,7 +22,7 @@ export type TDOSerializerMap<TExCtx> = Record<
   }
 >;
 
-export type TDODeserializerMap<TExCtx> = Record<
+export type DTODeserializerMap<TExCtx> = Record<
   string,
   {
     input: any;
@@ -31,9 +31,9 @@ export type TDODeserializerMap<TExCtx> = Record<
   }
 >;
 
-export class TDOSerializeCtx<
-  TTDOSerializerMap extends TDOSerializerMap<TExCtx>,
-  TTDODeserializerMap extends TDODeserializerMap<TExCtx>,
+export class DTOSerializeCtx<
+  TDTOSerializerMap extends DTOSerializerMap<TExCtx>,
+  TDTODeserializerMap extends DTODeserializerMap<TExCtx>,
   TExCtx
 > {
   private serializers = new Map<string, SerializerHandler<any, any, TExCtx>>();
@@ -42,23 +42,23 @@ export class TDOSerializeCtx<
     DeserializerHandler<any, any, TExCtx>
   >();
 
-  register_serializer<TType extends Extract<keyof TTDOSerializerMap, string>>(
+  register_serializer<TType extends Extract<keyof TDTOSerializerMap, string>>(
     type: TType,
     handler: SerializerHandler<
-      TTDOSerializerMap[TType]["config"],
-      TTDOSerializerMap[TType]["output"],
+      TDTOSerializerMap[TType]["config"],
+      TDTOSerializerMap[TType]["output"],
       TExCtx
     >
   ) {
     this.serializers.set(type, handler);
   }
   register_deserializer<
-    TType extends Extract<keyof TTDODeserializerMap, string>
+    TType extends Extract<keyof TDTODeserializerMap, string>
   >(
     type: TType,
     handler: DeserializerHandler<
-      TTDODeserializerMap[TType]["config"],
-      TTDODeserializerMap[TType]["input"],
+      TDTODeserializerMap[TType]["config"],
+      TDTODeserializerMap[TType]["input"],
       TExCtx
     >
   ) {
@@ -71,10 +71,10 @@ export class TDOSerializeCtx<
     this.deserializers.delete(type);
   }
 
-  serialize<TType extends Extract<keyof TTDOSerializerMap, string>>(
+  serialize<TType extends Extract<keyof TDTOSerializerMap, string>>(
     type: TType,
     input: MEPack,
-    config?: TTDOSerializerMap[TType]["config"]
+    config?: TDTOSerializerMap[TType]["config"]
   ) {
     const serializer = this.serializers.get(type);
     if (!serializer) {
@@ -84,13 +84,13 @@ export class TDOSerializeCtx<
       input,
       config,
       ex_ctx: this.ex_ctx,
-    }) as TTDOSerializerMap[TType]["output"];
+    }) as TDTOSerializerMap[TType]["output"];
   }
 
-  deserialize<TType extends Extract<keyof TTDODeserializerMap, string>>(
+  deserialize<TType extends Extract<keyof TDTODeserializerMap, string>>(
     type: TType,
-    input: TTDODeserializerMap[TType]["input"],
-    config?: TTDODeserializerMap[TType]["config"]
+    input: TDTODeserializerMap[TType]["input"],
+    config?: TDTODeserializerMap[TType]["config"]
   ) {
     const deserializer = this.deserializers.get(type);
     if (!deserializer) {

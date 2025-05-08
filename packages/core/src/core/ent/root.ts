@@ -1,10 +1,12 @@
-import { create_ent_registration, EntInitPipeEvent } from "../../common/ent";
+import { create_ent_registration } from "../../common/ent";
 import { EntChildCompo } from "../compo/tree/ent_child";
 import { ChildCompo } from "../compo/tree/child";
 import { set_children_parent_refs } from "../../common";
 import { MixEditor } from "../mix_editor";
+import { TypeCompo } from "../compo";
 
-const default_ChildCompo = new ChildCompo(EntChildCompo.type);
+export const root_ent_TypeCompo = new TypeCompo("core:root");
+export const root_ent_ChildCompo = new ChildCompo(EntChildCompo.type);
 
 const {
   EntType: RootEntType,
@@ -14,20 +16,21 @@ const {
   namespace: "core",
   ent_type: "core:root",
   init_stage_execute: async (event) => {
-    const { it, ex_ctx, init_params } = event;
-    const children = init_params?.children ?? [];
+    const { ent_id, ex_ctx, params } = event;
+    const children = params?.children ?? [];
 
-    set_children_parent_refs(ex_ctx.ecs, children, it.id);
+    set_children_parent_refs(ex_ctx.ecs, children, ent_id);
 
-    ex_ctx.ecs.set_compos(it.id, [new EntChildCompo(children)]);
+    ex_ctx.ecs.set_compos(ent_id, [
+      root_ent_TypeCompo,
+      root_ent_ChildCompo,
+      new EntChildCompo(children),
+    ]);
   },
 });
 
 function register_RootEnt(editor: MixEditor) {
-  editor.ecs.set_ent_default_compo(RootEntType, default_ChildCompo);
-  
   return register_RootEnt_init_pipe(editor);
 }
 
 export { RootEntType, RootEntInitPipeId, register_RootEnt };
-export type RootEntInitPipeEvent = EntInitPipeEvent<typeof RootEntInitPipeId>;

@@ -1,5 +1,4 @@
 import { create_Signal, WrappedSignal } from "@mixeditor/common";
-import { ECSCtx, Ent } from "../ecs";
 
 /** 内容上下文 */
 export class ContentCtx {

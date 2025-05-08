@@ -2,9 +2,9 @@ import { create_Signal, WrappedSignal } from "@mixeditor/common";
 import {
   GetCloneParamsCb,
   CreateCb,
-  FromTdoDataCb,
-  ToTdoDataCb,
-  ToTdoDecision,
+  FromDtoDataCb,
+  ToDtoDataCb,
+  ToDtoDecision,
 } from "../../../ecs";
 import { MixEditor } from "../../mix_editor";
 import {
@@ -59,7 +59,7 @@ export interface EntChildCompoCreateParams {
 }
 
 /** 子实体数组组件传输对象结构定义 */
-export type EntChildCompoTDOData = string[];
+export type EntChildCompoDTOData = string[];
 
 export function register_EntChildCompo(editor: MixEditor) {
   const { ecs } = editor;
@@ -67,13 +67,13 @@ export function register_EntChildCompo(editor: MixEditor) {
     [CreateCb]({ params }) {
       return new EntChildCompo(params.children);
     },
-    [ToTdoDataCb]({ it, save_with }) {
+    [ToDtoDataCb]({ it, save_with }) {
       const children = it.children.get();
       save_with(children);
-      return ToTdoDecision.Done({ data: children });
+      return ToDtoDecision.Done({ data: children });
     },
-    [FromTdoDataCb]({ data: input }) {
-      return { children: input as EntChildCompoTDOData };
+    [FromDtoDataCb]({ data: input }) {
+      return { children: input as EntChildCompoDTOData };
     },
     [GetCloneParamsCb]({ it }) {
       return { children: it.children.get() };

@@ -1,4 +1,4 @@
-// import { Ent, EntTDO } from "../../ecs";
+// import { Ent, EntDTO } from "../../ecs";
 // import { create_PipeStage_chain, IPipeEvent } from "../../pipe";
 // import { MixEditor } from "../mix_editor";
 // import { SavedData } from "./load_and_save";
@@ -14,7 +14,7 @@
 //   /** 要被反序列化的配置 */
 //   config: any;
 
-//   /** 反序列化后的根实体TDO */
+//   /** 反序列化后的根实体DTO */
 //   saved_data: SavedData;
 
 //   /** 最终被加载到内容中的根实体 */
@@ -26,7 +26,7 @@
 //   /** 要被序列化的根实体 */
 //   root_ent: string;
 
-//   /** 序列化后的根实体TDO */
+//   /** 序列化后的根实体DTO */
 //   saved_data?: SavedData;
 
 //   /** 要被序列化的格式 */
@@ -39,16 +39,16 @@
 // }
 
 // export function register_load_and_save_serialized_pipe(editor: MixEditor) {
-//   const { pipe, tdo_serialize } = editor;
+//   const { pipe, dto_serialize } = editor;
 
 //   pipe.set_pipe(
 //     "load_serialized",
 //     create_PipeStage_chain([
 //       {
-//         id: "deserialize_to_tdo",
+//         id: "deserialize_to_dto",
 //         execute: async (evt, wait_deps) => {
 //           await wait_deps();
-//           evt.saved_data = await tdo_serialize.deserialize(
+//           evt.saved_data = await dto_serialize.deserialize(
 //             evt.format,
 //             evt.serialized,
 //             evt.config
@@ -56,7 +56,7 @@
 //         },
 //       },
 //       {
-//         id: "load_tdo_to_content",
+//         id: "load_dto_to_content",
 //         execute: async (evt, wait_deps) => {
 //           await wait_deps();
 //           await pipe.execute({
@@ -72,7 +72,7 @@
 //     "save_serialized",
 //     create_PipeStage_chain([
 //       {
-//         id: "save_to_tdo",
+//         id: "save_to_dto",
 //         execute: async (evt, wait_deps) => {
 //           await wait_deps();
 //           const saved = await pipe.execute({
@@ -83,10 +83,10 @@
 //         },
 //       },
 //       {
-//         id: "serialize_from_tdo",
+//         id: "serialize_from_dto",
 //         execute: async (evt, wait_deps) => {
 //           await wait_deps();
-//           evt.serialized = await tdo_serialize.serialize(
+//           evt.serialized = await dto_serialize.serialize(
 //             evt.format,
 //             evt.saved_data!,
 //             evt.config

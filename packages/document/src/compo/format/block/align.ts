@@ -2,11 +2,11 @@ import { create_Signal, WrappedSignal } from "@mixeditor/common";
 import {
   Compo,
   CreateCb,
-  FromTdoDataCb,
+  FromDtoDataCb,
   GetCloneParamsCb,
   MixEditor,
-  ToTdoDataCb,
-  ToTdoDecision,
+  ToDtoDataCb,
+  ToDtoDecision,
 } from "@mixeditor/core";
 import {
   DocMergeCb,
@@ -36,7 +36,7 @@ export class DocAlignCompo implements Compo {
 }
 
 /** 标题组件传输对象结构定义 */
-export type DocAlignCompoTDOData = DocAlignType;
+export type DocAlignCompoDTOData = DocAlignType;
 
 export function register_DocAlignCompo(editor: MixEditor) {
   const { ecs } = editor;
@@ -44,10 +44,10 @@ export function register_DocAlignCompo(editor: MixEditor) {
     [CreateCb]({ params }) {
       return new DocAlignCompo(params.to);
     },
-    [ToTdoDataCb]({ it }) {
-      return ToTdoDecision.Done({ data: it.to.get() });
+    [ToDtoDataCb]({ it }) {
+      return ToDtoDecision.Done({ data: it.to.get() });
     },
-    [FromTdoDataCb]({ data }) {
+    [FromDtoDataCb]({ data }) {
       return { to: data as DocAlignType };
     },
     [GetCloneParamsCb]({ it }) {

@@ -1,9 +1,9 @@
 import {
   Compo,
   MixEditor,
-  ToTdoDataCb,
+  ToDtoDataCb,
   CreateCb,
-  ToTdoDecision,
+  ToDtoDecision,
 } from "@mixeditor/core";
 import { DocMergeCb, handle_merge_always_allow, MergeDecision } from "../../../pipe";
 

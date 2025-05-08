@@ -2,8 +2,8 @@ import {
   Compo,
   CreateCb,
   MixEditor,
-  ToTdoDataCb,
-  ToTdoDecision,
+  ToDtoDataCb,
+  ToDtoDecision,
 } from "@mixeditor/core";
 import {
   DocMergeCb,
@@ -23,7 +23,7 @@ export class DocLinkCompo implements Compo {
   }
 }
 
-export interface DocLinkCompoTDO {
+export interface DocLinkCompoDTO {
   type: typeof DocLinkCompo.type;
   uri: string;
 }
@@ -34,8 +34,8 @@ export function register_DocLinkCompo(editor: MixEditor) {
     [CreateCb]({ params }) {
       return new DocLinkCompo(params.uri);
     },
-    [ToTdoDataCb]({ it }) {
-      return ToTdoDecision.Done({
+    [ToDtoDataCb]({ it }) {
+      return ToDtoDecision.Done({
         data: {
           uri: it.uri,
         },

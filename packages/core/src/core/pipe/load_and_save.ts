@@ -1,4 +1,4 @@
-// import { Ent, EntTDO } from "../../ecs";
+// import { Ent, EntDTO } from "../../ecs";
 // import { create_PipeStage_chain, IPipeEvent } from "../../pipe";
 // import { MixEditor } from "../mix_editor";
 // import { MEPack } from "./io";
@@ -29,16 +29,16 @@
 //           await wait_deps();
 
 //           // 合并加载列表并去重
-//           const loadSet = new Set([...evt.input.tdos, evt.input.entry_tdo]);
+//           const loadSet = new Set([...evt.input.dtos, evt.input.entry_dto]);
 
 //           // 批量加载所有实体
-//           await Promise.all([...loadSet].map((tdo) => ecs.load_ent_tdo(tdo)));
+//           await Promise.all([...loadSet].map((dto) => ecs.load_ent_dto(dto)));
 
 //           // 获取入口实体
-//           const entryEnt = ecs.ents.get(evt.input.entry_tdo.id);
+//           const entryEnt = ecs.ents.get(evt.input.entry_dto.id);
 //           if (!entryEnt) {
 //             throw new Error(
-//               `入口实体 ${evt.input.entry_tdo.id} 加载失败，请检查数据完整性`
+//               `入口实体 ${evt.input.entry_dto.id} 加载失败，请检查数据完整性`
 //             );
 //           }
 
@@ -68,14 +68,14 @@
 //         },
 //       },
 //       {
-//         id: "save_to_tdo",
+//         id: "save_to_dto",
 //         execute: async (evt, wait_deps) => {
 //           await wait_deps();
 //           if (!evt.input) return;
 
-//           const tdos: EntTDO[] = [];
+//           const dtos: EntDTO[] = [];
 //           const processed_ents = new Set<string>();
-//           let entry_tdo: EntTDO;
+//           let entry_dto: EntDTO;
 
 //           const save_entity = async (ent_id: string) => {
 //             if (processed_ents.has(ent_id)) return;
@@ -88,7 +88,7 @@
 //             }
 
 //             let dependencies: string[] = [];
-//             const tdo = await ecs.save_ent_tdo(ent, (deps) => {
+//             const dto = await ecs.save_ent_dto(ent, (deps) => {
 //               dependencies.push(...deps);
 //             });
 
@@ -99,21 +99,21 @@
 
 //             // 区分入口实体和其他实体
 //             if (ent_id === evt.input) {
-//               entry_tdo = tdo;
+//               entry_dto = dto;
 //             } else {
-//               tdos.push(tdo);
+//               dtos.push(dto);
 //             }
 //           };
 
 //           await save_entity(evt.input);
 
-//           if (!entry_tdo!) {
-//             throw new Error("入口实体TDO生成失败");
+//           if (!entry_dto!) {
+//             throw new Error("入口实体DTO生成失败");
 //           }
 
 //           evt.output = {
-//             tdos,
-//             entry_tdo,
+//             dtos,
+//             entry_dto,
 //           };
 //         },
 //       },

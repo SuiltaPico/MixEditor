@@ -1,5 +1,5 @@
 import { create_Signal, WrappedSignal } from "@mixeditor/common";
-import { CompoTDO } from "../../../ecs";
+import { CompoDTO } from "../../../ecs";
 
 /** 路由组件。用于记录路由的来源。 */
 export class RouteCompo {
@@ -12,6 +12,6 @@ export class RouteCompo {
   }
 }
 
-export interface RouteCompoTDO extends CompoTDO {
+export interface RouteCompoDTO extends CompoDTO {
   src: string;
 }

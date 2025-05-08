@@ -1,4 +1,5 @@
-import { create_ent_registration, EntInitPipeEvent } from "../../common/ent";
+import { create_ent_registration } from "../../common/ent";
+import { ECSEntInitEvent } from "../../ecs";
 
 const {
   EntType: TempEntType,
@@ -10,4 +11,4 @@ const {
 });
 
 export { TempEntType, TempEntInitPipeId, register_TempEnt };
-export type TempEntInitPipeEvent = EntInitPipeEvent<typeof TempEntInitPipeId>;
+export type TempEntInitPipeEvent = ECSEntInitEvent;

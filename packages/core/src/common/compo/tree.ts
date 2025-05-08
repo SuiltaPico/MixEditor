@@ -4,6 +4,7 @@ import {
   TreeInsertChildrenCb,
   TreeSplitInCb,
   TreeSplitOutCb,
+  TypeCompo,
 } from "../../core";
 import {
   ChildCompo,
@@ -412,9 +413,6 @@ export async function split_ent(
   ent_id: string,
   index: number
 ) {
-  const ent = ecs.get_ent(ent_id);
-  if (!ent) throw new Error(`无法获取实体 ${ent_id}。`);
-
   const split_outs = new Map<string, any>();
   const cloned_compos: Compo[] = [];
 
@@ -444,11 +442,12 @@ export async function split_ent(
 
   await Promise.all(get_split_out_promises);
 
-  const new_ent = await ecs.create_ent(ent.type);
+  const ent_type = ecs.get_compo(ent_id, TypeCompo.type)?.value;
+  const new_ent_id = await ecs.create_ent(ent_type);
   const apply_split_out_promises = Array.from(split_outs.entries()).map(
     async ([compo_type, split_out_result]) => {
       const new_ent_compo = await ecs.get_or_create_compo(
-        new_ent.id,
+        new_ent_id,
         compo_type
       );
 
@@ -461,9 +460,9 @@ export async function split_ent(
   await Promise.all(apply_split_out_promises);
 
   // 将克隆的组件添加到新实体
-  ecs.set_compos(new_ent.id, cloned_compos);
+  ecs.set_compos(new_ent_id, cloned_compos);
 
-  return { new_ent_id: new_ent.id, split_outs };
+  return { new_ent_id, split_outs };
 }
 
 /** 根据路径分割 `ent_id` 实体。*/
@@ -503,8 +502,6 @@ export async function deep_split_ent(
   for (let i = path.length - 1; i >= 0; i--) {
     /** 待分割的位置索引 */
     const ent_to_split = ent_list[i];
-    const ent = ecs.get_ent(ent_to_split);
-    if (!ent) throw new Error(`无法获取实体 ${ent_to_split}。`);
     const { new_ent_id, split_outs: new_split_outs } = await split_ent(
       ecs,
       ent_to_split,
@@ -639,12 +636,10 @@ export const print_tree = async (
   id: string
 ): Promise<any> => {
   const ecs = editor.ecs;
-  const ent = ecs.get_ent(id);
   const actual_child_compo = get_actual_child_compo(ecs, id);
   return {
     // id: ent?.id,
-    type: ent?.type,
-    compo: ecs.get_compos(id).keys(),
+    type: ecs.get_compos(id).keys(),
     children:
       actual_child_compo instanceof EntChildCompo
         ? await Promise.all(

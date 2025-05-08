@@ -2,11 +2,11 @@ import { create_Signal, WrappedSignal } from "@mixeditor/common";
 import {
   Compo,
   CreateCb,
-  FromTdoDataCb,
+  FromDtoDataCb,
   GetCloneParamsCb,
   MixEditor,
-  ToTdoDataCb,
-  ToTdoDecision,
+  ToDtoDataCb,
+  ToDtoDecision,
 } from "@mixeditor/core";
 import {
   DocMergeCb,
@@ -27,7 +27,7 @@ export class DocHeadingCompo implements Compo {
 }
 
 /** 标题组件传输对象结构定义 */
-export type DocHeadingCompoTDOData = number;
+export type DocHeadingCompoDTOData = number;
 
 export function register_DocHeadingCompo(editor: MixEditor) {
   const { ecs } = editor;
@@ -35,11 +35,11 @@ export function register_DocHeadingCompo(editor: MixEditor) {
     [CreateCb]({ params }) {
       return new DocHeadingCompo(params.level);
     },
-    [ToTdoDataCb]({ it }) {
-      return ToTdoDecision.Done({ data: it.level.get() });
+    [ToDtoDataCb]({ it }) {
+      return ToDtoDecision.Done({ data: it.level.get() });
     },
-    [FromTdoDataCb]({ data }) {
-      return { level: data as DocHeadingCompoTDOData };
+    [FromDtoDataCb]({ data }) {
+      return { level: data as DocHeadingCompoDTOData };
     },
     [GetCloneParamsCb]({ it }) {
       return { level: it.level.get() };

@@ -1,11 +1,11 @@
 import { create_Signal, WrappedSignal } from "@mixeditor/common";
 import {
-  ToTdoDataCb,
-  CompoTDO,
-  FromTdoDataCb,
+  ToDtoDataCb,
+  CompoDTO,
+  FromDtoDataCb,
   CreateCb,
   GetCloneParamsCb,
-  ToTdoDecision,
+  ToDtoDecision,
 } from "../../../ecs";
 import { MixEditor } from "../../mix_editor";
 import { IChildCompo } from "./child";
@@ -51,7 +51,7 @@ export class TextChildCompo implements IChildCompo {
 }
 
 /** 文本内容组件传输对象结构定义 */
-export type TextChildCompoTDOData = string;
+export type TextChildCompoDTOData = string;
 
 export interface TextChildCompoCreateParams {
   content: string;
@@ -61,11 +61,11 @@ export interface TextChildCompoCreateParams {
 export function register_TextChildCompo(editor: MixEditor) {
   const { ecs } = editor;
   ecs.set_compo_behaviors(TextChildCompo.type, {
-    [FromTdoDataCb]({ data: input }) {
-      return new TextChildCompo(input as TextChildCompoTDOData);
+    [FromDtoDataCb]({ data: input }) {
+      return new TextChildCompo(input as TextChildCompoDTOData);
     },
-    [ToTdoDataCb]({ it }) {
-      return ToTdoDecision.Done({ data: it.content.get() });
+    [ToDtoDataCb]({ it }) {
+      return ToDtoDecision.Done({ data: it.content.get() });
     },
     [CreateCb]({ params }) {
       return new TextChildCompo(params.content);
@@ -96,10 +96,10 @@ export function register_TextChildCompo(editor: MixEditor) {
       it.content.set(content.slice(0, start) + content.slice(end));
 
       // 创建一个临时文本实体，用于存储删除的文本内容
-      const ent = await ecs.create_ent(TempEntType);
-      ecs.set_compo(ent.id, new TextChildCompo(deleted));
+      const ent_id = await ecs.create_ent(TempEntType);
+      ecs.set_compo(ent_id, new TextChildCompo(deleted));
 
-      return [ent.id];
+      return [ent_id];
     },
     [TreeSplitOutCb]({ it, index }) {
       const content = it.content.get();

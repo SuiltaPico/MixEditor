@@ -1,16 +1,14 @@
 import { IArrayLike } from "../../../common/object";
 import {
-  GetCloneParamsCb,
   Compo,
-  CompoTDO,
   CreateCb,
-  FromTdoDataCb,
-  ToTdoDataCb,
-  ToTdoDecision,
+  FromDtoDataCb,
+  GetCloneParamsCb,
+  ToDtoDataCb,
+  ToDtoDecision
 } from "../../../ecs";
 import { MixEditor } from "../../mix_editor";
 import { RouteCompo } from "../basic/route";
-import { TreeSplitInCb, TreeSplitOutCb } from "./cb";
 
 /**
  * 子实体来源记录组件
@@ -26,7 +24,7 @@ export class ChildCompo extends RouteCompo {
 }
 
 /** 子实体组件传输对象结构定义 */
-export type ChildCompoTDOData = string;
+export type ChildCompoDTOData = string;
 
 export interface ChildCompoCreateParams {
   src: string;
@@ -39,12 +37,12 @@ export function register_ChildCompo(editor: MixEditor) {
     [CreateCb]({ params }) {
       return new ChildCompo(params.src);
     },
-    [ToTdoDataCb]({ it }) {
+    [ToDtoDataCb]({ it }) {
       const src = it.src.get();
-      return ToTdoDecision.Done({ data: src });
+      return ToDtoDecision.Done({ data: src });
     },
-    [FromTdoDataCb]({ data: input }) {
-      return { src: input as ChildCompoTDOData };
+    [FromDtoDataCb]({ data: input }) {
+      return { src: input as ChildCompoDTOData };
     },
     [GetCloneParamsCb]({ it }) {
       return { src: it.src.get() };

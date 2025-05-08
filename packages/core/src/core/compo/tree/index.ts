@@ -1,3 +1,4 @@
+import { Compo } from "../../../ecs";
 import { MixEditor } from "../../mix_editor";
 import {
   ChildCompo,
@@ -33,9 +34,21 @@ export function register_tree_compos(editor: MixEditor) {
   register_ChildCompo(editor);
 }
 
-export interface TreeCompoCreateParamsMap {
-  [EntChildCompo.type]: EntChildCompoCreateParams;
-  [TextChildCompo.type]: TextChildCompoCreateParams;
-  [ParentCompo.type]: ParentCompoCreateParams;
-  [ChildCompo.type]: ChildCompoCreateParams;
+export interface TreeCompoMap {
+  [EntChildCompo.type]: {
+    compo: EntChildCompo;
+    create_params: EntChildCompoCreateParams;
+  };
+  [TextChildCompo.type]: {
+    compo: TextChildCompo;
+    create_params: TextChildCompoCreateParams;
+  };
+  [ParentCompo.type]: {
+    compo: ParentCompo;
+    create_params: ParentCompoCreateParams;
+  };
+  [ChildCompo.type]: {
+    compo: ChildCompo;
+    create_params: ChildCompoCreateParams;
+  };
 }
