@@ -4,7 +4,7 @@ import {
   CompoBehaviorMap,
   ECSCompoMap,
   ECSCtx,
-  ECSPipeEventMap
+  ECSPipeEventMap,
 } from "../ecs";
 import { OpBehaviorHandler, OpBehaviorMap, OpCtx } from "../op";
 import { IPipeEvent, IPipeStageHandler, PipeCtx } from "../pipe";
@@ -15,10 +15,8 @@ import {
   DTOSerializeCtx,
   DTOSerializerMap,
 } from "../serialize/serialize_ctx";
-import {
-  ChildCompoBehaviorMap,
-  CoreCompoMap
-} from "./compo";
+import { ChildCompoBehaviorMap, CoreCompoMap } from "./compo";
+import { CoreEntInitPipeEventMap } from "./ent";
 import { MECoreOpMap } from "./op";
 import { MECorePipeEventMap } from "./pipe";
 import { regist_core_items } from "./regist_core_items";
@@ -61,7 +59,10 @@ export interface MEDTOSerializeMap extends DTOSerializerMap<any> {}
 export interface MEDTODeSerializeMap extends DTODeserializerMap<any> {}
 
 /** MixEditor 的管道事件表，供插件扩展 */
-export interface MEPipeEventMap extends MECorePipeEventMap, ECSPipeEventMap {}
+export interface MEPipeEventMap
+  extends MECorePipeEventMap,
+    ECSPipeEventMap,
+    CoreEntInitPipeEventMap {}
 
 export type MEPlugin = Plugin<MixEditor>;
 

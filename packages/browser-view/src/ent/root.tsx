@@ -1,8 +1,4 @@
-import {
-  EntChildCompo,
-  MixEditor,
-  RootEntInitPipeId
-} from "@mixeditor/core";
+import { EntChildCompo, MixEditor, RootEntInitPipeId } from "@mixeditor/core";
 import { For } from "solid-js";
 import { from_solidjs_compo, NodeRenderer } from "../common/render";
 import {
@@ -72,7 +68,7 @@ export function register_RootEnt_bv_extend(editor: MixEditor) {
         },
         render_selection_policy: BvRenderSelectionDecision.Traverse,
       });
-      ecs.set_compos(event.it.id, [renderable]);
+      ecs.set_compos(event.ent_id, [renderable]);
     },
   });
 }

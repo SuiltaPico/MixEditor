@@ -1,7 +1,6 @@
 import { create_Signal, Rect } from "@mixeditor/common";
 import {
   create_InputDataEvent,
-  create_InputEntsEvent,
   MEDataTransfer,
   MESelection,
   MixEditor,
@@ -11,6 +10,7 @@ import {
   TreeCollapsedSelectionType,
   TreeExtendedSelection,
   TreeExtendedSelectionType,
+  TypeCompo,
 } from "@mixeditor/core";
 import {
   Component,
@@ -152,7 +152,7 @@ export const TreeRangeRenderer: Component<{
       } as MEDataTransfer;
     } else if (typeof e.data === "string") {
       const temp_ent = await editor.ecs.create_ent(TempEntType);
-      editor.ecs.set_compo(temp_ent.id, new TextChildCompo(e.data));
+      editor.ecs.set_compo(temp_ent, new TextChildCompo(e.data));
 
       data_transfer = {
         types: ["text/plain"],
@@ -165,15 +165,13 @@ export const TreeRangeRenderer: Component<{
       for (const type of e.dataTransfer!.types) {
         data_map.set(type, e.dataTransfer!.getData(type));
         console.log(data_map.get(type)?.slice(0, 500));
-        
       }
-      
+
       data_transfer = {
         types: Array.from(data_map.keys()),
         get_data(type: string) {
           return data_map.get(type);
         },
-
       } as MEDataTransfer;
     }
 
@@ -268,7 +266,8 @@ export const TreeRangeRenderer: Component<{
           console.log(
             "selection changed",
             selection.type,
-            editor.ecs.get_ent(selection.caret.ent_id),
+            selection.caret.ent_id,
+            editor.ecs.get_compo(selection.caret.ent_id, TypeCompo.type)?.value,
             selection.caret.offset
           );
         } else if (selection.type === TreeExtendedSelectionType) {
@@ -276,10 +275,12 @@ export const TreeRangeRenderer: Component<{
             "selection changed",
             selection.type,
             "start:",
-            editor.ecs.get_ent(selection.start.ent_id),
+            selection.start.ent_id,
+            editor.ecs.get_compo(selection.start.ent_id, TypeCompo.type)?.value,
             selection.start.offset,
             "end:",
-            editor.ecs.get_ent(selection.end.ent_id),
+            selection.end.ent_id,
+            editor.ecs.get_compo(selection.end.ent_id, TypeCompo.type)?.value,
             selection.end.offset,
             "anchor:",
             selection.anchor

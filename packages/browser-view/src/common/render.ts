@@ -1,11 +1,10 @@
-import { Ent } from "@mixeditor/core";
 import { createRoot } from "solid-js";
 import { BvContext } from "../context";
 
 /** 渲染结果的节点。 */
 export type RenderedDomNode = Node & {
   /** 渲染器对应的实体。 */
-  me_ent?: Ent;
+  me_ent_id?: string;
 };
 
 /** 渲染结果 */

@@ -6,7 +6,10 @@ export * from "./behavior/wrap";
 export * from "./utils";
 
 export interface CompoMapBvExtend {
-  [BvRenderableCompo.type]: BvRenderableCompo;
+  [BvRenderableCompo.type]: {
+    compo: BvRenderableCompo;
+    create_params: {};
+  };
 }
 
 export interface CompoBehaviorMapBvExtend {
