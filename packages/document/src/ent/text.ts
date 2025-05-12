@@ -2,10 +2,10 @@ import { LoopDecision } from "@mixeditor/common";
 import {
   ChildCompo,
   create_ent_registration,
-  EntInitPipeEvent,
+  ECSEntInitEvent,
   MixEditor,
   ParentCompo,
-  TextChildCompo
+  TextChildCompo,
 } from "@mixeditor/core";
 import {
   BackBorderStrategy,
@@ -49,7 +49,7 @@ const default_DocEntTraitsCompo = new DocConfigCompo({
 });
 
 const {
-  EntType: TextEntType,
+  EntType,
   EntInitPipeId: TextEntInitPipeId,
   register_ent: register_TextEnt_init_pipe,
 } = create_ent_registration({
@@ -70,5 +70,4 @@ function register_TextEnt(editor: MixEditor) {
   return register_TextEnt_init_pipe(editor);
 }
 
-export { register_TextEnt, TextEntInitPipeId, TextEntType };
-export type TextEntInitPipeEvent = EntInitPipeEvent<typeof TextEntInitPipeId>;
+export { register_TextEnt, TextEntInitPipeId, EntType as TextEntType };
