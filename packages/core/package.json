@@ -1,6 +1,6 @@
 {
 	"name": "@mixeditor/core",
-	"version": "0.0.0-exp.3",
+	"version": "0.0.0-exp.4",
 	"description": "The core framework for Mixeditor, providing the foundational architecture including ECS, operation management, plugin system, selection, and data pipes.",
 	"keywords": [
 		"mixeditor",
