@@ -1,6 +1,6 @@
 {
   "name": "@mixeditor/browser-view",
-  "version": "0.0.0-exp.3",
+  "version": "0.0.0-exp.4",
   "description": "Mixeditor's browser view plugin, responsible for rendering the document model in the DOM using SolidJS and handling UI interactions.",
   "keywords": [
     "mixeditor",
