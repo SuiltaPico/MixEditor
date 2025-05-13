@@ -6,7 +6,11 @@ import { EntDTO } from "./ent";
 import { MixEditor } from "../core";
 import { IPipeEvent, PipeEventMap } from "../pipe";
 
-export type ECSCompoMap = Record<string, { compo: Compo; create_params: any }>;
+export type ECSEntMetaMap = Record<string, { create_params: any }>;
+export type ECSCompoMetaMap = Record<
+  string,
+  { compo: Compo; create_params: any }
+>;
 
 export const ECSCreateEntPipeId = "core:create_ent";
 export const ECSLoadEntDtoPipeId = "core:load_ent_dto";
@@ -96,7 +100,8 @@ export type CompoBehaviorMap<TExCtx> = Record<
 
 /** 实体上下文。 */
 export class ECSCtx<
-  TCompoMap extends ECSCompoMap,
+  TEntMetaMap extends ECSEntMetaMap,
+  TCompoMetaMap extends ECSCompoMetaMap,
   TCompoBehaviorMap extends CompoBehaviorMap<MixEditor>
 > {
   /** 实体ID生成器。 */
@@ -114,7 +119,7 @@ export class ECSCtx<
   protected compo_behaviors: BehaviorHandlerManager<
     TCompoBehaviorMap,
     Compo,
-    { [key in keyof TCompoMap]: TCompoMap[key]["compo"] },
+    { [key in keyof TCompoMetaMap]: TCompoMetaMap[key]["compo"] },
     MixEditor
   >;
 
@@ -136,7 +141,9 @@ export class ECSCtx<
 
   // ------- 实体方法 -------
   /** 创建实体。 */
-  async create_ent(ent_type: string, params?: any) {
+  async create_ent<
+    TEntType extends Extract<keyof TEntMetaMap, string> | string
+  >(ent_type: TEntType, params?: TEntMetaMap[TEntType]["create_params"]) {
     const id = this.gen_ent_id();
     await this.ex_ctx.pipe.execute({
       pipe_id: ent_type + ".init",
@@ -228,22 +235,22 @@ export class ECSCtx<
   static EmptyCompos = new Map<string, Compo>();
 
   /** 获取组件。 */
-  get_compo<TCompoType extends Extract<keyof TCompoMap, string> | string>(
+  get_compo<TCompoType extends Extract<keyof TCompoMetaMap, string> | string>(
     ent_id: string,
     compo_type: TCompoType
   ) {
     let compo = this.compos.get(
       ent_id,
       compo_type
-    ) as TCompoType extends keyof TCompoMap
-      ? TCompoMap[TCompoType]["compo"]
+    ) as TCompoType extends keyof TCompoMetaMap
+      ? TCompoMetaMap[TCompoType]["compo"]
       : undefined;
     return compo;
   }
 
   /** 获取或创建组件。 */
   async get_or_create_compo<
-    TCompoType extends Extract<keyof TCompoMap, string> | string
+    TCompoType extends Extract<keyof TCompoMetaMap, string> | string
   >(entId: string, compoType: TCompoType) {
     let compo = this.get_compo(entId, compoType);
     if (!compo) {
@@ -281,8 +288,11 @@ export class ECSCtx<
 
   /** 创建组件。 */
   async create_compo<
-    TCompoType extends Extract<keyof TCompoMap, string> | string
-  >(compo_type: TCompoType, params: TCompoMap[TCompoType]["create_params"]) {
+    TCompoType extends Extract<keyof TCompoMetaMap, string> | string
+  >(
+    compo_type: TCompoType,
+    params: TCompoMetaMap[TCompoType]["create_params"]
+  ) {
     return await this.run_compo_behavior(
       { type: compo_type } as any,
       CreateCb as any,
@@ -301,7 +311,7 @@ export class ECSCtx<
     this.compo_behaviors = new BehaviorHandlerManager<
       TCompoBehaviorMap,
       Compo,
-      { [key in keyof TCompoMap]: TCompoMap[key]["compo"] },
+      { [key in keyof TCompoMetaMap]: TCompoMetaMap[key]["compo"] },
       MixEditor
     >(this.ex_ctx);
 

@@ -34,7 +34,7 @@ export function register_tree_compos(editor: MixEditor) {
   register_ChildCompo(editor);
 }
 
-export interface TreeCompoMap {
+export interface TreeCompoMetaMap {
   [EntChildCompo.type]: {
     compo: EntChildCompo;
     create_params: EntChildCompoCreateParams;

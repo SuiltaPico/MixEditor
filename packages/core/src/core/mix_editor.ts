@@ -2,8 +2,9 @@ import { ContentCtx } from "../content/content_ctx";
 import {
   CompoBehaviorHandler,
   CompoBehaviorMap,
-  ECSCompoMap,
+  ECSCompoMetaMap,
   ECSCtx,
+  ECSEntMetaMap,
   ECSPipeEventMap,
 } from "../ecs";
 import { OpBehaviorHandler, OpBehaviorMap, OpCtx } from "../op";
@@ -15,7 +16,7 @@ import {
   DTOSerializeCtx,
   DTOSerializerMap,
 } from "../serialize/serialize_ctx";
-import { ChildCompoBehaviorMap, CoreCompoMap } from "./compo";
+import { ChildCompoBehaviorMap, CoreCompoMetaMap } from "./compo";
 import { CoreEntInitPipeEventMap } from "./ent";
 import { MECoreOpMap } from "./op";
 import { MECorePipeEventMap } from "./pipe";
@@ -37,15 +38,18 @@ export type MEPipeStageHandler<TEvent extends MEEvent> = IPipeStageHandler<
   MixEditor
 >;
 
-/** MixEditor 的组件表，供插件扩展 */
-export interface MECompoMap extends CoreCompoMap, ECSCompoMap {}
+/** MixEditor 的实体元数据表，供插件扩展 */
+export interface MEEntMetaMap extends ECSEntMetaMap {}
+
+/** MixEditor 的组件元数据表，供插件扩展 */
+export interface MECompoMetaMap extends CoreCompoMetaMap, ECSCompoMetaMap {}
 
 /** MixEditor 的组件行为映射表，供插件扩展 */
 export interface MECompoBehaviorMap
   extends CompoBehaviorMap<MixEditor>,
     ChildCompoBehaviorMap {}
 
-export interface MEOpMap extends MECompoMap {}
+export interface MEOpMap extends MECompoMetaMap {}
 /** MixEditor 的操作行为映射表，供插件扩展 */
 export interface MEOpBehaviorMap extends OpBehaviorMap<MixEditor> {}
 
@@ -72,7 +76,7 @@ export interface InitParams {
 
 /** MixEditor 的上下文。 */
 export class MixEditor {
-  ecs: ECSCtx<MECompoMap, MECompoBehaviorMap>;
+  ecs: ECSCtx<MEEntMetaMap, MECompoMetaMap, MECompoBehaviorMap>;
 
   content: ContentCtx;
 
