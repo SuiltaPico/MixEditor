@@ -104,6 +104,13 @@ export class PluginCtx<
     }
   }
 
+  /** 获取插件暴露的接口 */
+  get_plugin_exposed(id: string): any {
+    const pluginData = this.plugins.get(id);
+    if (!pluginData || !pluginData.inited) return undefined;
+    return pluginData.exposed;
+  }
+
   /** 等待插件初始化完成。返回插件暴露的接口。 */
   async wait_plugin_inited<TExposed>(id: string): Promise<TExposed> {
     const pluginData = this.plugins.get(id);
