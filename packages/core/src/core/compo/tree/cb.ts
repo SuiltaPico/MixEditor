@@ -3,6 +3,7 @@ import { MixEditor, MECompoBehaviorHandler } from "../../mix_editor";
 
 export const TreeInsertChildrenCb = "tree:children.insert" as const;
 export const TreeDeleteChildrenCb = "tree:children.delete" as const;
+export const TreeReplaceChildrenCb = "tree:children.replace" as const;
 export const TreeSplitOutCb = "tree:split_out" as const;
 export const TreeSplitInCb = "tree:split_in" as const;
 
@@ -20,6 +21,17 @@ export interface ChildCompoBehaviorMap extends CompoBehaviorMap<MixEditor> {
       start: number;
       end: number;
     },
+    // 返回删除的子实体ID
+    string[]
+  >;
+  [TreeReplaceChildrenCb]: MECompoBehaviorHandler<
+    {
+      start: number;
+      end: number;
+      items: string[];
+      parent_id: string;
+    },
+    // 返回替换的子实体ID
     string[]
   >;
   /** 删除自身 `index` 以右（包括 `index`）的部分，并自身的分割结果。

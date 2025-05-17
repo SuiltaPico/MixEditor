@@ -10,6 +10,7 @@ import { MixEditor } from "../../mix_editor";
 import {
   TreeDeleteChildrenCb,
   TreeInsertChildrenCb,
+  TreeReplaceChildrenCb,
   TreeSplitInCb,
   TreeSplitOutCb,
 } from "./cb";
@@ -90,6 +91,13 @@ export function register_EntChildCompo(editor: MixEditor) {
       const deleted = children.splice(start, end - start);
       it.children.set(children);
       return deleted;
+    },
+    [TreeReplaceChildrenCb]({ it, start, end, items, parent_id }) {
+      const children = it.children.get();
+      set_children_parent_refs(ecs, items, parent_id);
+      const replaced = children.splice(start, end - start, ...items);
+      it.children.set(children);
+      return replaced;
     },
     [TreeSplitOutCb]({ it, index }) {
       const children = it.children.get();

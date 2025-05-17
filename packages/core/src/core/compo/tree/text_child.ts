@@ -14,6 +14,7 @@ import {
   TreeInsertChildrenCb,
   TreeSplitInCb,
   TreeSplitOutCb,
+  TreeReplaceChildrenCb,
 } from "./cb";
 import { TempEntType } from "../../ent/temp";
 import { walk } from "../../../common";
@@ -100,6 +101,39 @@ export function register_TextChildCompo(editor: MixEditor) {
       ecs.set_compo(ent_id, new TextChildCompo(deleted));
 
       return [ent_id];
+    },
+    async [TreeReplaceChildrenCb]({ it, start, end, items, ex_ctx, parent_id }) {
+      const ecs = ex_ctx.ecs;
+      const current_content = it.content.get();
+
+      // 提取将被替换的文本内容
+      const replaced_text = current_content.slice(start, end);
+
+      // 构建新的文本内容
+      let new_content_parts: string[] = [];
+      new_content_parts.push(current_content.slice(0, start)); // 保留 start 索引之前的部分
+
+      for (const item_id of items) {
+        // 遍历 items (实体ID数组)，提取其文本内容
+        // 这里的逻辑与 TreeInsertChildrenCb 类似
+        walk(ecs, item_id, (ent_id) => {
+          const text_compo = ecs.get_compo(ent_id, TextChildCompo.type);
+          if (text_compo) {
+            new_content_parts.push(text_compo.content.get());
+          }
+        });
+      }
+      new_content_parts.push(current_content.slice(end)); // 保留 end 索引之后的部分
+      
+      // 更新组件的文本内容
+      it.content.set(new_content_parts.join(""));
+
+      // 为被替换的文本创建一个临时实体
+      const temp_ent_id = await ecs.create_ent(TempEntType);
+      ecs.set_compo(temp_ent_id, new TextChildCompo(replaced_text));
+
+      // 返回包含临时实体ID的数组
+      return [temp_ent_id];
     },
     [TreeSplitOutCb]({ it, index }) {
       const content = it.content.get();
