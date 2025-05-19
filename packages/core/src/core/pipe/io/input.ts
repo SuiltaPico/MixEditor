@@ -15,9 +15,14 @@ export interface InputDataEvent extends IPipeEvent<MixEditor> {
 export function create_InputDataEvent(
   editor: MixEditor,
   data: MEDataTransfer,
-  selection: MESelection
+  selection?: MESelection
 ): InputDataEvent {
-  return { pipe_id: InputDataPipeID, data, selection, ex_ctx: editor };
+  return {
+    pipe_id: InputDataPipeID,
+    data,
+    selection: selection ?? editor.selection.get_selection(),
+    ex_ctx: editor,
+  };
 }
 
 export const InputEntsPipeID = "core:input_ents";

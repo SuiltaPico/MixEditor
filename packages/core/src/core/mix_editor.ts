@@ -55,7 +55,7 @@ export interface MEOpBehaviorMap extends OpBehaviorMap<MixEditor> {}
 
 /** MixEditor 的选区表，供插件扩展 */
 export interface MESelectionMap extends SelectionMap, TreeSelectionMapExtend {}
-export type MESelection = MESelectionMap[keyof MESelectionMap];
+export type MESelection = MESelectionMap[keyof MESelectionMap] | undefined;
 
 /** MixEditor 的DTO序列化表，供插件扩展 */
 export interface MEDTOSerializeMap extends DTOSerializerMap<any> {}
