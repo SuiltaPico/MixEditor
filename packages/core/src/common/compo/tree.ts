@@ -416,13 +416,23 @@ export async function split_ent(
   const split_outs = new Map<string, any>();
   const cloned_compos: Compo[] = [];
 
-  const get_split_out_promises = Array.from(
+  // 先创建新实体
+  const ent_type = ecs.get_compo(ent_id, TypeCompo.type)?.value;
+  const new_ent_id = await ecs.create_ent(ent_type);
+
+  // 遍历源实体自身组件
+  const process_promises = Array.from(
     ecs.get_own_compos(ent_id).values()
   ).map(async (compo) => {
+    // 如果新实体已经有该组件，直接跳过
+    if (ecs.get_compo(new_ent_id, compo.type)) return;
+
+    // 优先尝试分割
     const split_out_behavior = ecs.get_compo_behavior(
       compo.type,
       TreeSplitOutCb
     );
+
     if (split_out_behavior) {
       const result = await split_out_behavior({
         it: compo,
@@ -430,37 +440,31 @@ export async function split_ent(
         index,
       });
       split_outs.set(compo.type, result);
+
+      const new_ent_compo = await ecs.get_or_create_compo(
+        new_ent_id,
+        compo.type
+      );
+
+      await ecs.run_compo_behavior(new_ent_compo, TreeSplitInCb, {
+        data: result,
+      });
     } else {
+      // 分割行为不存在，尝试克隆
       const cloned_compo = await clone_compo(ecs, compo);
       if (cloned_compo) {
         cloned_compos.push(cloned_compo);
-      } else {
-        // TODO: 需要决定无法分割和克隆的组件如何处理
       }
     }
   });
 
-  await Promise.all(get_split_out_promises);
+  await Promise.all(process_promises);
 
-  const ent_type = ecs.get_compo(ent_id, TypeCompo.type)?.value;
-  const new_ent_id = await ecs.create_ent(ent_type);
-  const apply_split_out_promises = Array.from(split_outs.entries()).map(
-    async ([compo_type, split_out_result]) => {
-      const new_ent_compo = await ecs.get_or_create_compo(
-        new_ent_id,
-        compo_type
-      );
-
-      await ecs.run_compo_behavior(new_ent_compo, TreeSplitInCb, {
-        data: split_out_result,
-      });
-    }
+  // 添加克隆组件（新实体尚未拥有的）
+  const filtered_cloned_compos = cloned_compos.filter(
+    (c) => !ecs.get_compo(new_ent_id, c.type)
   );
-
-  await Promise.all(apply_split_out_promises);
-
-  // 将克隆的组件添加到新实体
-  ecs.set_compos(new_ent_id, cloned_compos);
+  ecs.set_compos(new_ent_id, filtered_cloned_compos);
 
   return { new_ent_id, split_outs };
 }
