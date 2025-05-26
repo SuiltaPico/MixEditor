@@ -421,42 +421,42 @@ export async function split_ent(
   const new_ent_id = await ecs.create_ent(ent_type);
 
   // 遍历源实体自身组件
-  const process_promises = Array.from(
-    ecs.get_own_compos(ent_id).values()
-  ).map(async (compo) => {
-    // 如果新实体已经有该组件，直接跳过
-    if (ecs.get_compo(new_ent_id, compo.type)) return;
+  const process_promises = Array.from(ecs.get_own_compos(ent_id).values()).map(
+    async (compo) => {
+      // 如果新实体已经有该组件，直接跳过
+      if (ecs.get_compo(new_ent_id, compo.type)) return;
 
-    // 优先尝试分割
-    const split_out_behavior = ecs.get_compo_behavior(
-      compo.type,
-      TreeSplitOutCb
-    );
-
-    if (split_out_behavior) {
-      const result = await split_out_behavior({
-        it: compo,
-        ex_ctx: ecs.ex_ctx,
-        index,
-      });
-      split_outs.set(compo.type, result);
-
-      const new_ent_compo = await ecs.get_or_create_compo(
-        new_ent_id,
-        compo.type
+      // 优先尝试分割
+      const split_out_behavior = ecs.get_compo_behavior(
+        compo.type,
+        TreeSplitOutCb
       );
 
-      await ecs.run_compo_behavior(new_ent_compo, TreeSplitInCb, {
-        data: result,
-      });
-    } else {
-      // 分割行为不存在，尝试克隆
-      const cloned_compo = await clone_compo(ecs, compo);
-      if (cloned_compo) {
-        cloned_compos.push(cloned_compo);
+      if (split_out_behavior) {
+        const result = await split_out_behavior({
+          it: compo,
+          ex_ctx: ecs.ex_ctx,
+          index,
+        });
+        split_outs.set(compo.type, result);
+
+        const new_ent_compo = await ecs.get_or_create_compo(
+          new_ent_id,
+          compo.type
+        );
+
+        await ecs.run_compo_behavior(new_ent_compo, TreeSplitInCb, {
+          data: result,
+        });
+      } else {
+        // 分割行为不存在，尝试克隆
+        const cloned_compo = await clone_compo(ecs, compo);
+        if (cloned_compo) {
+          cloned_compos.push(cloned_compo);
+        }
       }
     }
-  });
+  );
 
   await Promise.all(process_promises);
 
@@ -553,10 +553,11 @@ export enum WalkDecision {
 
 export const WalkDone = Symbol("walk_done");
 
-export function walk(
+export function walk<TState>(
   ecs: MixEditor["ecs"],
   ent_id: string,
-  processor: (ent_id: string) => WalkDecision | void
+  state: TState,
+  processor: (ent_id: string, state: TState) => WalkDecision | void
 ) {
   // 使用数组作为栈
   const stack: string[] = [ent_id];
@@ -567,7 +568,7 @@ export function walk(
     const current_ent = stack.pop()!;
 
     // 处理当前实体
-    const decision = processor(current_ent);
+    const decision = processor(current_ent, state);
 
     // 如果决定停止遍历，则跳过该节点的子节点
     if (decision === WalkDecision.StopDrive) continue;
@@ -594,10 +595,11 @@ export function walk(
   return WalkDone;
 }
 
-export function reverse_walk(
+export function reverse_walk<TState>(
   ecs: MixEditor["ecs"],
   ent_id: string,
-  processor: (ent_id: string) => WalkDecision | void
+  state: TState,
+  processor: (ent_id: string, state: TState) => WalkDecision | void
 ) {
   // 使用数组作为栈
   const stack: string[] = [ent_id];
@@ -608,7 +610,7 @@ export function reverse_walk(
     const current_ent = stack.pop()!;
 
     // 处理当前实体
-    const decision = processor(current_ent);
+    const decision = processor(current_ent, state);
 
     // 如果决定停止遍历，则跳过该节点的子节点
     if (decision === WalkDecision.StopDrive) continue;

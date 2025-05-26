@@ -79,7 +79,7 @@ export function register_TextChildCompo(editor: MixEditor) {
       const content = it.content.get();
       let new_content = content.slice(0, index);
       for (const item of items) {
-        walk(ecs, item, (ent_id) => {
+        walk(ecs, item, undefined, (ent_id) => {
           const text_compo = ecs.get_compo(ent_id, TextChildCompo.type);
           if (text_compo) {
             new_content += text_compo.content.get();
@@ -102,7 +102,14 @@ export function register_TextChildCompo(editor: MixEditor) {
 
       return [ent_id];
     },
-    async [TreeReplaceChildrenCb]({ it, start, end, items, ex_ctx, parent_id }) {
+    async [TreeReplaceChildrenCb]({
+      it,
+      start,
+      end,
+      items,
+      ex_ctx,
+      parent_id,
+    }) {
       const ecs = ex_ctx.ecs;
       const current_content = it.content.get();
 
@@ -116,7 +123,7 @@ export function register_TextChildCompo(editor: MixEditor) {
       for (const item_id of items) {
         // 遍历 items (实体ID数组)，提取其文本内容
         // 这里的逻辑与 TreeInsertChildrenCb 类似
-        walk(ecs, item_id, (ent_id) => {
+        walk(ecs, item_id, undefined, (ent_id) => {
           const text_compo = ecs.get_compo(ent_id, TextChildCompo.type);
           if (text_compo) {
             new_content_parts.push(text_compo.content.get());
@@ -124,7 +131,7 @@ export function register_TextChildCompo(editor: MixEditor) {
         });
       }
       new_content_parts.push(current_content.slice(end)); // 保留 end 索引之后的部分
-      
+
       // 更新组件的文本内容
       it.content.set(new_content_parts.join(""));
 
