@@ -1,3 +1,4 @@
+import { createRoot } from "solid-js";
 import { ContentCtx } from "../content/content_ctx";
 import {
   CompoBehaviorHandler,
@@ -94,18 +95,25 @@ export class MixEditor {
 
   plugin: PluginCtx<this>;
 
+  destroy_reactive!: () => void;
+
   async init(params: InitParams) {
-    regist_core_items(this);
+    await createRoot(async (dispose) => {
+      regist_core_items(this);
 
-    await this.pipe.execute({ pipe_id: "init" }); // 初始化插件
+      await this.pipe.execute({ pipe_id: "init" }); // 初始化插件
 
-    if (params.root_ent) {
-      this.content.root.set(params.root_ent);
-    }
+      if (params.root_ent) {
+        this.content.root.set(params.root_ent);
+      }
+
+      this.destroy_reactive = dispose;
+    });
   }
 
   async destroy() {
     await this.pipe.execute({ pipe_id: "destroy" }); // 销毁插件
+    this.destroy_reactive();
   }
 
   constructor(params: { plugins: MEPlugin[] }) {
