@@ -35,6 +35,18 @@ export class PipeCtx<TPipeEventMap extends PipeEventMap<TExCtx>, TExCtx> {
     pipe.set_stage(stage as any);
   }
 
+  delete_stage<TPipeId extends Extract<keyof TPipeEventMap, string>>(
+    pipe_id: TPipeId,
+    stage_id: string
+  ) {
+    const pipe = this.pipes.get(pipe_id);
+    if (!pipe) return;
+    pipe.delete_stage(stage_id);
+    if (pipe.count() === 0) {
+      this.pipes.delete(pipe_id);
+    }
+  }
+
   delete_pipe(pipe_id: string) {
     this.pipes.delete(pipe_id);
   }

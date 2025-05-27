@@ -8,6 +8,8 @@ export interface IPipe<TEvent extends IPipeEvent<TExCtx>, TExCtx> {
   id: string;
   /** 设置阶段 */
   set_stage(stage: IPipeStage<TEvent, TExCtx>): void;
+  /** 获取阶段数量 */
+  count(): number;
   /** 执行管线 */
   execute(
     /** 外部上下文 */
@@ -32,6 +34,10 @@ export class Pipe<TEvent extends IPipeEvent<TExCtx>, TExCtx>
 
   delete_stage(stage_id: string): void {
     this.stages.delete(stage_id);
+  }
+
+  count(): number {
+    return this.stages.size;
   }
 
   async execute(
