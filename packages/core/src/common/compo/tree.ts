@@ -413,60 +413,61 @@ export async function split_ent(
   ent_id: string,
   index: number
 ) {
-  const split_outs = new Map<string, any>();
-  const cloned_compos: Compo[] = [];
+  throw new Error("not implemented");
+  // const split_outs = new Map<string, any>();
+  // const cloned_compos: Compo[] = [];
 
-  // 先创建新实体
-  const ent_type = ecs.get_compo(ent_id, TypeCompo.type)?.value;
-  const new_ent_id = await ecs.create_ent(ent_type);
+  // // 先创建新实体
+  // const ent_type = ecs.get_compo(ent_id, TypeCompo.type)?.value;
+  // const new_ent_id = await ecs.create_ent(ent_type);
 
-  // 遍历源实体自身组件
-  const process_promises = Array.from(ecs.get_own_compos(ent_id).values()).map(
-    async (compo) => {
-      // 如果新实体已经有该组件，直接跳过
-      if (ecs.get_compo(new_ent_id, compo.type)) return;
+  // // 遍历源实体自身组件
+  // const process_promises = Array.from(ecs.get_own_compos(ent_id).values()).map(
+  //   async (compo) => {
+  //     // 如果新实体已经有该组件，直接跳过
+  //     if (ecs.get_compo(new_ent_id, compo.type)) return;
 
-      // 优先尝试分割
-      const split_out_behavior = ecs.get_compo_behavior(
-        compo.type,
-        TreeSplitOutCb
-      );
+  //     // 优先尝试分割
+  //     const split_out_behavior = ecs.get_compo_behavior(
+  //       compo.type,
+  //       TreeSplitOutCb
+  //     );
 
-      if (split_out_behavior) {
-        const result = await split_out_behavior({
-          it: compo,
-          ex_ctx: ecs.ex_ctx,
-          index,
-        });
-        split_outs.set(compo.type, result);
+  //     if (split_out_behavior) {
+  //       const result = await split_out_behavior({
+  //         it: compo,
+  //         ex_ctx: ecs.ex_ctx,
+  //         index,
+  //       });
+  //       split_outs.set(compo.type, result);
 
-        const new_ent_compo = await ecs.get_or_create_compo(
-          new_ent_id,
-          compo.type
-        );
+  //       const new_ent_compo = await ecs.get_or_create_compo(
+  //         new_ent_id,
+  //         compo.type
+  //       );
 
-        await ecs.run_compo_behavior(new_ent_compo, TreeSplitInCb, {
-          data: result,
-        });
-      } else {
-        // 分割行为不存在，尝试克隆
-        const cloned_compo = await clone_compo(ecs, compo);
-        if (cloned_compo) {
-          cloned_compos.push(cloned_compo);
-        }
-      }
-    }
-  );
+  //       await ecs.run_compo_behavior(new_ent_compo, TreeSplitInCb, {
+  //         data: result,
+  //       });
+  //     } else {
+  //       // 分割行为不存在，尝试克隆
+  //       const cloned_compo = await clone_compo(ecs, compo);
+  //       if (cloned_compo) {
+  //         cloned_compos.push(cloned_compo);
+  //       }
+  //     }
+  //   }
+  // );
 
-  await Promise.all(process_promises);
+  // await Promise.all(process_promises);
 
-  // 添加克隆组件（新实体尚未拥有的）
-  const filtered_cloned_compos = cloned_compos.filter(
-    (c) => !ecs.get_compo(new_ent_id, c.type)
-  );
-  ecs.set_compos(new_ent_id, filtered_cloned_compos);
+  // // 添加克隆组件（新实体尚未拥有的）
+  // const filtered_cloned_compos = cloned_compos.filter(
+  //   (c) => !ecs.get_compo(new_ent_id, c.type)
+  // );
+  // ecs.set_compos(new_ent_id, filtered_cloned_compos);
 
-  return { new_ent_id, split_outs };
+  // return { new_ent_id, split_outs };
 }
 
 /** 根据路径分割 `ent_id` 实体。*/
@@ -481,65 +482,66 @@ export async function deep_split_ent(
    */
   path: number[]
 ) {
-  if (path.length < 1) throw new Error("分割路径至少需要包含一个位置索引。");
+  throw new Error("not implemented");
+  // if (path.length < 1) throw new Error("分割路径至少需要包含一个位置索引。");
 
-  /** 根实体到最后一个待分割实体的实体 ID 列表，长度为 path.length - 1 */
-  const ent_list: string[] = [ent_id];
-  const split_outs: Map<string, any>[] = [];
-  let splited_root_ent_id!: string;
+  // /** 根实体到最后一个待分割实体的实体 ID 列表，长度为 path.length - 1 */
+  // const ent_list: string[] = [ent_id];
+  // const split_outs: Map<string, any>[] = [];
+  // let splited_root_ent_id!: string;
 
-  // 获取从根实体到最后一个待分割实体的实体 ID 列表
-  // 循环到倒数第二个，也就是最后一个实体索引
-  for (let i = 0; i < path.length - 1; i++) {
-    const child_index = path[i];
-    const child_ent = get_child_ent_id(ecs, ent_list[i], child_index);
-    if (!child_ent)
-      throw new Error(
-        `无法获取实体 ${ent_list[i]} 的第 ${child_index} 个子实体。`
-      );
-    ent_list.push(child_ent);
-  }
+  // // 获取从根实体到最后一个待分割实体的实体 ID 列表
+  // // 循环到倒数第二个，也就是最后一个实体索引
+  // for (let i = 0; i < path.length - 1; i++) {
+  //   const child_index = path[i];
+  //   const child_ent = get_child_ent_id(ecs, ent_list[i], child_index);
+  //   if (!child_ent)
+  //     throw new Error(
+  //       `无法获取实体 ${ent_list[i]} 的第 ${child_index} 个子实体。`
+  //     );
+  //   ent_list.push(child_ent);
+  // }
 
-  let pos_index = path[path.length - 1];
+  // let pos_index = path[path.length - 1];
 
-  // 从内到外分割
-  for (let i = path.length - 1; i >= 0; i--) {
-    /** 待分割的位置索引 */
-    const ent_to_split = ent_list[i];
-    const { new_ent_id, split_outs: new_split_outs } = await split_ent(
-      ecs,
-      ent_to_split,
-      pos_index
-    );
+  // // 从内到外分割
+  // for (let i = path.length - 1; i >= 0; i--) {
+  //   /** 待分割的位置索引 */
+  //   const ent_to_split = ent_list[i];
+  //   const { new_ent_id, split_outs: new_split_outs } = await split_ent(
+  //     ecs,
+  //     ent_to_split,
+  //     pos_index
+  //   );
 
-    // 将分割结果放到自己父元素
-    if (i === 0) {
-      splited_root_ent_id = new_ent_id;
-    } else {
-      const self_pos_index_in_parent = path[i - 1];
-      const parent_ent = ent_list[i - 1];
-      const parent_actual_child_compo = get_actual_child_compo(ecs, parent_ent);
-      if (!parent_actual_child_compo)
-        throw new Error(`无法获取实体 ${parent_ent} 的实际子实体组件。`);
+  //   // 将分割结果放到自己父元素
+  //   if (i === 0) {
+  //     splited_root_ent_id = new_ent_id;
+  //   } else {
+  //     const self_pos_index_in_parent = path[i - 1];
+  //     const parent_ent = ent_list[i - 1];
+  //     const parent_actual_child_compo = get_actual_child_compo(ecs, parent_ent);
+  //     if (!parent_actual_child_compo)
+  //       throw new Error(`无法获取实体 ${parent_ent} 的实际子实体组件。`);
 
-      ecs.run_compo_behavior(parent_actual_child_compo, TreeInsertChildrenCb, {
-        items: [new_ent_id],
-        index: self_pos_index_in_parent + 1,
-        parent_id: parent_ent,
-      });
+  //     ecs.run_compo_behavior(parent_actual_child_compo, TreeInsertChildrenCb, {
+  //       items: [new_ent_id],
+  //       index: self_pos_index_in_parent + 1,
+  //       parent_id: parent_ent,
+  //     });
 
-      // 下一次分割应该在新旧实体之间
-      pos_index = self_pos_index_in_parent + 1;
-    }
+  //     // 下一次分割应该在新旧实体之间
+  //     pos_index = self_pos_index_in_parent + 1;
+  //   }
 
-    split_outs.push(new_split_outs);
-  }
+  //   split_outs.push(new_split_outs);
+  // }
 
-  return {
-    new_ent_id: splited_root_ent_id,
-    /** 分割结果，是按从内到外的顺序排列的。*/
-    split_outs,
-  };
+  // return {
+  //   new_ent_id: splited_root_ent_id,
+  //   /** 分割结果，是按从内到外的顺序排列的。*/
+  //   split_outs,
+  // };
 }
 
 export enum WalkDecision {

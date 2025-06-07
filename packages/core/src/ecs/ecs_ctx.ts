@@ -248,14 +248,16 @@ export class ECSCtx<
     return compo;
   }
 
-  /** 获取或创建组件。 */
-  async get_or_create_compo<
+  get_or_create_compo<
     TCompoType extends Extract<keyof TCompoMetaMap, string> | string
-  >(entId: string, compoType: TCompoType) {
-    let compo = this.get_compo(entId, compoType);
+  >(
+    entId: string,
+    compoType: TCompoType,
+    compo_factory: (entId: string) => TCompoMetaMap[TCompoType]["compo"]
+  ) {
+    let compo: any = this.get_compo(entId, compoType);
     if (!compo) {
-      compo = (await this.create_compo(compoType, {} as any)) as any;
-      if (!compo) throw new Error(`无法创建组件 ${compoType}。`);
+      compo = compo_factory(entId) as any;
       this.set_compo(entId, compo);
     }
     return compo;
